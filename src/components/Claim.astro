@@ -1,4 +1,5 @@
 ---
+import { getEntry } from 'astro:content';
 import ClaimEvidenceToggle from './ClaimEvidenceToggle.tsx';
 import Cite from './Cite.astro';
 
@@ -10,13 +11,27 @@ interface Props {
   /**
    * Optional inline evidence summary. When provided, the tier badge becomes
    * clickable and expands a stone-50 block beneath the claim with this text.
-   * Pass the FIRST source's summary (or the claim's `evidence_summary`) if
-   * multiple are relevant — keep this single-string for predictable UX.
+   * If omitted, falls back to the FIRST source's `notes` field (truncated).
    */
   evidence_summary?: string;
 }
 
 const { tier, sources = [], evidence_summary } = Astro.props;
+
+// Auto-derive evidence summary from the first source's notes when not provided.
+// Keeps existing call sites working without per-page backfill.
+let resolvedSummary = evidence_summary;
+if (!resolvedSummary && sources.length > 0) {
+  try {
+    const first = await getEntry('sources', sources[0]);
+    const notes = first?.data?.notes;
+    if (notes && notes.length > 8) {
+      resolvedSummary = notes.length > 220 ? notes.slice(0, 217).trimEnd() + '…' : notes;
+    }
+  } catch {
+    /* missing source — leave summary undefined */
+  }
+}
 ---
 
 <span class="claim">
@@ -25,7 +40,7 @@ const { tier, sources = [], evidence_summary } = Astro.props;
   <span class="ml-1 inline-block align-middle">
     <ClaimEvidenceToggle
       tier={tier}
-      evidenceSummary={evidence_summary}
+      evidenceSummary={resolvedSummary}
       client:visible
     />
   </span>
