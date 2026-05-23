@@ -41,6 +41,8 @@ const kootams = defineCollection({
     deity: reference('deities').optional(),
     exogamy_with: z.array(reference('kootams')).default([]),
     claims: z.array(reference('claims')).default([]),
+    status: z.enum(['documented', 'stub']).default('documented'),
+    attestation: z.enum(['academic', 'community', 'oral-family']).optional(),
   }),
 });
 
@@ -51,10 +53,20 @@ const deities = defineCollection({
     name: z.string(),
     tradition: z.string(),
     village: z.string().optional(),
+    district: z.string().optional(),
+    tamil_name: z.string().optional(),
+    geo: z
+      .object({
+        lat: z.number(),
+        lng: z.number(),
+        zoom: z.number(),
+      })
+      .optional(),
     kootam: reference('kootams').optional(),
     iconography: z.string(),
     festivals: z.array(z.string()).default([]),
     claims: z.array(reference('claims')).default([]),
+    attestation: z.enum(['academic', 'community', 'oral-family']).optional(),
   }),
 });
 

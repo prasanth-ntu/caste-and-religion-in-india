@@ -1,0 +1,215 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection, getEntry } from 'astro:content';
+
+const kootams = await getCollection('kootams');
+
+const documented: Array<{
+  slug: string;
+  name: string;
+  deityName: string | null;
+  village: string | null;
+  district: string | null;
+  attestation: string | null;
+}> = [];
+const namedNoDeity: Array<{ slug: string; name: string }> = [];
+const stubs: Array<{ slug: string; name: string }> = [];
+
+for (const k of kootams) {
+  const d = k.data;
+  if (d.status === 'stub') {
+    stubs.push({ slug: d.slug, name: d.name });
+    continue;
+  }
+  if (!d.deity) {
+    namedNoDeity.push({ slug: d.slug, name: d.name });
+    continue;
+  }
+  const deityRef = typeof d.deity === 'string' ? d.deity : d.deity.id;
+  const deityEntry = await getEntry('deities', deityRef);
+  documented.push({
+    slug: d.slug,
+    name: d.name,
+    deityName: deityEntry?.data.name ?? null,
+    village: deityEntry?.data.village ?? null,
+    district: deityEntry?.data.district ?? null,
+    attestation: d.attestation ?? null,
+  });
+}
+
+documented.sort((a, b) => a.name.localeCompare(b.name));
+namedNoDeity.sort((a, b) => a.name.localeCompare(b.name));
+stubs.sort((a, b) => a.slug.localeCompare(b.slug));
+
+const repoBase = 'https://github.com/prasanth-ntu/caste-and-religion-in-india';
+function newIssueUrl(slug: string, name: string) {
+  const title = encodeURIComponent(`Document lineage: ${name} (${slug})`);
+  const body = encodeURIComponent(
+    `Please share what you know about this kootam, with sources where possible.\n\n` +
+      `**Kootam slug:** \`${slug}\`\n` +
+      `**Kootam name:** ${name}\n` +
+      `**Totem species (if known):**\n` +
+      `**Tamil name:**\n` +
+      `**Kuladeivam (clan deity) name:**\n` +
+      `**Temple village / district:**\n` +
+      `**Annual festivals / iconography:**\n` +
+      `**Exogamy partners (other kootams):**\n` +
+      `**Sources / how you know this (published, family oral, community archive):**\n`
+  );
+  return `${repoBase}/issues/new?title=${title}&body=${body}`;
+}
+---
+
+<BaseLayout
+  title="Contribute lineages — Decoded"
+  description="The site documents only 4 of 145 Kongu Vellala kootams. Contribute your family lineage and help fill the gap."
+>
+  <main id="main-content" class="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Contribute</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Help close the gap</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        Contribute a lineage
+        <span class="ml-3 font-tamil text-3xl font-medium text-stone-600 sm:text-4xl">
+          பங்களி
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-stone-700">
+        The 145-kootam structure of the Kongu Vellala Gounder community is well-attested in
+        community ethnography. A machine-readable list with verified totems, kuladeivams, and
+        exogamy partners is <em>not</em> in the public domain. This site openly tracks what's
+        documented versus what's missing — and invites you to help.
+      </p>
+    </header>
+
+    <section class="mb-10 grid gap-3 sm:grid-cols-3">
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <p class="text-3xl font-bold text-emerald-900">{documented.length}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800">documented</p>
+        <p class="mt-1 text-xs text-emerald-900">with kuladeivam + attestation</p>
+      </div>
+      <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p class="text-3xl font-bold text-amber-900">{namedNoDeity.length}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-amber-800">named-only</p>
+        <p class="mt-1 text-xs text-amber-900">on published list; kuladeivam pending</p>
+      </div>
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+        <p class="text-3xl font-bold text-rose-900">{stubs.length}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-rose-800">wanted</p>
+        <p class="mt-1 text-xs text-rose-900">name + everything else needed</p>
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="mb-3 text-xl font-semibold text-stone-900">🟢 Documented</h2>
+      <p class="mb-3 text-sm text-stone-600">
+        These 4 lineages have a kootam-to-kuladeivam mapping. Three (Maniyan, Senganni, Vilayan)
+        are attested via the author's family / friend network and are flagged 🟡 until published
+        sources are added.
+      </p>
+      <ul class="space-y-2">
+        {documented.map((d) => (
+          <li class="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm">
+            <span>
+              <a href={`/lineage/k/${d.slug}/`} class="font-medium text-stone-900 underline">
+                {d.name}
+              </a>{' '}
+              <span class="text-stone-500">— {d.deityName ?? '—'}</span>{' '}
+              {d.village && <span class="text-stone-500">({d.village}{d.district ? `, ${d.district}` : ''})</span>}
+            </span>
+            {d.attestation && (
+              <span class={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                d.attestation === 'oral-family'
+                  ? 'bg-amber-100 text-amber-900'
+                  : 'bg-emerald-100 text-emerald-900'
+              }`}>
+                {d.attestation === 'oral-family' ? '🟡 oral-family' : '🟢 community'}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="mb-3 text-xl font-semibold text-stone-900">🟡 Named, kuladeivam pending ({namedNoDeity.length})</h2>
+      <p class="mb-3 text-sm text-stone-600">
+        These kootams are on the published 24-named list but their kuladeivam, temple village,
+        and exogamy partners are not yet entered. Contribute one if you know it.
+      </p>
+      <ul class="grid gap-2 sm:grid-cols-2">
+        {namedNoDeity.map((k) => (
+          <li class="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
+            <a href={`/lineage/kootams/${k.slug}/`} class="font-medium text-stone-800 underline">
+              {k.name}
+            </a>
+            <a
+              href={newIssueUrl(k.slug, k.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs font-medium text-emerald-700 hover:underline"
+            >
+              Add details →
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="mb-10">
+      <h2 class="mb-3 text-xl font-semibold text-stone-900">🚧 Wanted: undocumented ({stubs.length})</h2>
+      <p class="mb-3 text-sm text-stone-600">
+        These are placeholder slots (<code>kootam-001</code> … <code>kootam-120</code>) — the
+        force graph needs 145 nodes to honour the canonical count, so stubs fill the gap. If
+        you can verify a name + totem species + kuladeivam for any of these positions, open a
+        pull request or issue.
+      </p>
+      <details class="rounded-xl border border-stone-200 bg-white">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-stone-800">
+          Show all {stubs.length} stub slots
+        </summary>
+        <ul class="grid gap-1 px-4 py-3 text-sm sm:grid-cols-3">
+          {stubs.map((k) => (
+            <li class="flex items-center justify-between gap-2">
+              <span class="font-mono text-xs text-stone-600">{k.slug}</span>
+              <a
+                href={newIssueUrl(k.slug, k.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-[11px] font-medium text-emerald-700 hover:underline"
+              >
+                Claim →
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
+
+    <section class="rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-700">
+      <h3 class="mb-2 text-base font-semibold text-stone-900">How to contribute</h3>
+      <ol class="list-decimal space-y-1.5 pl-5">
+        <li>
+          Click "Add details →" or "Claim →" above to open a pre-filled issue, or open a
+          pull request against the{' '}
+          <a href={repoBase} target="_blank" rel="noopener noreferrer" class="font-medium underline">
+            repository
+          </a>.
+        </li>
+        <li>
+          Share what you know: kuladeivam name, temple village/district, totem species, exogamy
+          partners, festival calendar.
+        </li>
+        <li>
+          Cite a source where possible — a published ethnography, a temple's own materials, or
+          explicitly mark it as "family/community oral attestation" (we tag those 🟡).
+        </li>
+      </ol>
+    </section>
+  </main>
+</BaseLayout>

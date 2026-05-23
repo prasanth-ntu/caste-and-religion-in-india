@@ -10,6 +10,7 @@ exogamy_with: []
 claims:
   - kootam-exogamy-rule
   - kootam-totem-system
+status: stub
 ---
 
 # Kootam 076 (stub)

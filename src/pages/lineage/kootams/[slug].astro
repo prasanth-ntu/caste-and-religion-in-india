@@ -2,6 +2,7 @@
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Claim from '../../../components/Claim.astro';
+import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
 
 export async function getStaticPaths() {
   const all = await getCollection('kootams');
@@ -15,8 +16,9 @@ const { entry } = Astro.props;
 const d = entry.data;
 const { Content } = await render(entry);
 
-const isStub = /^kootam-\d{3}$/.test(d.slug);
+const isStub = d.status === 'stub';
 const isKadai = d.slug === 'kadai';
+const isDocumentedWithDeity = d.status === 'documented' && !!d.deity;
 
 // Totem emoji map
 const totemEmoji: Record<string, string> = {
@@ -219,11 +221,22 @@ for (const r of d.claims ?? []) {
 
     <section class="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
       <p>
+        {isDocumentedWithDeity && (
+          <>
+            For a fuller selector + comparison view, see the{' '}
+            <a href={`/lineage/k/${d.slug}/`} class="font-medium text-emerald-700 underline">
+              {d.name} explore page →
+            </a>
+            <br />
+          </>
+        )}
         Back to{' '}
         <a href="/lineage/kootams" class="font-medium text-emerald-700 underline">
           the full 145 kootam force graph →
         </a>
       </p>
     </section>
+
+    {isDocumentedWithDeity && <LineageCompareOverlay client:idle currentSlug={d.slug} />}
   </main>
 </BaseLayout>

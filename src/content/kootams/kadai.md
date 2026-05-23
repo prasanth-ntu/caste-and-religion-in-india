@@ -19,6 +19,8 @@ claims:
   - kootam-exogamy-rule
   - kootam-totem-system
   - kootam-exogamy-genetic-rationale
+status: documented
+attestation: community
 ---
 
 # Kadai Kootam

@@ -1,0 +1,302 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Claim from '../../../components/Claim.astro';
+import LineageSelector from '../../../components/LineageSelector.tsx';
+import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
+
+export async function getStaticPaths() {
+  const all = await getCollection('kootams');
+  // Only generate "explore" routes for documented kootams (with a deity).
+  // The /lineage/kootams/[slug] route still exists for every kootam (including stubs).
+  return all
+    .filter((entry) => entry.data.status === 'documented' && entry.data.deity)
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+
+const isKadai = d.slug === 'kadai';
+
+const totemEmoji: Record<string, string> = {
+  bird: '🐦',
+  tree: '🌳',
+  fish: '🐟',
+  flower: '🌸',
+  other: '✶',
+};
+const totemColor: Record<string, string> = {
+  bird: 'bg-amber-50 border-amber-300 text-amber-900',
+  tree: 'bg-emerald-50 border-emerald-300 text-emerald-900',
+  fish: 'bg-sky-50 border-sky-300 text-sky-900',
+  flower: 'bg-rose-50 border-rose-300 text-rose-900',
+  other: 'bg-stone-50 border-stone-300 text-stone-900',
+};
+const tNorm = ['bird', 'tree', 'fish', 'flower'].includes(d.totem.type) ? d.totem.type : 'other';
+
+// Resolve deity (always populated for documented kootams in this route)
+let deity = null as null | {
+  slug: string;
+  name: string;
+  tamilName?: string;
+  village?: string;
+  district?: string;
+  tradition?: string;
+  festivals: string[];
+  iconography?: string;
+};
+if (d.deity) {
+  const deityRef = typeof d.deity === 'string' ? d.deity : d.deity.id;
+  const dEntry = await getEntry('deities', deityRef);
+  if (dEntry) {
+    deity = {
+      slug: dEntry.data.slug,
+      name: dEntry.data.name,
+      tamilName: dEntry.data.tamil_name,
+      village: dEntry.data.village,
+      district: dEntry.data.district,
+      tradition: dEntry.data.tradition,
+      festivals: dEntry.data.festivals ?? [],
+      iconography: dEntry.data.iconography,
+    };
+  }
+}
+
+const exogamyRefs: { slug: string; name: string }[] = [];
+for (const r of d.exogamy_with ?? []) {
+  const refId = typeof r === 'string' ? r : r.id;
+  const partner = await getEntry('kootams', refId);
+  if (partner) exogamyRefs.push({ slug: partner.data.slug, name: partner.data.name });
+}
+
+const claimRefs: { id: string; statement: string; tier: 'green' | 'yellow' | 'red' | 'rational' }[] = [];
+for (const r of d.claims ?? []) {
+  const refId = typeof r === 'string' ? r : r.id;
+  const c = await getEntry('claims', refId);
+  if (c) claimRefs.push({ id: c.data.id, statement: c.data.statement, tier: c.data.tier });
+}
+
+const tierBadge: Record<string, string> = {
+  community: '🟢 community-attested',
+  'oral-family': '🟡 oral-family attestation',
+  academic: '🟢 academic source',
+};
+---
+
+<BaseLayout
+  title={`${d.name} — Lineage Explore`}
+  description={`Explore the ${d.name} kootam — totem, kuladeivam${
+    deity ? ` (${deity.name})` : ''
+  }, exogamy partners, and linked claims.`}
+>
+  <main id="main-content" class="mx-auto max-w-3xl px-6 py-10 sm:py-14">
+    {/* Sticky selector bar */}
+    <div class="sticky top-0 z-20 -mx-6 mb-6 border-b border-stone-200 bg-stone-50/95 px-6 py-3 backdrop-blur">
+      <LineageSelector client:load />
+    </div>
+
+    {/* Breadcrumb */}
+    <nav class="mb-6 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">India</a>
+      <span aria-hidden="true">›</span>
+      <a href="/lineage" class="hover:text-stone-900">Tamil Nadu</a>
+      <span aria-hidden="true">›</span>
+      <a href="/lineage/kongu" class="hover:text-stone-900">Kongu Nadu</a>
+      <span aria-hidden="true">›</span>
+      <a href="/lineage/vellala" class="hover:text-stone-900">Vellala</a>
+      <span aria-hidden="true">›</span>
+      <a href="/lineage/gounder" class="hover:text-stone-900">Gounder</a>
+      <span aria-hidden="true">›</span>
+      <span class="font-medium text-stone-800">{d.name}</span>
+      {deity && (
+        <>
+          <span aria-hidden="true">›</span>
+          <span class="text-stone-700">{deity.name}</span>
+        </>
+      )}
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-6">
+      <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Lineage explore</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        {isKadai && <span class="text-rose-600">★ </span>}
+        {d.name}
+      </h1>
+      <p class="mt-2 font-tamil text-2xl text-stone-700">{d.totem.tamil_name}</p>
+    </header>
+
+    {/* Attestation banner */}
+    {d.attestation === 'oral-family' && (
+      <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p>
+          <span class="font-semibold">🟡 Family-attested.</span> This kootam-deity pairing is
+          documented here via oral family/community testimony, not yet from published
+          ethnography. Researched details (totem species, exogamy partners, festival calendar,
+          iconography) are pending.
+        </p>
+        <p class="mt-1.5 text-xs text-amber-800">
+          Have published sources?{' '}
+          <a href="/contribute/" class="font-medium underline">Contribute →</a>
+        </p>
+      </div>
+    )}
+
+    {isKadai && (
+      <div class="mb-6 rounded-2xl border-2 border-rose-300 bg-gradient-to-br from-rose-50 to-amber-50 p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-widest text-rose-700">
+          ★ The author's lineage
+        </p>
+        <p class="mt-1 text-sm text-stone-800">
+          This is the kootam the author of this site belongs to. The full prose deep-dives
+          (region, caste, title, deity, ancestor practices) are available as canonical pages:
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a href="/lineage/kongu" class="rounded-full border border-rose-300 bg-white px-3 py-1 text-sm hover:bg-rose-50">🌾 Kongu</a>
+          <a href="/lineage/vellala" class="rounded-full border border-rose-300 bg-white px-3 py-1 text-sm hover:bg-rose-50">🧑‍🌾 Vellala</a>
+          <a href="/lineage/gounder" class="rounded-full border border-rose-300 bg-white px-3 py-1 text-sm hover:bg-rose-50">👑 Gounder</a>
+          <a href="/lineage/konur" class="rounded-full border border-rose-300 bg-white px-3 py-1 text-sm hover:bg-rose-50">🪔 Konur Kaliamman</a>
+          <a href="/lineage/ancestors" class="rounded-full border border-rose-300 bg-white px-3 py-1 text-sm hover:bg-rose-50">🌾 Ancestor practices</a>
+        </div>
+      </div>
+    )}
+
+    {/* Totem card */}
+    <section class={`mb-6 flex items-center gap-4 rounded-2xl border p-5 ${totemColor[tNorm]}`}>
+      <div class="text-5xl" aria-hidden="true">{totemEmoji[tNorm]}</div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide">Totem · {tNorm}</p>
+        <p class="mt-1 text-lg font-semibold">{d.totem.species}</p>
+        <p class="font-tamil text-sm">{d.totem.tamil_name}</p>
+      </div>
+    </section>
+
+    {/* Deity card */}
+    {deity && (
+      <section class="mb-6 rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 p-5">
+        <p class="text-xs font-semibold uppercase tracking-widest text-rose-700">
+          Kuladeivam · குலதெய்வம்
+        </p>
+        <h2 class="mt-1 text-2xl font-bold text-stone-900">
+          {deity.name}
+        </h2>
+        {deity.tamilName && <p class="mt-1 font-tamil text-base text-rose-800">{deity.tamilName}</p>}
+        <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          {deity.village && (
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Village</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.village}</dd>
+            </div>
+          )}
+          {deity.district && (
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">District</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.district}</dd>
+            </div>
+          )}
+          {deity.tradition && (
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Tradition</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.tradition}</dd>
+            </div>
+          )}
+          {deity.festivals?.length > 0 && (
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Festivals</dt>
+              <dd class="mt-0.5 flex flex-wrap gap-1.5 text-stone-800">
+                {deity.festivals.map((f) => (
+                  <span class="rounded-full border border-rose-200 bg-white px-2 py-0.5 text-xs">
+                    {f}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )}
+        </dl>
+        {deity.slug === 'konur-kaliamman' && (
+          <p class="mt-4">
+            <a href="/lineage/konur" class="text-sm font-medium text-rose-800 underline">
+              Visit the full temple page →
+            </a>
+          </p>
+        )}
+      </section>
+    )}
+
+    {/* Attestation tier chip */}
+    {d.attestation && (
+      <section class="mb-6">
+        <span class="inline-flex items-center gap-1 rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
+          Attestation: {tierBadge[d.attestation] ?? d.attestation}
+        </span>
+      </section>
+    )}
+
+    {/* Exogamy */}
+    {exogamyRefs.length > 0 && (
+      <section class="mb-6">
+        <h2 class="mb-3 text-xl font-semibold text-stone-900">
+          Exogamy partners
+          <span class="ml-2 font-tamil text-base font-medium text-stone-600">மாமன்-மச்சான்</span>
+        </h2>
+        <ul class="flex flex-wrap gap-2">
+          {exogamyRefs.map((p) => (
+            <li>
+              <a
+                href={`/lineage/kootams/${p.slug}`}
+                class="inline-block rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800 hover:border-stone-500 hover:bg-stone-50"
+              >
+                {p.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {/* Body */}
+    <section class="prose prose-stone mb-8 max-w-none text-stone-800">
+      <Content />
+    </section>
+
+    {/* Compare CTA */}
+    <section class="mb-8 rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm">
+      <p class="text-stone-700">
+        Want to compare this lineage with another? See{' '}
+        {isKadai ? (
+          <>
+            <a href="/compare?a=kadai&b=maniyan" class="font-medium underline">Kadai vs Maniyan</a>,{' '}
+            <a href="/compare?a=kadai&b=senganni" class="font-medium underline">Kadai vs Senganni</a>, or pick any pair on{' '}
+            <a href="/compare" class="font-medium underline">the compare page →</a>
+          </>
+        ) : (
+          <>
+            <a href={`/compare?a=${d.slug}&b=kadai`} class="font-medium underline">
+              {d.name} vs Kadai
+            </a>{' '}
+            or open the full{' '}
+            <a href="/compare" class="font-medium underline">compare page →</a>
+          </>
+        )}
+      </p>
+    </section>
+
+    <section class="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+      <p>
+        Back to{' '}
+        <a href="/lineage" class="font-medium text-emerald-700 underline">Section B hub</a>{' '}
+        or{' '}
+        <a href="/lineage/kootams" class="font-medium text-emerald-700 underline">
+          the 145-kootam force graph →
+        </a>
+      </p>
+    </section>
+
+    <LineageCompareOverlay client:idle currentSlug={d.slug} />
+  </main>
+</BaseLayout>

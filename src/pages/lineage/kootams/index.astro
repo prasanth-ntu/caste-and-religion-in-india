@@ -6,14 +6,12 @@ import KootamForceGraph from '../../../components/viz/KootamForceGraph.tsx';
 
 const all = await getCollection('kootams');
 
-// Stable order: kadai first (highlighted), then named entries alphabetically, then numbered stubs.
-const isStub = (slug: string) => /^kootam-\d{3}$/.test(slug);
-
+// Stable order: kadai first (highlighted), then documented entries alphabetically, then stubs.
 const sorted = [...all].sort((a, b) => {
   if (a.data.slug === 'kadai') return -1;
   if (b.data.slug === 'kadai') return 1;
-  const aStub = isStub(a.data.slug);
-  const bStub = isStub(b.data.slug);
+  const aStub = a.data.status === 'stub';
+  const bStub = b.data.status === 'stub';
   if (aStub !== bStub) return aStub ? 1 : -1;
   return a.data.slug.localeCompare(b.data.slug);
 });
@@ -30,7 +28,7 @@ const kootams = sorted.map((entry) => {
     region: d.region,
     deity: d.deity ? (typeof d.deity === 'string' ? d.deity : d.deity.id) : undefined,
     exogamyWith: (d.exogamy_with ?? []).map((r: any) => (typeof r === 'string' ? r : r.id)),
-    isStub: isStub(d.slug),
+    isStub: d.status === 'stub',
     isHighlight: d.slug === 'kadai',
   };
 });
@@ -100,6 +98,17 @@ const stubCount = kootams.length - namedCount;
           Members of a kootam traditionally treat their totem species as off-limits for harm or
           consumption.
         </Claim>
+      </p>
+    </section>
+
+    <section class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <p>
+        <span class="font-semibold">🚧 Data gap:</span> only 4 of the 145 kootams have a
+        kuladeivam pairing populated; 24 are named-only; 120 are placeholder stubs. The honest
+        version of this graph invites your help —{' '}
+        <a href="/contribute/" class="font-medium underline hover:text-amber-950">
+          contribute your lineage →
+        </a>
       </p>
     </section>
 

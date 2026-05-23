@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
+import LineageSelector from '../../components/LineageSelector.tsx';
 
 const cards = [
   {
@@ -53,6 +54,18 @@ const cards = [
   description="A semantic-zoom map of the personal lineage from India to Konur — Kongu Vellala Gounder, Kadai Kootam, Konur Kaliamman."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    {/* Lineage selector — at the top so visitors can switch lineage immediately */}
+    <section class="mb-8">
+      <LineageSelector client:load />
+      <p class="mt-2 text-xs text-stone-500">
+        Default view = the author's lineage (Kadai / Konur Kaliamman). Pick another to explore.
+        Selection is remembered across the site via URL + localStorage.{' '}
+        <a href="/contribute/" class="underline hover:text-stone-700">
+          Don't see yours? Contribute →
+        </a>
+      </p>
+    </section>
+
     {/* Hero */}
     <section class="mb-10">
       <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Section B</p>

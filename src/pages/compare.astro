@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LineageCompare from '../components/LineageCompare.tsx';
+---
+
+<BaseLayout
+  title="Compare lineages — Decoded"
+  description="Side-by-side comparison of two Kongu Vellala lineages — totem, kuladeivam, exogamy, attestation."
+>
+  <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Compare</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Lineage compare</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        Side-by-side
+        <span class="ml-3 font-tamil text-3xl font-medium text-stone-600 sm:text-4xl">
+          ஒப்பீடு
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-stone-700">
+        Pick two Kongu Vellala lineages and see what they share, where they differ, and what
+        is honestly still undocumented. Defaults to the author's lineage (Kadai / Konur
+        Kaliamman) for A; pick anything for B.
+      </p>
+    </header>
+
+    <LineageCompare client:load />
+
+    <section class="mt-12 rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-700">
+      <p>
+        Don't see your kootam in the picker?{' '}
+        <a href="/contribute/" class="font-medium text-emerald-700 underline">
+          Contribute it →
+        </a>{' '}
+        Only 4 of 145 kootams have populated kuladeivam data so far. This site needs your
+        family/community input.
+      </p>
+    </section>
+  </main>
+</BaseLayout>

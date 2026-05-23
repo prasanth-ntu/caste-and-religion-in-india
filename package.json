@@ -9,7 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "gen:manifest": "node scripts/generate-lineage-manifest.mjs",
+    "prebuild": "node scripts/generate-lineage-manifest.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.5",
