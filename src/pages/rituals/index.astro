@@ -1,13 +1,172 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import RitualFlipCard from '../../components/viz/RitualFlipCard.astro';
+
+const all = await getCollection('rituals');
+
+// Sort: birth → puberty → marriage → death → kuladeivam → kootam → food → purity → other,
+// then alphabetical within each category.
+const categoryOrder = [
+  'birth',
+  'puberty',
+  'marriage',
+  'death',
+  'kuladeivam',
+  'kootam',
+  'food',
+  'purity',
+  'other',
+] as const;
+
+const sorted = [...all].sort((a, b) => {
+  const ai = categoryOrder.indexOf(a.data.category);
+  const bi = categoryOrder.indexOf(b.data.category);
+  if (ai !== bi) return ai - bi;
+  return a.data.name.localeCompare(b.data.name);
+});
+
+const categories = ['all', ...categoryOrder] as const;
+
+// Count entries per category so chips can show counts (and hide empty ones).
+const counts: Record<string, number> = { all: sorted.length };
+for (const c of categoryOrder) {
+  counts[c] = sorted.filter((r) => r.data.category === c).length;
+}
 ---
 
-<BaseLayout title="Rituals — Decoded">
-  <main class="mx-auto max-w-5xl px-6 py-12">
-    <h1 class="text-4xl font-bold">
-      Rituals
-      <span class="ml-2 font-tamil text-2xl font-medium text-stone-600">சடங்குகள்</span>
-    </h1>
-    <p class="mt-4 text-stone-600">Section C — Ritual flip-card audit. Placeholder.</p>
+<BaseLayout
+  title="Rituals — Decoded"
+  description="Tradition vs. evidence on Tamil and Indian rituals — flip-card audit of birth, marriage, death, kuladeivam, kootam, food, and purity rites."
+>
+  <main class="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Rituals</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-rose-700">Section C · V5</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Rituals</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          சடங்குகள்
+        </span>
+      </h1>
+      <p class="mt-3 max-w-3xl text-base text-stone-600">
+        Tap any card to flip it. The <strong>front</strong> shows what tradition says about
+        the rite — the inherited story families pass down. The <strong>back</strong> shows what
+        the evidence says, and, where it applies, the underlying rational basis that survives
+        even when the folk explanation does not.
+      </p>
+    </header>
+
+    {/* Category filter chips */}
+    <section class="mb-8" aria-label="Filter rituals by category">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
+        Filter by category
+      </p>
+      <div class="flex flex-wrap gap-2" role="group" data-filter-chips>
+        {categories.map((cat) => {
+          const count = counts[cat] ?? 0;
+          if (cat !== 'all' && count === 0) return null;
+          const isAll = cat === 'all';
+          return (
+            <button
+              type="button"
+              class={`ritual-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                isAll
+                  ? 'border-stone-900 bg-stone-900 text-white'
+                  : 'border-stone-300 bg-white text-stone-700 hover:border-stone-500'
+              }`}
+              data-filter={cat}
+              aria-pressed={isAll ? 'true' : 'false'}
+            >
+              <span>{cat}</span>
+              <span class={`rounded-full px-1.5 text-[10px] ${isAll ? 'bg-white/20' : 'bg-stone-100 text-stone-600'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+
+    {/* Grid */}
+    {sorted.length === 0 ? (
+      <section class="rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 p-8 text-center">
+        <p class="text-sm text-stone-600">
+          No ritual entries are populated yet. Content is being added — check back shortly.
+        </p>
+      </section>
+    ) : (
+      <section
+        class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        data-rituals-grid
+        aria-label="Ritual flip cards"
+      >
+        {sorted.map((entry) => <RitualFlipCard entry={entry} />)}
+      </section>
+    )}
+
+    <section class="mt-12 rounded-xl border border-stone-200 bg-white p-5 text-sm text-stone-600">
+      <p class="font-medium text-stone-800">A note on the flip</p>
+      <p class="mt-1">
+        These cards are not a verdict on whether a ritual is "good" or "bad" — they're an
+        epistemic audit. Many rites have a sound rational basis even when the folk story is
+        unprovable. The flip helps separate the two without flattening the practice.
+      </p>
+    </section>
   </main>
 </BaseLayout>
+
+<script>
+  // Category filter — toggles .is-hidden on cards based on data-category.
+  function initRitualFilters() {
+    const chipsRoot = document.querySelector('[data-filter-chips]');
+    const grid = document.querySelector('[data-rituals-grid]');
+    if (!chipsRoot || !grid) return;
+    if ((chipsRoot as HTMLElement).dataset.filterWired === '1') return;
+    (chipsRoot as HTMLElement).dataset.filterWired = '1';
+
+    const chips = chipsRoot.querySelectorAll<HTMLButtonElement>('[data-filter]');
+    const cards = grid.querySelectorAll<HTMLElement>('.ritual-flip-card');
+
+    const apply = (filter: string) => {
+      cards.forEach((card) => {
+        const cat = card.dataset.category;
+        const show = filter === 'all' || cat === filter;
+        card.classList.toggle('is-hidden', !show);
+        // If a card is filtered out, also reset its flip state so it doesn't
+        // come back flipped.
+        if (!show) card.classList.remove('is-flipped');
+      });
+      chips.forEach((c) => {
+        const active = c.dataset.filter === filter;
+        c.setAttribute('aria-pressed', active ? 'true' : 'false');
+        if (active) {
+          c.classList.remove('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
+          c.classList.add('border-stone-900', 'bg-stone-900', 'text-white');
+        } else {
+          c.classList.add('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
+          c.classList.remove('border-stone-900', 'bg-stone-900', 'text-white');
+        }
+        // Also flip the count badge background.
+        const badge = c.querySelector('span:last-child');
+        if (badge) {
+          badge.className = active
+            ? 'rounded-full px-1.5 text-[10px] bg-white/20'
+            : 'rounded-full px-1.5 text-[10px] bg-stone-100 text-stone-600';
+        }
+      });
+    };
+
+    chips.forEach((c) => {
+      c.addEventListener('click', () => apply(c.dataset.filter || 'all'));
+    });
+  }
+
+  initRitualFilters();
+  document.addEventListener('astro:page-load', initRitualFilters);
+</script>

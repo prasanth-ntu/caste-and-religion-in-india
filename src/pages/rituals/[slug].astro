@@ -1,0 +1,278 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FactTier from '../../components/FactTier.astro';
+import Claim from '../../components/Claim.astro';
+
+export async function getStaticPaths() {
+  const all = await getCollection('rituals');
+  return all.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+
+type Tier = 'green' | 'yellow' | 'red' | 'rational';
+type Category =
+  | 'birth'
+  | 'puberty'
+  | 'marriage'
+  | 'death'
+  | 'kuladeivam'
+  | 'kootam'
+  | 'food'
+  | 'purity'
+  | 'other';
+
+const categoryStyles: Record<Category, string> = {
+  birth: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  puberty: 'bg-amber-50 text-amber-800 ring-amber-200',
+  marriage: 'bg-rose-50 text-rose-800 ring-rose-200',
+  death: 'bg-stone-100 text-stone-800 ring-stone-300',
+  kuladeivam: 'bg-indigo-50 text-indigo-800 ring-indigo-200',
+  kootam: 'bg-teal-50 text-teal-800 ring-teal-200',
+  food: 'bg-orange-50 text-orange-800 ring-orange-200',
+  purity: 'bg-violet-50 text-violet-800 ring-violet-200',
+  other: 'bg-slate-50 text-slate-800 ring-slate-200',
+};
+const catClasses = categoryStyles[d.category as Category];
+
+// Resolve claim refs → { id, statement, tier, sources, rebuttal?, evidence_summary }
+type ClaimResolved = {
+  id: string;
+  statement: string;
+  tier: Tier;
+  sources: string[];
+  rebuttal?: string;
+  evidence_summary: string;
+};
+const claimRefs: ClaimResolved[] = [];
+for (const r of d.claims ?? []) {
+  const refId = typeof r === 'string' ? r : r.id;
+  const c = await getEntry('claims', refId);
+  if (c) {
+    claimRefs.push({
+      id: c.data.id,
+      statement: c.data.statement,
+      tier: c.data.tier,
+      sources: (c.data.sources ?? []).map((s: any) => (typeof s === 'string' ? s : s.id)),
+      rebuttal: c.data.rebuttal,
+      evidence_summary: c.data.evidence_summary,
+    });
+  }
+}
+
+// Resolve related lineage refs → name + slug for pill links.
+type LineagePill = { slug: string; name: string };
+const lineageRefs: LineagePill[] = [];
+for (const r of d.relatedLineage ?? []) {
+  const refId = typeof r === 'string' ? r : r.id;
+  const l = await getEntry('lineage-nodes', refId);
+  if (l) lineageRefs.push({ slug: l.data.slug, name: l.data.name });
+}
+
+// Resolve related policy refs (treat as claims for display).
+const policyRefs: ClaimResolved[] = [];
+for (const r of d.relatedPolicy ?? []) {
+  const refId = typeof r === 'string' ? r : r.id;
+  const c = await getEntry('claims', refId);
+  if (c) {
+    policyRefs.push({
+      id: c.data.id,
+      statement: c.data.statement,
+      tier: c.data.tier,
+      sources: (c.data.sources ?? []).map((s: any) => (typeof s === 'string' ? s : s.id)),
+      rebuttal: c.data.rebuttal,
+      evidence_summary: c.data.evidence_summary,
+    });
+  }
+}
+
+// Collect all source ids referenced for the page bibliography
+const allSourceIds = Array.from(
+  new Set([...claimRefs, ...policyRefs].flatMap((c) => c.sources))
+);
+type SourceResolved = {
+  id: string;
+  title: string;
+  authors: string[];
+  year?: number;
+  url?: string;
+  type: string;
+};
+const sourceEntries: SourceResolved[] = [];
+for (const sid of allSourceIds) {
+  const s = await getEntry('sources', sid);
+  if (s) {
+    sourceEntries.push({
+      id: s.data.id,
+      title: s.data.title,
+      authors: s.data.authors ?? [],
+      year: s.data.year,
+      url: s.data.url,
+      type: s.data.type,
+    });
+  }
+}
+---
+
+<BaseLayout
+  title={`${d.name} — Ritual Decoded`}
+  description={`Tradition vs. evidence for ${d.name} — what the ritual claims, what the record shows, and the rational basis behind it.`}
+>
+  <main class="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/rituals/" class="hover:text-stone-900">Rituals</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">{d.name}</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-rose-700">Ritual profile</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">{d.name}</h1>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <span
+          class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide ring-1 ring-inset ${catClasses}`}
+        >
+          {d.category}
+        </span>
+        <FactTier tier={d.tier} />
+      </div>
+    </header>
+
+    {/* Side-by-side comparison */}
+    <section class="mb-10 grid gap-4 md:grid-cols-2">
+      <article class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wider text-amber-800">
+          Tradition says
+        </p>
+        <p class="mt-2 text-sm leading-relaxed text-stone-800">{d.tradition_says}</p>
+      </article>
+      <article class="rounded-2xl border border-sky-200 bg-sky-50 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wider text-sky-800">Evidence says</p>
+        <p class="mt-2 text-sm leading-relaxed text-stone-800">{d.evidence_says}</p>
+      </article>
+      {d.rational_basis && (
+        <article class="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 md:col-span-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-indigo-800">
+            ⚖️ Rational basis
+          </p>
+          <p class="mt-2 text-sm leading-relaxed text-stone-800">{d.rational_basis}</p>
+        </article>
+      )}
+    </section>
+
+    {/* Markdown body (if any) */}
+    {entry.body && entry.body.trim().length > 0 && (
+      <section class="prose prose-stone mb-10 max-w-none text-stone-800">
+        <Content />
+      </section>
+    )}
+
+    {/* Claims */}
+    {claimRefs.length > 0 && (
+      <section class="mb-10">
+        <h2 class="mb-3 text-xl font-semibold text-stone-900">Linked claims</h2>
+        <ul class="space-y-3">
+          {claimRefs.map((c) => (
+            <li class="rounded-xl border border-stone-200 bg-white p-4">
+              <Claim tier={c.tier} sources={c.sources}>{c.statement}</Claim>
+              {c.evidence_summary && (
+                <p class="mt-2 text-sm text-stone-600">{c.evidence_summary}</p>
+              )}
+              {c.rebuttal && (
+                <p class="mt-2 rounded-md bg-stone-50 p-2 text-sm text-stone-700">
+                  <span class="font-semibold">Rebuttal: </span>{c.rebuttal}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {/* Policy refs (rendered like claims) */}
+    {policyRefs.length > 0 && (
+      <section class="mb-10">
+        <h2 class="mb-3 text-xl font-semibold text-stone-900">Policy &amp; related claims</h2>
+        <ul class="space-y-3">
+          {policyRefs.map((c) => (
+            <li class="rounded-xl border border-stone-200 bg-white p-4">
+              <Claim tier={c.tier} sources={c.sources}>{c.statement}</Claim>
+              {c.evidence_summary && (
+                <p class="mt-2 text-sm text-stone-600">{c.evidence_summary}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {/* Related lineage */}
+    {lineageRefs.length > 0 && (
+      <section class="mb-10">
+        <h2 class="mb-3 text-xl font-semibold text-stone-900">Related lineage</h2>
+        <ul class="flex flex-wrap gap-2">
+          {lineageRefs.map((p) => (
+            <li>
+              <a
+                href={`/lineage/${p.slug}/`}
+                class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-900 hover:border-emerald-400 hover:bg-emerald-100"
+              >
+                <span aria-hidden="true">🧬</span>
+                <span>{p.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {/* Sources bibliography */}
+    {sourceEntries.length > 0 && (
+      <section class="mb-10">
+        <h2 class="mb-3 text-xl font-semibold text-stone-900">Sources</h2>
+        <ol class="space-y-2 text-sm">
+          {sourceEntries.map((s) => (
+            <li id={`src-${s.id}`} class="rounded-md border border-stone-200 bg-white p-3">
+              <p class="text-stone-800">
+                {s.authors.length > 0 && <span>{s.authors.join(', ')} </span>}
+                {s.year && <span>({s.year}). </span>}
+                {s.url ? (
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-medium underline hover:text-stone-900"
+                  >
+                    {s.title}
+                  </a>
+                ) : (
+                  <span class="font-medium">{s.title}</span>
+                )}
+                <span class="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-stone-600">
+                  {s.type}
+                </span>
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    <section class="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+      <p>
+        ← Back to{' '}
+        <a href="/rituals/" class="font-medium text-rose-700 underline">
+          all rituals
+        </a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>

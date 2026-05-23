@@ -12,6 +12,4 @@ relatedPolicy: []
 claims: []
 ---
 
-# Tonsuring (Mottai Adithal)
-
 Performed in infancy, often at the Kuladeivam temple. The ritual blends a hygienic intervention with a public reaffirmation of clan and deity membership.

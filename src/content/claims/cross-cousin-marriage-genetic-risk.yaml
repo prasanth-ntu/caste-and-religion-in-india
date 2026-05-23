@@ -1,0 +1,16 @@
+id: cross-cousin-marriage-genetic-risk
+statement: Maaman-machan (மாமன்–மச்சான்) cross-cousin preferred marriage carries a measurable but absolute-low elevation in autosomal recessive disorder risk for offspring, and the risk is meaningfully amplified within an already endogamous founder population.
+tier: yellow
+sources:
+  - wikipedia-cross-cousin-marriage
+  - nakatsuka-2017-natgen
+evidence_summary: >-
+  First-cousin unions roughly double the baseline rate of autosomal
+  recessive disorders in offspring (from ~2% to ~4%); the absolute risk
+  remains low for most conditions in the general population. Within a
+  caste already showing Nakatsuka-style founder-event signatures, the
+  effective risk for community-specific recessive variants is plausibly
+  higher than the general first-cousin baseline, though community-specific
+  quantification is not yet published for Kongu Vellala. Yellow because
+  the general genetic-risk literature is robust but Kongu Vellala–specific
+  numbers are not.

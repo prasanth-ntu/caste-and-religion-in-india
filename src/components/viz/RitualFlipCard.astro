@@ -1,0 +1,212 @@
+---
+import FactTier from '../FactTier.astro';
+
+type Tier = 'green' | 'yellow' | 'red' | 'rational';
+type Category =
+  | 'birth'
+  | 'puberty'
+  | 'marriage'
+  | 'death'
+  | 'kuladeivam'
+  | 'kootam'
+  | 'food'
+  | 'purity'
+  | 'other';
+
+interface RitualData {
+  slug: string;
+  name: string;
+  category: Category;
+  tradition_says: string;
+  evidence_says: string;
+  tier: Tier;
+  rational_basis?: string;
+}
+
+interface Props {
+  entry: { data: RitualData; id?: string; slug?: string };
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+
+const categoryStyles: Record<Category, string> = {
+  birth: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  puberty: 'bg-amber-50 text-amber-800 ring-amber-200',
+  marriage: 'bg-rose-50 text-rose-800 ring-rose-200',
+  death: 'bg-stone-100 text-stone-800 ring-stone-300',
+  kuladeivam: 'bg-indigo-50 text-indigo-800 ring-indigo-200',
+  kootam: 'bg-teal-50 text-teal-800 ring-teal-200',
+  food: 'bg-orange-50 text-orange-800 ring-orange-200',
+  purity: 'bg-violet-50 text-violet-800 ring-violet-200',
+  other: 'bg-slate-50 text-slate-800 ring-slate-200',
+};
+
+const catClasses = categoryStyles[d.category];
+---
+
+<article
+  class="ritual-flip-card"
+  data-category={d.category}
+  data-slug={d.slug}
+  style="perspective: 1200px;"
+>
+  <button
+    type="button"
+    class="ritual-flip-btn group relative block w-full text-left"
+    aria-pressed="false"
+    aria-label={`${d.name} — tap to flip and reveal what evidence says`}
+    data-flip-trigger
+  >
+    <div
+      class="ritual-flip-inner relative h-full min-h-[300px] w-full transition-transform duration-500"
+      style="transform-style: preserve-3d;"
+    >
+      {/* FRONT — Tradition */}
+      <div
+        class="ritual-face ritual-face-front absolute inset-0 flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition-shadow group-hover:shadow-md"
+        style="backface-visibility: hidden; -webkit-backface-visibility: hidden;"
+      >
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <span
+            class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide ring-1 ring-inset ${catClasses}`}
+          >
+            {d.category}
+          </span>
+          <FactTier tier={d.tier} />
+        </div>
+        <h3 class="text-xl font-semibold text-stone-900">{d.name}</h3>
+        <div class="mt-3 flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">
+            Tradition says
+          </p>
+          <p class="mt-1 text-sm leading-relaxed text-stone-700">{d.tradition_says}</p>
+        </div>
+        <p
+          class="mt-4 text-right text-xs font-medium text-stone-500 group-hover:text-stone-700"
+          aria-hidden="true"
+        >
+          Tap to flip ↻
+        </p>
+      </div>
+
+      {/* BACK — Evidence */}
+      <div
+        class="ritual-face ritual-face-back absolute inset-0 flex h-full flex-col rounded-2xl border border-stone-300 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm"
+        style="backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: rotateY(180deg);"
+      >
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <span
+            class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide ring-1 ring-inset ${catClasses}`}
+          >
+            {d.category}
+          </span>
+          <FactTier tier={d.tier} />
+        </div>
+        <h3 class="text-lg font-semibold text-stone-900">{d.name}</h3>
+        <div class="mt-3 flex-1 space-y-3 overflow-auto">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-sky-700">
+              Evidence says
+            </p>
+            <p class="mt-1 text-sm leading-relaxed text-stone-700">{d.evidence_says}</p>
+          </div>
+          {d.rational_basis && (
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-indigo-700">
+                Rational basis
+              </p>
+              <p class="mt-1 text-sm leading-relaxed text-stone-700">{d.rational_basis}</p>
+            </div>
+          )}
+        </div>
+        <div class="mt-4 flex items-center justify-between">
+          <span
+            class="text-xs font-medium text-stone-500"
+            aria-hidden="true"
+          >
+            ↺ Flip back
+          </span>
+          <a
+            href={`/rituals/${d.slug}/`}
+            class="inline-flex items-center gap-1 rounded-md bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-700"
+            onclick="event.stopPropagation()"
+            data-readmore
+          >
+            Read more →
+          </a>
+        </div>
+      </div>
+    </div>
+  </button>
+</article>
+
+<style>
+  .ritual-flip-card.is-flipped .ritual-flip-inner {
+    transform: rotateY(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ritual-flip-inner {
+      transition: none !important;
+      transform: none !important;
+    }
+    .ritual-flip-card .ritual-face-front {
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+    .ritual-flip-card .ritual-face-back {
+      transform: none !important;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .ritual-flip-card.is-flipped .ritual-face-front {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ritual-flip-card.is-flipped .ritual-face-back {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .ritual-flip-card.is-hidden {
+    display: none;
+  }
+</style>
+
+<script>
+  // Wire up flip behavior for every card on the page. Idempotent.
+  function initRitualFlipCards() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-flip-trigger]');
+    buttons.forEach((btn) => {
+      if (btn.dataset.flipWired === '1') return;
+      btn.dataset.flipWired = '1';
+      const card = btn.closest('.ritual-flip-card');
+      if (!card) return;
+
+      const toggle = () => {
+        const flipped = card.classList.toggle('is-flipped');
+        btn.setAttribute('aria-pressed', flipped ? 'true' : 'false');
+      };
+
+      btn.addEventListener('click', (e) => {
+        // Don't flip when clicking the inner "Read more" link
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-readmore]')) return;
+        toggle();
+      });
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+  }
+
+  initRitualFlipCards();
+  // Re-init on Astro view transitions if used.
+  document.addEventListener('astro:page-load', initRitualFlipCards);
+</script>
