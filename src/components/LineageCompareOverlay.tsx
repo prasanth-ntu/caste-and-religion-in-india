@@ -71,7 +71,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Compare lineages"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-lg transition hover:border-stone-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-stone-400 sm:bottom-8 sm:right-8"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-lg transition hover:border-stone-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 sm:bottom-8 sm:right-8"
       >
         <span aria-hidden="true">⇄</span>
         <span className="hidden sm:inline">Compare with…</span>
@@ -105,7 +105,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded-md p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                className="rounded-md p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
               >
                 ✕
               </button>
@@ -123,7 +123,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by kootam, deity, village…"
-                  className="mb-3 w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-300"
+                  className="mb-3 w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                 />
                 <ul className="space-y-1">
                   {candidates.map((m) => (
@@ -131,7 +131,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                       <button
                         type="button"
                         onClick={() => setPickedB(m.slug)}
-                        className="flex w-full items-start gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left text-sm hover:border-stone-400 hover:bg-stone-50"
+                        className="flex w-full items-start gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left text-sm hover:border-stone-400 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                       >
                         <span aria-hidden="true">{m.totemEmoji}</span>
                         <span className="min-w-0 flex-1">
@@ -164,14 +164,14 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                       <button
                         type="button"
                         onClick={() => setPickedB(null)}
-                        className="font-medium text-stone-600 underline hover:text-stone-900"
+                        className="font-medium text-stone-600 underline hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded"
                       >
                         ← Pick a different B
                       </button>
                       <span className="mx-2">·</span>
                       <a
                         href={`/compare?a=${currentSlug}&b=${pickedB}`}
-                        className="font-medium text-emerald-700 underline"
+                        className="font-medium text-emerald-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded"
                       >
                         Open full /compare page →
                       </a>
@@ -191,7 +191,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                     </p>
                     <a
                       href={`/compare?a=${currentSlug}&b=${pickedB}`}
-                      className="mt-3 inline-flex items-center gap-1 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+                      className="mt-3 inline-flex items-center gap-1 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                     >
                       Open full compare view →
                     </a>
@@ -199,7 +199,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                       <button
                         type="button"
                         onClick={() => setPickedB(null)}
-                        className="text-stone-600 underline"
+                        className="text-stone-600 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded"
                       >
                         ← Pick a different B
                       </button>

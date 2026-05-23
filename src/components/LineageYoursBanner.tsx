@@ -66,7 +66,10 @@ export default function LineageYoursBanner({ pageSlug, pageName }: Props) {
         ) : (
           <> for this kootam is not yet documented.</>
         )}{' '}
-        <a href={`/lineage/k/${pageSlug}/`} className="font-medium underline">
+        <a
+          href={`/lineage/k/${pageSlug}/`}
+          className="font-medium underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+        >
           Open the {pageName} compare-and-explore page →
         </a>
       </p>

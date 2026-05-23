@@ -217,7 +217,7 @@ function AdmixtureChart() {
           .tickValues([-4000, -3000, -2000, -1000, 0, 1000, 2000])
           .tickFormat((d) => formatYear(d as number)),
       );
-    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', 11);
+    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
     xAxisG.selectAll('line').attr('stroke', '#78716c');
     xAxisG.select('.domain').attr('stroke', '#78716c');
 
@@ -226,7 +226,7 @@ function AdmixtureChart() {
       .attr('x', innerW / 2)
       .attr('y', innerH + 38)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 12)
+      .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
       .attr('fill', '#44403c')
       .text('Time');
@@ -238,7 +238,7 @@ function AdmixtureChart() {
         .ticks(5)
         .tickFormat((d) => `${Math.round((d as number) * 100)}%`),
     );
-    yAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', 11);
+    yAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
     yAxisG.selectAll('line').attr('stroke', '#78716c');
     yAxisG.select('.domain').attr('stroke', '#78716c');
 
@@ -246,7 +246,7 @@ function AdmixtureChart() {
     g.append('text')
       .attr('transform', `translate(${-margin.left + 14},${innerH / 2}) rotate(-90)`)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 12)
+      .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
       .attr('fill', '#44403c')
       .text('Ancestry share');
@@ -266,7 +266,7 @@ function AdmixtureChart() {
     // Annotation pill ("~1900 BP — admixture ends, endogamy begins")
     const annoText = isMobile ? 'endogamy begins (~1900 BP)' : '~1900 BP — admixture ends, endogamy locks in';
     const annoPad = 6;
-    const annoFontSize = isMobile ? 10 : 11;
+    const annoFontSize = isMobile ? 12 : 11;
     const tempText = g
       .append('text')
       .attr('font-size', annoFontSize)
@@ -311,7 +311,7 @@ function AdmixtureChart() {
       .attr('x', (x(ADMIXTURE_WINDOW.start) + x(ADMIXTURE_WINDOW.end)) / 2)
       .attr('y', bracketY - 6)
       .attr('text-anchor', 'middle')
-      .attr('font-size', isMobile ? 9 : 11)
+      .attr('font-size', isMobile ? 12 : 11)
       .attr('font-weight', 600)
       .attr('fill', '#92400e')
       .text('Admixture window (Moorjani 2013)');
@@ -464,7 +464,7 @@ function FounderChart() {
       .attr('x', (d) => x(d.severity) + 6)
       .attr('y', y.bandwidth() / 2)
       .attr('dy', '0.35em')
-      .attr('font-size', isMobile ? 10 : 11)
+      .attr('font-size', isMobile ? 12 : 11)
       .attr('font-weight', 600)
       .attr('fill', '#44403c')
       .text((d) => d.severity.toFixed(1));
@@ -478,7 +478,7 @@ function FounderChart() {
       .attr('y', (d) => (y(d.group) ?? 0) + y.bandwidth() / 2)
       .attr('dy', '0.35em')
       .attr('text-anchor', 'end')
-      .attr('font-size', isMobile ? 10 : 12)
+      .attr('font-size', isMobile ? 12 : 12)
       .attr('font-weight', (d) => (d.kind === 'highlight' ? 700 : 500))
       .attr('fill', (d) => {
         if (d.kind === 'highlight') return '#9f1239';
@@ -492,7 +492,7 @@ function FounderChart() {
       .append('g')
       .attr('transform', `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(5));
-    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', 11);
+    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
     xAxisG.selectAll('line').attr('stroke', '#78716c');
     xAxisG.select('.domain').attr('stroke', '#78716c');
 
@@ -501,7 +501,7 @@ function FounderChart() {
       .attr('x', innerW / 2)
       .attr('y', innerH + 32)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 12)
+      .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
       .attr('fill', '#44403c')
       .text('Founder-event severity (IBD-based, higher = tighter bottleneck)');

@@ -32,7 +32,7 @@ const { icon, classes, name } = styles[section];
 
 <a
   href={href}
-  class={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${classes}`}
+  class={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 ${classes}`}
   aria-label={`Cross-link to ${name}: ${label}`}
 >
   <span

@@ -11,7 +11,7 @@ const { id, n } = Astro.props;
   <a
     href={`#src-${id}`}
     title={id}
-    class="no-underline hover:underline"
+    class="no-underline hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
     aria-label={`Reference ${n ?? id}: ${id}`}
   >
     [{n ?? id}]

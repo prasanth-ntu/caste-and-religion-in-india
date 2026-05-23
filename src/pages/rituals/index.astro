@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RitualFlipCard from '../../components/viz/RitualFlipCard.astro';
+import RitualsFilterClient from '../../components/viz/RitualsFilterClient';
 
 const all = await getCollection('rituals');
 
@@ -26,13 +27,12 @@ const sorted = [...all].sort((a, b) => {
   return a.data.name.localeCompare(b.data.name);
 });
 
-const categories = ['all', ...categoryOrder] as const;
-
-// Count entries per category so chips can show counts (and hide empty ones).
-const counts: Record<string, number> = { all: sorted.length };
-for (const c of categoryOrder) {
-  counts[c] = sorted.filter((r) => r.data.category === c).length;
-}
+// Lightweight metadata handed to the React filter island.
+const ritualsMeta = sorted.map((r) => ({
+  slug: r.data.slug,
+  category: r.data.category,
+  tier: r.data.tier,
+}));
 ---
 
 <BaseLayout
@@ -41,7 +41,7 @@ for (const c of categoryOrder) {
 >
   <main id="main-content" class="mx-auto max-w-6xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
-      <a href="/" class="hover:text-stone-900">Home</a>
+      <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Rituals</span>
     </nav>
@@ -62,36 +62,12 @@ for (const c of categoryOrder) {
       </p>
     </header>
 
-    {/* Category filter chips */}
-    <section class="mb-8" aria-label="Filter rituals by category">
-      <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
-        Filter by category
-      </p>
-      <div class="flex flex-wrap gap-2" role="group" data-filter-chips>
-        {categories.map((cat) => {
-          const count = counts[cat] ?? 0;
-          if (cat !== 'all' && count === 0) return null;
-          const isAll = cat === 'all';
-          return (
-            <button
-              type="button"
-              class={`ritual-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
-                isAll
-                  ? 'border-stone-900 bg-stone-900 text-white'
-                  : 'border-stone-300 bg-white text-stone-700 hover:border-stone-500'
-              }`}
-              data-filter={cat}
-              aria-pressed={isAll ? 'true' : 'false'}
-            >
-              <span>{cat}</span>
-              <span class={`rounded-full px-1.5 text-[10px] ${isAll ? 'bg-white/20' : 'bg-stone-100 text-stone-600'}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    {/* Filter bar (React island) */}
+    {sorted.length > 0 && (
+      <section class="mb-8" aria-label="Filter rituals">
+        <RitualsFilterClient rituals={ritualsMeta} client:load />
+      </section>
+    )}
 
     {/* Grid */}
     {sorted.length === 0 ? (
@@ -120,53 +96,3 @@ for (const c of categoryOrder) {
     </section>
   </main>
 </BaseLayout>
-
-<script>
-  // Category filter — toggles .is-hidden on cards based on data-category.
-  function initRitualFilters() {
-    const chipsRoot = document.querySelector('[data-filter-chips]');
-    const grid = document.querySelector('[data-rituals-grid]');
-    if (!chipsRoot || !grid) return;
-    if ((chipsRoot as HTMLElement).dataset.filterWired === '1') return;
-    (chipsRoot as HTMLElement).dataset.filterWired = '1';
-
-    const chips = chipsRoot.querySelectorAll<HTMLButtonElement>('[data-filter]');
-    const cards = grid.querySelectorAll<HTMLElement>('.ritual-flip-card');
-
-    const apply = (filter: string) => {
-      cards.forEach((card) => {
-        const cat = card.dataset.category;
-        const show = filter === 'all' || cat === filter;
-        card.classList.toggle('is-hidden', !show);
-        // If a card is filtered out, also reset its flip state so it doesn't
-        // come back flipped.
-        if (!show) card.classList.remove('is-flipped');
-      });
-      chips.forEach((c) => {
-        const active = c.dataset.filter === filter;
-        c.setAttribute('aria-pressed', active ? 'true' : 'false');
-        if (active) {
-          c.classList.remove('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
-          c.classList.add('border-stone-900', 'bg-stone-900', 'text-white');
-        } else {
-          c.classList.add('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
-          c.classList.remove('border-stone-900', 'bg-stone-900', 'text-white');
-        }
-        // Also flip the count badge background.
-        const badge = c.querySelector('span:last-child');
-        if (badge) {
-          badge.className = active
-            ? 'rounded-full px-1.5 text-[10px] bg-white/20'
-            : 'rounded-full px-1.5 text-[10px] bg-stone-100 text-stone-600';
-        }
-      });
-    };
-
-    chips.forEach((c) => {
-      c.addEventListener('click', () => apply(c.dataset.filter || 'all'));
-    });
-  }
-
-  initRitualFilters();
-  document.addEventListener('astro:page-load', initRitualFilters);
-</script>

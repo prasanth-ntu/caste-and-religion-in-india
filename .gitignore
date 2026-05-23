@@ -37,3 +37,4 @@ bug*-after-*.png
 *-screenshot.png
 test-*.png
 
+docs/qa-matrix.md

@@ -218,7 +218,7 @@ export default function LineageSelector({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-stone-300 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-stone-400 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-300"
+        className="flex w-full items-center justify-between gap-3 rounded-lg border border-stone-300 bg-white px-3 py-2 text-left text-sm shadow-sm transition hover:border-stone-400 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
       >
         <span className="min-w-0 flex-1">
           {!compact && (
@@ -255,7 +255,7 @@ export default function LineageSelector({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by kootam, deity, village…"
-              className="w-full rounded-md border border-stone-200 px-2 py-1.5 text-sm focus:border-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-300"
+              className="w-full rounded-md border border-stone-200 px-2 py-1.5 text-sm focus:border-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
             />
           </div>
 
@@ -284,7 +284,7 @@ export default function LineageSelector({
                   Honest data-gap.{' '}
                   <a
                     href="/contribute/"
-                    className="text-stone-700 underline hover:text-stone-900"
+                    className="text-stone-700 underline hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded"
                   >
                     Contribute →
                   </a>
@@ -349,7 +349,7 @@ function Option({
         onClick={() => onPick(m)}
         aria-selected={active}
         role="option"
-        className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-stone-100 ${
+        className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${
           active ? 'bg-stone-100' : ''
         }`}
       >

@@ -77,7 +77,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
-      <a href="/" class="hover:text-stone-900">Home</a>
+      <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Sources</span>
     </nav>
@@ -110,7 +110,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
           return (
             <button
               type="button"
-              class={`source-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+              class={`source-chip inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 ${
                 isAll
                   ? 'border-stone-900 bg-stone-900 text-white'
                   : 'border-stone-300 bg-white text-stone-700 hover:border-stone-500'
@@ -153,7 +153,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
                   <h2 class="mt-1 text-lg font-semibold leading-snug">
                     <a
                       href={`/sources/${c.id}/`}
-                      class="text-stone-900 hover:text-sky-700"
+                      class="text-stone-900 hover:text-sky-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                     >
                       {c.title}
                     </a>
@@ -169,7 +169,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
                         href={c.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-xs text-sky-700 underline hover:text-sky-900"
+                        class="text-xs text-sky-700 underline hover:text-sky-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                       >
                         external link ↗
                       </a>
@@ -178,7 +178,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
                 </div>
                 <a
                   href={`/sources/${c.id}/`}
-                  class="shrink-0 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-100"
+                  class="shrink-0 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                 >
                   Cited in {c.backlinks.length}
                 </a>

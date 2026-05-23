@@ -7,7 +7,7 @@
  * calls during the same Astro build are O(1).
  *
  * URL conventions used here mirror the dynamic routes in `src/pages/`:
- *   - kootams        → /lineage/kootams/{slug}/
+ *   - kootams        → /lineage/k/{slug}/
  *   - lineage-nodes  → /lineage/{slug}/   (only some have dedicated pages — see hardcoded set)
  *   - rituals        → /rituals/{slug}/
  *   - deities        → /lineage/konur/    (only konur has a dedicated page today)
@@ -62,7 +62,7 @@ function hrefForDeity(slug: string): string | null {
 function hrefFor(collection: BacklinkCollection, slug: string): string | null {
   switch (collection) {
     case 'kootams':
-      return `/lineage/kootams/${slug}/`;
+      return `/lineage/k/${slug}/`;
     case 'rituals':
       return `/rituals/${slug}/`;
     case 'lineage-nodes':

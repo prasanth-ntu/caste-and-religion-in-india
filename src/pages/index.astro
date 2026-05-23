@@ -1,148 +1,221 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import FactTier from '../components/FactTier.astro';
-import Claim from '../components/Claim.astro';
 ---
 
 <BaseLayout
   title="Decoded — Caste & Religion in India"
   description="Evidence-tiered, interactive exploration of caste and religion in India. Bilingual English / Tamil."
 >
-  <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    {/* Hero */}
-    <section class="mb-16 text-center">
-      <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">
-        <span class="block">Decoded</span>
-        <span lang="ta" class="mt-2 block font-tamil text-4xl font-medium text-stone-700 sm:text-5xl">
-          தெளிவு
+  <main id="main-content">
+    {/* ───────────────────────────── Hero ───────────────────────────── */}
+    <section class="bg-cream px-6 py-16 sm:py-20">
+      <div class="mx-auto max-w-3xl text-center">
+        <h1 class="font-display tracking-tight text-stone-900">
+          <span class="block text-5xl md:text-7xl leading-[1.05]">Decoded</span>
+          <span
+            lang="ta"
+            class="mt-3 block font-tamil text-3xl md:text-5xl font-medium text-stone-700"
+          >
+            தெளிவு
+          </span>
+        </h1>
+        <p class="mx-auto mt-8 max-w-2xl text-lg sm:text-xl text-stone-700 leading-relaxed">
+          Separating history from folklore in caste, religion, and ritual.
+        </p>
+        <p
+          lang="ta"
+          class="mx-auto mt-2 max-w-2xl font-tamil text-base sm:text-lg text-stone-600 leading-relaxed"
+        >
+          சாதி, மதம், சடங்கு — வரலாறு என்ன, கதை என்ன என்று பிரித்தறிதல்.
+        </p>
+      </div>
+    </section>
+
+    {/* ─────────────────────── Four pillar cards ─────────────────────── */}
+    <section class="mx-auto max-w-6xl px-6 py-12">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Pillar 1 — Overview (indigo) */}
+        <a
+          href="/overview"
+          class="group relative flex flex-col rounded-2xl border border-stone-200 bg-indigo-50/50 p-6 transition-all duration-200 hover:border-indigo-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <div
+            class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700"
+            aria-hidden="true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+          </div>
+          <h2 class="font-display text-lg font-semibold text-stone-900 leading-snug">
+            Overview
+          </h2>
+          <span lang="ta" class="mt-0.5 block font-tamil text-sm text-stone-500">பொது</span>
+          <p class="mt-3 text-sm text-stone-600 leading-relaxed">
+            Caste system across India — varna vs jati, the colonial timeline, genetics, reservation policy.
+          </p>
+          <div class="mt-auto pt-4 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-stone-500">
+              5 pages · key claims tier-tagged
+            </span>
+            <span
+              class="text-sm font-medium text-indigo-700 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0"
+              aria-hidden="true"
+            >→ Open</span>
+          </div>
+        </a>
+
+        {/* Pillar 2 — Lineage (emerald) */}
+        <a
+          href="/lineage"
+          class="group relative flex flex-col rounded-2xl border border-stone-200 bg-emerald-50/50 p-6 transition-all duration-200 hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <div
+            class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"
+            aria-hidden="true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="19" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M12 7.5v3.5" /><path d="M12 11l-6 5.5" /><path d="M12 11l6 5.5" /></svg>
+          </div>
+          <h2 class="font-display text-lg font-semibold text-stone-900 leading-snug">
+            Lineage
+          </h2>
+          <span lang="ta" class="mt-0.5 block font-tamil text-sm text-stone-500">வம்சாவளி</span>
+          <p class="mt-3 text-sm text-stone-600 leading-relaxed">
+            Kongu Vellala Gounder, the 145 kootams, Konur Kaliamman — a personal trail from region to deity.
+          </p>
+          <div class="mt-auto pt-4 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-stone-500">
+              145 kootams · 6 deities
+            </span>
+            <span
+              class="text-sm font-medium text-emerald-700 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0"
+              aria-hidden="true"
+            >→ Open</span>
+          </div>
+        </a>
+
+        {/* Pillar 3 — Rituals (rose) */}
+        <a
+          href="/rituals"
+          class="group relative flex flex-col rounded-2xl border border-stone-200 bg-rose-50/50 p-6 transition-all duration-200 hover:border-rose-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <div
+            class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700"
+            aria-hidden="true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.5 2.5 3 4.5 3 7a3 3 0 1 1-6 0c0-2.5 1.5-4.5 3-7z" /><path d="M8 16c0 2.5 1.8 4 4 4s4-1.5 4-4c0-1.5-1-2.5-2-3-.5 1-1 1.5-2 1.5s-1.5-.5-2-1.5c-1 .5-2 1.5-2 3z" /></svg>
+          </div>
+          <h2 class="font-display text-lg font-semibold text-stone-900 leading-snug">
+            Rituals
+          </h2>
+          <span lang="ta" class="mt-0.5 block font-tamil text-sm text-stone-500">சடங்குகள்</span>
+          <p class="mt-3 text-sm text-stone-600 leading-relaxed">
+            Tonsuring, ear-piercing, kuladeivam visits — what tradition says, what evidence says, what the rational basis is.
+          </p>
+          <div class="mt-auto pt-4 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-stone-500">
+              12 rituals · 4 tiers
+            </span>
+            <span
+              class="text-sm font-medium text-rose-700 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0"
+              aria-hidden="true"
+            >→ Open</span>
+          </div>
+        </a>
+
+        {/* Pillar 4 — Sources (sky) */}
+        <a
+          href="/sources"
+          class="group relative flex flex-col rounded-2xl border border-stone-200 bg-sky-50/50 p-6 transition-all duration-200 hover:border-sky-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <div
+            class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700"
+            aria-hidden="true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5z" /><path d="M4 4.5v15A2.5 2.5 0 0 0 6.5 22H20" /></svg>
+          </div>
+          <h2 class="font-display text-lg font-semibold text-stone-900 leading-snug">
+            Sources
+          </h2>
+          <span lang="ta" class="mt-0.5 block font-tamil text-sm text-stone-500">ஆதாரங்கள்</span>
+          <p class="mt-3 text-sm text-stone-600 leading-relaxed">
+            The bibliography behind every claim. Papers, books, Wikipedia, inscriptions, oral attestations.
+          </p>
+          <div class="mt-auto pt-4 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-wider text-stone-500">
+              45 sources · type-filterable
+            </span>
+            <span
+              class="text-sm font-medium text-sky-700 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0"
+              aria-hidden="true"
+            >→ Open</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    {/* ───────────────────────── Tier legend strip ───────────────────────── */}
+    <section class="mx-auto max-w-6xl px-6 py-12">
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <span
+          class="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-700 cursor-help"
+          title="Well-established: multiple independent peer-reviewed or primary sources agree."
+        >
+          <span aria-hidden="true">🟢</span>
+          <span>well-established</span>
         </span>
-      </h1>
-      <p class="mx-auto mt-6 max-w-2xl text-lg text-stone-700">
-        Separating history from folklore in caste, religion, and ritual.
-      </p>
-      <p lang="ta" class="mx-auto mt-1 max-w-2xl font-tamil text-base text-stone-600">
-        சாதி, மதம், சடங்கு — வரலாறு என்ன, கதை என்ன என்று பிரித்தறிதல்.
-      </p>
-    </section>
-
-    {/* Pillar cards */}
-    <section class="mb-16 grid gap-6 sm:grid-cols-3">
-      <a
-        href="/overview"
-        class="group rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-      >
-        <div
-          class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700"
-          aria-hidden="true"
+        <span
+          class="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-700 cursor-help"
+          title="Plausible or debated: sources disagree, or the evidence is partial."
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-        </div>
-        <h2 class="text-xl font-semibold group-hover:text-indigo-700">
-          Overview
-          <span lang="ta" class="block font-tamil text-base font-medium text-stone-600">பொது</span>
-        </h2>
-        <p class="mt-2 text-sm text-stone-600">
-          India-wide caste system: varna vs jati, the colonial timeline, genetics, and reservation policy.
-        </p>
-      </a>
-
-      <a
-        href="/lineage"
-        class="group rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-      >
-        <div
-          class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"
-          aria-hidden="true"
+          <span aria-hidden="true">🟡</span>
+          <span>plausible / debated</span>
+        </span>
+        <span
+          class="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-700 cursor-help"
+          title="Myth or unverified: popular folklore not supported by evidence."
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="19" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M12 7.5v3.5" /><path d="M12 11l-6 5.5" /><path d="M12 11l6 5.5" /></svg>
-        </div>
-        <h2 class="text-xl font-semibold group-hover:text-emerald-700">
-          Lineage
-          <span lang="ta" class="block font-tamil text-base font-medium text-stone-600">வம்சாவளி</span>
-        </h2>
-        <p class="mt-2 text-sm text-stone-600">
-          Kongu Vellala Gounder, the 145 kootams, Konur Kaliamman — a personal trail from region to deity.
-        </p>
-      </a>
-
-      <a
-        href="/rituals"
-        class="group rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-      >
-        <div
-          class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700"
-          aria-hidden="true"
+          <span aria-hidden="true">🔴</span>
+          <span>myth / unverified</span>
+        </span>
+        <span
+          class="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-700 cursor-help"
+          title="Rational basis: a plausible practical or material rationale, distinct from the stated tradition."
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6" /><path d="M5 8h14" /><path d="M6 8c0 6 2 10 6 12 4-2 6-6 6-12" /></svg>
-        </div>
-        <h2 class="text-xl font-semibold group-hover:text-rose-700">
-          Rituals
-          <span lang="ta" class="block font-tamil text-base font-medium text-stone-600">சடங்குகள்</span>
-        </h2>
-        <p class="mt-2 text-sm text-stone-600">
-          Tonsuring, ear-piercing, kuladeivam visits — what tradition says, what evidence says, what the rational basis is.
-        </p>
-      </a>
+          <span aria-hidden="true">⚖️</span>
+          <span>rational basis</span>
+        </span>
+      </div>
     </section>
 
-    {/* Bibliography link */}
-    <section class="mb-12 flex flex-wrap items-center justify-center gap-2 text-sm text-stone-600">
-      <span>Trace every claim →</span>
-      <a
-        href="/sources/"
-        class="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-medium text-sky-800 hover:border-sky-400 hover:bg-sky-100"
-      >
-        <span aria-hidden="true">📚</span>
-        <span>Browse all sources</span>
-        <span lang="ta" class="font-tamil text-xs text-sky-700">ஆதாரங்கள்</span>
-      </a>
-    </section>
-
-    {/* Epistemic legend */}
-    <section class="mb-16 rounded-2xl border border-stone-200 bg-white p-8">
-      <h2 class="text-2xl font-semibold">
-        How we tier claims
-        <span class="ml-2 font-tamil text-lg font-medium text-stone-600">சான்று அளவீடு</span>
-      </h2>
-      <p class="mt-2 text-stone-600">
-        Every assertion on this site is tagged with one of four tiers.
+    {/* ───────────────────── "How to use this site" ───────────────────── */}
+    <section class="mx-auto max-w-prose px-6 py-12">
+      <p class="text-center text-base text-stone-700 leading-relaxed">
+        This site is a map between <em class="font-display italic text-stone-900">what is taught</em>
+        and <em class="font-display italic text-stone-900">what is documented</em>. Open the
+        Explorer in the corner if you'd like a guided path; or pick a pillar above and read.
       </p>
-      <ul class="mt-6 grid gap-4 sm:grid-cols-2">
-        <li class="flex items-start gap-3">
-          <FactTier tier="green" />
-          <p class="text-sm text-stone-700">
-            Well-established by multiple independent peer-reviewed or primary sources.
-          </p>
-        </li>
-        <li class="flex items-start gap-3">
-          <FactTier tier="yellow" />
-          <p class="text-sm text-stone-700">
-            Plausible or actively debated — sources disagree or evidence is partial.
-          </p>
-        </li>
-        <li class="flex items-start gap-3">
-          <FactTier tier="red" />
-          <p class="text-sm text-stone-700">
-            Myth, folklore, or unverified — popular but unsupported by evidence.
-          </p>
-        </li>
-        <li class="flex items-start gap-3">
-          <FactTier tier="rational" />
-          <p class="text-sm text-stone-700">
-            Has a plausible practical / material rationale, distinct from the stated tradition.
-          </p>
-        </li>
-      </ul>
+      <div class="mt-6 flex justify-center">
+        {/*
+          Open-explorer CTA. Dispatches a custom event the floating Explorer widget can
+          listen for to expand itself. Explorer dev: add a window.addEventListener
+          for 'decoded:open-explorer' that toggles the widget open.
+        */}
+        <button
+          type="button"
+          id="open-explorer-btn"
+          class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        >
+          <span>Not sure where to start? Open the Explorer</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
     </section>
 
-    {/* Sample claim wiring */}
-    <section class="mb-8 rounded-2xl border border-dashed border-stone-300 bg-stone-100 p-6 text-sm text-stone-700">
-      <p class="mb-2 font-medium text-stone-800">Citation wiring (sample):</p>
-      <p>
-        <Claim tier="green" sources={['wikipedia-kongu-vellalar']}>
-          The Kongu region historically functioned as a buffer zone between the Chola, Pandya, and Chera kingdoms.
-        </Claim>
-      </p>
-    </section>
+    <script is:inline>
+      // Dispatches a custom event so the floating <Explorer /> widget (mounted by
+      // BaseLayout) can listen and expand itself in response to the home-page CTA.
+      document.getElementById('open-explorer-btn')?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('decoded:open-explorer'));
+      });
+    </script>
   </main>
 </BaseLayout>

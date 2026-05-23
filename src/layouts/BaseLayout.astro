@@ -1,5 +1,9 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import SiteHeader from '../components/site/SiteHeader.astro';
+import SiteFooter from '../components/site/SiteFooter.astro';
+import Explorer from '../components/site/Explorer.tsx';
 
 interface Props {
   title?: string;
@@ -53,8 +57,9 @@ const siteName = 'decoded.prasanth.io';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+Tamil:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;700&display=swap"
     />
+    <ClientRouter />
   </head>
   <body class="min-h-screen bg-stone-50 font-sans text-stone-900 antialiased">
     <a
@@ -62,21 +67,9 @@ const siteName = 'decoded.prasanth.io';
       class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-stone-900 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-stone-500"
       >Skip to main content</a
     >
+    <SiteHeader />
     <slot />
-
-    <footer class="mt-16 border-t border-stone-200 bg-white">
-      <div class="mx-auto max-w-5xl px-6 py-8 text-sm text-stone-600">
-        <p class="mb-3 font-medium text-stone-800">Evidence legend</p>
-        <ul class="flex flex-wrap gap-x-4 gap-y-1">
-          <li><span aria-hidden="true">🟢</span> well-established</li>
-          <li><span aria-hidden="true">🟡</span> plausible / debated</li>
-          <li><span aria-hidden="true">🔴</span> myth / unverified</li>
-          <li><span aria-hidden="true">⚖️</span> rational basis</li>
-        </ul>
-        <p class="mt-4">
-          <a href="/about" class="underline hover:text-stone-900">Methodology &amp; disclaimers</a>
-        </p>
-      </div>
-    </footer>
+    <Explorer client:idle transition:persist />
+    <SiteFooter />
   </body>
 </html>

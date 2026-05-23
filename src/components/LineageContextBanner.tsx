@@ -64,7 +64,7 @@ export default function LineageContextBanner() {
       <p className="mt-1.5">
         <a
           href={`/lineage/k/${current.slug}/`}
-          className="inline-flex items-center gap-1 font-medium text-amber-900 underline hover:text-amber-950"
+          className="inline-flex items-center gap-1 font-medium text-amber-900 underline hover:text-amber-950 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
         >
           Switch to your lineage view →
         </a>

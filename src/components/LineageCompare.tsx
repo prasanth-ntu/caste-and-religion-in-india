@@ -95,7 +95,7 @@ export default function LineageCompare({
             type="button"
             onClick={swap}
             aria-label="Swap A and B"
-            className="shrink-0 rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-medium text-stone-700 hover:border-stone-400"
+            className="shrink-0 rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-medium text-stone-700 hover:border-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
           >
             ⇄ Swap
           </button>
@@ -120,7 +120,7 @@ export default function LineageCompare({
             onClick={swap}
             disabled={!b}
             aria-label="Swap A and B"
-            className="self-end rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="self-end rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 shadow-sm transition hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
           >
             ⇄ Swap
           </button>

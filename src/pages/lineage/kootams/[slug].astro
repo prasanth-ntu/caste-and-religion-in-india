@@ -1,245 +1,49 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import Claim from '../../../components/Claim.astro';
-import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
-import LineageYoursBanner from '../../../components/LineageYoursBanner.tsx';
+// Phase 1.8: this route is a static redirect to the canonical /lineage/k/<slug>/ page.
+// We still generate one HTML file per kootam slug so any inbound link or bookmark
+// pointing at /lineage/kootams/<slug>/ gets a meta-refresh + JS redirect to the
+// canonical URL. The catalog index /lineage/kootams/ (force graph) stays at
+// src/pages/lineage/kootams/index.astro and is unaffected.
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const all = await getCollection('kootams');
   return all.map((entry) => ({
     params: { slug: entry.data.slug },
-    props: { entry },
+    props: { slug: entry.data.slug, name: entry.data.name },
   }));
 }
 
-const { entry } = Astro.props;
-const d = entry.data;
-const { Content } = await render(entry);
-
-const isStub = d.status === 'stub';
-const isKadai = d.slug === 'kadai';
-const isDocumentedWithDeity = d.status === 'documented' && !!d.deity;
-
-// Totem emoji map
-const totemEmoji: Record<string, string> = {
-  bird: '🐦',
-  tree: '🌳',
-  fish: '🐟',
-  flower: '🌸',
-  other: '✶',
-};
-const totemColor: Record<string, string> = {
-  bird: 'bg-amber-100 border-amber-300 text-amber-900',
-  tree: 'bg-emerald-100 border-emerald-300 text-emerald-900',
-  fish: 'bg-sky-100 border-sky-300 text-sky-900',
-  flower: 'bg-rose-100 border-rose-300 text-rose-900',
-  other: 'bg-stone-100 border-stone-300 text-stone-900',
-};
-const tNorm = ['bird', 'tree', 'fish', 'flower'].includes(d.totem.type) ? d.totem.type : 'other';
-
-// Resolve deity (optional)
-let deity = null as null | { slug: string; name: string };
-if (d.deity) {
-  const deityRef = typeof d.deity === 'string' ? d.deity : d.deity.id;
-  const dEntry = await getEntry('deities', deityRef);
-  if (dEntry) deity = { slug: dEntry.data.slug, name: dEntry.data.name };
-}
-
-// Resolve exogamy partners (just names + slugs)
-const exogamyRefs: { slug: string; name: string }[] = [];
-for (const r of d.exogamy_with ?? []) {
-  const refId = typeof r === 'string' ? r : r.id;
-  const partner = await getEntry('kootams', refId);
-  if (partner) exogamyRefs.push({ slug: partner.data.slug, name: partner.data.name });
-}
-
-// Resolve claims (just statements + tiers)
-const claimRefs: { id: string; statement: string; tier: 'green' | 'yellow' | 'red' | 'rational' }[] = [];
-for (const r of d.claims ?? []) {
-  const refId = typeof r === 'string' ? r : r.id;
-  const c = await getEntry('claims', refId);
-  if (c) claimRefs.push({ id: c.data.id, statement: c.data.statement, tier: c.data.tier });
-}
+const { slug, name } = Astro.props;
+const canonical = `/lineage/k/${slug}/`;
 ---
-
-<BaseLayout
-  title={`${d.name} — Kootam Profile`}
-  description={`Profile of ${d.name} (${d.totem.tamil_name}) — totem: ${d.totem.species}.`}
->
-  <main id="main-content" class="mx-auto max-w-3xl px-6 py-12 sm:py-16">
-    <nav class="mb-6 text-sm text-stone-500">
-      <a href="/" class="hover:text-stone-900">Home</a>
-      <span class="mx-2" aria-hidden="true">/</span>
-      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
-      <span class="mx-2" aria-hidden="true">/</span>
-      <a href="/lineage/kootams" class="hover:text-stone-900">Kootams</a>
-      <span class="mx-2" aria-hidden="true">/</span>
-      <span class="text-stone-700">{d.name}</span>
-    </nav>
-
-    {isKadai && (
-      <div class="mb-6 rounded-2xl border-2 border-rose-300 bg-gradient-to-br from-rose-50 to-amber-50 p-5 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-widest text-rose-700">★ This is your kootam</p>
-        <p class="mt-1 text-sm text-stone-800">
-          Among the 145 Kongu Vellala kootams, this is the one the author's family belongs to —
-          the Kadai (quail) totem clan. The Kuladeivam (clan deity) is{' '}
-          <a href="/lineage/konur" class="font-medium underline">Konur Kaliamman</a>.
-        </p>
-      </div>
-    )}
-
-    {!isKadai && <LineageYoursBanner client:load pageSlug={d.slug} pageName={d.name} />}
-
-    {isStub && (
-      <div class="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5">
-        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800">🚧 Stub entry</p>
-        <p class="mt-1 text-sm text-stone-800">
-          This kootam is a placeholder in the V3 dataset — the 145 count is well-attested but a
-          machine-readable canonical list is not in the public domain. If you can verify the
-          real name, totem species, region, or exogamy partners for this slot, please open a
-          pull request.
-        </p>
-        <p class="mt-2">
-          <a
-            href="https://github.com/prasanth-ntu/caste-and-religion-in-india"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1 text-sm font-medium text-amber-900 underline"
-          >
-            Contribute on GitHub →
-          </a>
-        </p>
-      </div>
-    )}
-
-    <header class="mb-8">
-      <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Kootam profile</p>
-      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-        {isKadai && <span class="text-rose-600">★ </span>}
-        {d.name}
-      </h1>
-      <p class="mt-2 font-tamil text-2xl text-stone-700">{d.totem.tamil_name}</p>
-    </header>
-
-    {/* Totem card */}
-    <section class={`mb-8 flex items-center gap-4 rounded-2xl border p-5 ${totemColor[tNorm]}`}>
-      <div class="text-5xl" aria-hidden="true">{totemEmoji[tNorm]}</div>
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide">Totem · {tNorm}</p>
-        <p class="mt-1 text-lg font-semibold">{d.totem.species}</p>
-        <p class="font-tamil text-sm">{d.totem.tamil_name}</p>
-      </div>
-    </section>
-
-    {/* Facts */}
-    <section class="mb-8 grid gap-3 sm:grid-cols-2">
-      {d.region && (
-        <div class="rounded-xl border border-stone-200 bg-white p-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Region</p>
-          <p class="mt-1 text-sm text-stone-800">{d.region}</p>
-        </div>
-      )}
-      {deity && (
-        <div class="rounded-xl border border-stone-200 bg-white p-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Kuladeivam</p>
-          <p class="mt-1 text-sm text-stone-800">
-            {deity.slug === 'konur-kaliamman' ? (
-              <a href="/lineage/konur" class="font-medium underline">{deity.name}</a>
-            ) : (
-              deity.name
-            )}
-          </p>
-        </div>
-      )}
-      <div class="rounded-xl border border-stone-200 bg-white p-4">
-        <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">Slug</p>
-        <p class="mt-1 font-mono text-sm text-stone-800">{d.slug}</p>
-      </div>
-    </section>
-
-    {/* Exogamy */}
-    {exogamyRefs.length > 0 && (
-      <section class="mb-8">
-        <h2 class="mb-3 text-xl font-semibold text-stone-900">
-          Exogamy partners
-          <span class="ml-2 font-tamil text-base font-medium text-stone-600">மாமன்-மச்சான்</span>
-        </h2>
-        <p class="mb-3 text-sm text-stone-600">
-          Documented or commonly-cited maaman-machan cross-cousin alliance partners. Marriage
-          within the same kootam is prohibited; these are non-shared clans into which marriage is
-          allowed and often preferred.
-        </p>
-        <ul class="flex flex-wrap gap-2">
-          {exogamyRefs.map((p) => (
-            <li>
-              <a
-                href={`/lineage/kootams/${p.slug}`}
-                class="inline-block rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800 hover:border-stone-500 hover:bg-stone-50"
-              >
-                {p.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
-    {/* Claims */}
-    {claimRefs.length > 0 && (
-      <section class="mb-8">
-        <h2 class="mb-3 text-xl font-semibold text-stone-900">Claims linked to this kootam</h2>
-        <ul class="space-y-3">
-          {claimRefs.map((c) => (
-            <li class="rounded-xl border border-stone-200 bg-white p-4">
-              <Claim tier={c.tier}>{c.statement}</Claim>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
-    {/* Markdown body */}
-    <section class="prose prose-stone mb-8 max-w-none text-stone-800">
-      <Content />
-    </section>
-
-    {/* Kadai-only origin story */}
-    {isKadai && (
-      <section class="mb-8 rounded-2xl border border-rose-200 bg-rose-50 p-5">
-        <h2 class="mb-2 text-lg font-semibold text-rose-900">The quail-call origin (community lore)</h2>
-        <p class="text-sm text-stone-800">
-          Community oral tradition recounts an episode in which a quail's sudden alarm call
-          alerted Kadai ancestors to an approaching threat — a robber band, or a hunting party,
-          depending on the teller — saving the lineage. In gratitude the kootam adopted the bird
-          as its totem and forbade its harm.{' '}
-          <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-            🟡 plausible / debated
-          </span>{' '}
-          — this is characteristic South Indian totemic clan-myth, not historiographically
-          datable. The functional totem-clan structure, however, is well-attested.
-        </p>
-      </section>
-    )}
-
-    <section class="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redirecting to {name} — /lineage/k/{slug}/</title>
+    <meta name="robots" content="noindex,follow" />
+    <link rel="canonical" href={canonical} />
+    <meta http-equiv="refresh" content={`0; url=${canonical}`} />
+    <script is:inline define:vars={{ canonical }}>
+      window.location.replace(canonical);
+    </script>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 480px; margin: 4rem auto; padding: 0 1rem; color: #1c1917; }
+      a { color: #4338ca; }
+    </style>
+  </head>
+  <body>
+    <p>
+      This page has moved. Redirecting to{' '}
+      <a href={canonical}>{canonical}</a>…
+    </p>
+    <noscript>
       <p>
-        {isDocumentedWithDeity && (
-          <>
-            For a fuller selector + comparison view, see the{' '}
-            <a href={`/lineage/k/${d.slug}/`} class="font-medium text-emerald-700 underline">
-              {d.name} explore page →
-            </a>
-            <br />
-          </>
-        )}
-        Back to{' '}
-        <a href="/lineage/kootams" class="font-medium text-emerald-700 underline">
-          the full 145 kootam force graph →
-        </a>
+        If you are not redirected automatically, follow{' '}
+        <a href={canonical}>this link to the {name} page</a>.
       </p>
-    </section>
-
-    {isDocumentedWithDeity && <LineageCompareOverlay client:idle currentSlug={d.slug} />}
-  </main>
-</BaseLayout>
+    </noscript>
+  </body>
+</html>

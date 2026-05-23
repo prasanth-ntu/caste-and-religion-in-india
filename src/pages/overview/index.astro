@@ -54,7 +54,7 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-8 text-sm text-stone-500">
-      <a href="/" class="hover:text-stone-900">Home</a>
+      <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Overview</span>
     </nav>
@@ -76,7 +76,7 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
           return (
             <a
               href={p.href}
-              class={`group rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition-all ${c.hover}`}
+              class={`group rounded-2xl border border-stone-200 bg-white p-6 shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 ${c.hover}`}
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex items-center gap-2">

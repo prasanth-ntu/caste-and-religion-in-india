@@ -48,12 +48,13 @@ const catClasses = categoryStyles[d.category];
 <article
   class="ritual-flip-card"
   data-category={d.category}
+  data-tier={d.tier}
   data-slug={d.slug}
   style="perspective: 1200px;"
 >
   <button
     type="button"
-    class="ritual-flip-btn group relative block w-full text-left"
+    class="ritual-flip-btn group relative block w-full min-h-[44px] min-w-[44px] text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
     aria-pressed="false"
     data-flip-trigger
   >
@@ -82,7 +83,7 @@ const catClasses = categoryStyles[d.category];
           <p class="mt-1 text-sm leading-relaxed text-stone-700">{d.tradition_says}</p>
         </div>
         <p
-          class="mt-4 text-right text-xs font-medium text-stone-500 group-hover:text-stone-700"
+          class="mt-4 text-right text-sm font-medium text-stone-500 group-hover:text-stone-700"
           aria-hidden="true"
         >
           Tap to flip ↻
@@ -121,14 +122,14 @@ const catClasses = categoryStyles[d.category];
         </div>
         <div class="mt-4 flex items-center justify-between">
           <span
-            class="text-xs font-medium text-stone-500"
+            class="text-sm font-medium text-stone-500"
             aria-hidden="true"
           >
             ↺ Flip back
           </span>
           <a
             href={`/rituals/${d.slug}/`}
-            class="inline-flex items-center gap-1 rounded-md bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-700"
+            class="inline-flex items-center gap-1 rounded-md bg-stone-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-stone-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
             onclick="event.stopPropagation()"
             data-readmore
           >

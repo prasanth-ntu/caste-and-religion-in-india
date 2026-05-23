@@ -79,7 +79,10 @@ export default function LineagePersonalSentence() {
       ) : (
         <>The kuladeivam for this kootam is not yet documented on this site.{' '}</>
       )}
-      <a href={`/lineage/k/${current.slug}/`} className="underline hover:text-stone-900">
+      <a
+        href={`/lineage/k/${current.slug}/`}
+        className="underline hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+      >
         Open {current.name}'s page →
       </a>
     </>
