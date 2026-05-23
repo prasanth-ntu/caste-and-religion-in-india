@@ -48,6 +48,9 @@ interface VarnaJatiRadialProps {
 export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const transformRef = useRef(d3.zoomIdentity);
+  const [zoomed, setZoomed] = useState(false);
 
   const [measured, setMeasured] = useState(false);
   const [size, setSize] = useState({ width: 800, height: 800 });
@@ -173,7 +176,42 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     } else {
       renderRadial(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
     }
+
+    // Pinch-to-zoom + drag-to-pan on mobile, where leaf clusters are dense.
+    // `touch-action: pan-y` (set on the SVG) lets one-finger vertical scroll
+    // pass through to the page, so zoom/pan only engages on a pinch or a
+    // deliberate drag — the chart never traps the scroll.
+    if (isMobile) {
+      const layer = svg.select<SVGGElement>('.vjr-zoom-layer');
+      const zoom = d3
+        .zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 4])
+        .on('zoom', (event) => {
+          transformRef.current = event.transform;
+          layer.attr('transform', event.transform.toString());
+          setZoomed(event.transform.k !== 1 || event.transform.x !== 0 || event.transform.y !== 0);
+        });
+      zoomRef.current = zoom;
+      svg.call(zoom);
+      svg.on('dblclick.zoom', null);
+      // Re-apply the prior transform so selecting a node (which re-renders the
+      // SVG) doesn't snap the view back to the default zoom/pan.
+      if (transformRef.current !== d3.zoomIdentity) {
+        zoom.transform(svg as any, transformRef.current);
+      }
+    } else {
+      zoomRef.current = null;
+    }
   }, [laidOut, size, activePathIds, isMobile, inView]);
+
+  const resetView = () => {
+    const svg = d3.select(svgRef.current);
+    if (svgRef.current && zoomRef.current) {
+      transformRef.current = d3.zoomIdentity;
+      zoomRef.current.transform(svg as any, d3.zoomIdentity);
+      setZoomed(false);
+    }
+  };
 
   return (
     <div ref={containerRef} id={id} className="relative w-full">
@@ -193,11 +231,20 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
 
       {isMobile && measured && (
         <p className="mb-2 text-center text-xs text-stone-400">
-          Tap any node to explore · only labelled nodes shown on mobile
+          Tap any node to explore · pinch to zoom, drag to pan
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-4">
+      <div className="relative overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-4">
+        {isMobile && zoomed && (
+          <button
+            type="button"
+            onClick={resetView}
+            className="absolute right-3 top-3 z-10 rounded-full border border-stone-300 bg-white/95 px-3 py-1.5 text-xs font-medium text-stone-700 shadow-sm backdrop-blur transition hover:border-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            ↺ Reset view
+          </button>
+        )}
         {measured && (
           <svg
             ref={svgRef}
@@ -209,13 +256,22 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
                 : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
             }
             className="block max-w-full"
+            style={isMobile ? { touchAction: 'pan-y' } : undefined}
             role="img"
             aria-label="Dendrogram from Indian society through varna and jati to the Kadai kootam"
           />
         )}
       </div>
 
-      {selected && <Drawer node={selected} onClose={() => setSelected(null)} isMobile={isMobile} />}
+      {selected && (
+        <Drawer
+          node={selected}
+          siblings={siblingsOf(root, selected.id)}
+          onNavigate={setSelected}
+          onClose={() => setSelected(null)}
+          isMobile={isMobile}
+        />
+      )}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
@@ -264,7 +320,11 @@ function renderVertical(
   const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
     d.data.level === 'root' || d.data.level === 'varna' || activePathIds.has(d.data.id);
 
-  const g = svg.append('g');
+  const g = svg.append('g').attr('class', 'vjr-zoom-layer');
+
+  // When a node is focused (tap/hover), dim everything not on its ancestor
+  // path so the lineage reads clearly on a small screen.
+  const focusActive = activePathIds.size > 0;
 
   // Links: cubic Bezier, top-down.
   g.append('g')
@@ -284,7 +344,11 @@ function renderVertical(
     })
     .attr('stroke-width', (d: any) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? 2.2 : 1;
+      return onPath ? 3 : 1;
+    })
+    .attr('stroke-opacity', (d: any) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return focusActive && !onPath ? 0.3 : 1;
     });
 
   // Nodes.
@@ -299,6 +363,7 @@ function renderVertical(
     .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
     .style('cursor', 'pointer')
     .style('outline', 'none')
+    .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.4 : 1))
     .on('click', (_, d) => handlers.setSelected(d.data))
     .on('mouseenter', (event: MouseEvent, d) => {
       handlers.setHoveredId(d.data.id);
@@ -315,12 +380,22 @@ function renderVertical(
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handlers.setSelected(d.data); }
     });
 
+  // Invisible ≥44px touch target behind every node so taps land reliably on a
+  // small screen (WCAG 2.5.5). The visible dot stays small for visual density.
+  node
+    .append('circle')
+    .attr('r', 22)
+    .attr('fill', 'transparent')
+    .attr('stroke', 'none')
+    .style('pointer-events', 'all');
+
   node
     .append('circle')
     .attr('r', (d) => d.data.highlight ? 8 : d.children ? 5 : 4)
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
     .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
+    .style('pointer-events', 'none')
     .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : null)
     .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
 
@@ -533,36 +608,70 @@ function renderRadial(
       return raw;
     });
 
-  // Connector line from active dot to the left (toward prose / tooltip).
-  if (root.descendants().find((d) => activePathIds.has(d.data.id) && d.data.highlight)) {
-    const ev = root.descendants().find((d) => d.data.highlight);
-    if (ev) {
-      const yR = (ev as any).y as number;
-      g.append('line')
-        .attr('x1', 0).attr('x2', yR - 14)
-        .attr('y1', 0).attr('y2', 0)
-        .attr('stroke', LEVEL_COLOR[ev.data.level].stroke)
-        .attr('stroke-width', 1.5)
-        .attr('stroke-dasharray', '3 3')
-        .attr('opacity', 0.5);
-    }
-  }
 }
 
 // ─────────────────────────── Drawer ───────────────────────────
 
-function Drawer({ node, onClose, isMobile }: { node: TreeNode; onClose: () => void; isMobile: boolean }) {
+// Siblings of a node (same parent), as raw TreeNodes — used for the drawer's
+// prev/next chevrons so a tapped cluster can be browsed without dismissing.
+function siblingsOf(root: d3.HierarchyNode<TreeNode>, id: string): TreeNode[] {
+  const hit = root.descendants().find((d) => d.data.id === id);
+  if (!hit || !hit.parent || !hit.parent.children) return [];
+  return hit.parent.children.map((c) => c.data);
+}
+
+function Drawer({
+  node,
+  siblings,
+  onNavigate,
+  onClose,
+  isMobile,
+}: {
+  node: TreeNode;
+  siblings: TreeNode[];
+  onNavigate: (n: TreeNode) => void;
+  onClose: () => void;
+  isMobile: boolean;
+}) {
+  const [dragY, setDragY] = useState(0);
+  const dragStart = useRef<number | null>(null);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') goSibling(-1);
+      if (e.key === 'ArrowRight') goSibling(1);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onClose, node, siblings]);
 
   const color = LEVEL_COLOR[node.level];
   const tier = node.tier ? TIER_BADGE[node.tier] : null;
 
+  const idx = siblings.findIndex((s) => s.id === node.id);
+  const hasSiblings = siblings.length > 1 && idx >= 0;
+  const goSibling = (dir: -1 | 1) => {
+    if (!hasSiblings) return;
+    const next = siblings[(idx + dir + siblings.length) % siblings.length];
+    if (next) onNavigate(next);
+  };
+
+  // Swipe-down-to-dismiss on the mobile handle.
+  const onHandleTouchStart = (e: React.TouchEvent) => { dragStart.current = e.touches[0].clientY; };
+  const onHandleTouchMove = (e: React.TouchEvent) => {
+    if (dragStart.current == null) return;
+    setDragY(Math.max(0, e.touches[0].clientY - dragStart.current));
+  };
+  const onHandleTouchEnd = () => {
+    if (dragY > 90) onClose();
+    setDragY(0);
+    dragStart.current = null;
+  };
+
   const panelClasses = isMobile
-    ? 'fixed inset-x-0 bottom-0 max-h-[75vh] w-full overflow-y-auto rounded-t-2xl border-t border-stone-200 bg-white shadow-2xl'
+    ? 'fixed inset-x-0 bottom-0 max-h-[80vh] w-full overflow-y-auto rounded-t-2xl border-t border-stone-200 bg-white shadow-2xl'
     : 'fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-stone-200 bg-white shadow-2xl';
 
   return (
@@ -573,8 +682,29 @@ function Drawer({ node, onClose, isMobile }: { node: TreeNode; onClose: () => vo
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-stone-900/30 backdrop-blur-sm"
       />
-      <aside className={panelClasses} role="dialog" aria-modal="true" aria-label={`${node.name.en} details`}>
-        <div className="flex items-start justify-between gap-4 border-b border-stone-200 p-5">
+      <aside
+        className={panelClasses}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${node.name.en} details`}
+        style={
+          isMobile
+            ? { transform: `translateY(${dragY}px)`, transition: dragStart.current == null ? 'transform 200ms ease' : 'none', paddingBottom: 'env(safe-area-inset-bottom)' }
+            : undefined
+        }
+      >
+        {isMobile && (
+          <div
+            className="flex cursor-grab touch-none justify-center pt-2.5 pb-1 active:cursor-grabbing"
+            onTouchStart={onHandleTouchStart}
+            onTouchMove={onHandleTouchMove}
+            onTouchEnd={onHandleTouchEnd}
+            aria-hidden="true"
+          >
+            <span className="h-1.5 w-10 rounded-full bg-stone-300" />
+          </div>
+        )}
+        <div className="flex items-start justify-between gap-4 border-b border-stone-200 p-5 pt-3">
           <div>
             <span
               className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
@@ -596,6 +726,27 @@ function Drawer({ node, onClose, isMobile }: { node: TreeNode; onClose: () => vo
             </svg>
           </button>
         </div>
+        {hasSiblings && (
+          <div className="flex items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-5 py-2.5">
+            <button
+              type="button"
+              onClick={() => goSibling(-1)}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              <span aria-hidden="true">‹</span> Prev
+            </button>
+            <span className="text-[11px] text-stone-500">
+              {idx + 1} of {siblings.length} siblings
+            </span>
+            <button
+              type="button"
+              onClick={() => goSibling(1)}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              Next <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        )}
         <div className="space-y-4 p-5 text-sm leading-relaxed text-stone-700">
           {tier && (
             <div className={`flex items-center gap-2 rounded-lg px-3 py-2 ${tier.bg} ${tier.fg}`}>

@@ -170,7 +170,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                       </button>
                       <span className="mx-2">·</span>
                       <a
-                        href={`/compare?a=${currentSlug}&b=${pickedB}`}
+                        href={`/compare?a=${currentSlug}&b=${pickedB}#chart`}
                         className="font-medium text-emerald-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded"
                       >
                         Open full /compare page →
@@ -190,7 +190,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                       side-by-side view is wider than this screen — open the full compare page:
                     </p>
                     <a
-                      href={`/compare?a=${currentSlug}&b=${pickedB}`}
+                      href={`/compare?a=${currentSlug}&b=${pickedB}#chart`}
                       className="mt-3 inline-flex items-center gap-1 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                     >
                       Open full compare view →

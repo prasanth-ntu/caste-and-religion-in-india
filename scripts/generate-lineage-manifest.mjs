@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // generate-lineage-manifest.mjs
 //
-// Reads src/content/kootams/*.md + src/content/deities/*.md and emits:
+// Reads src/content/kootams/*.{md,mdx} + src/content/deities/*.{md,mdx} and emits:
 //  1. src/data/lineage-manifest.json — flat, shippable manifest used by the
 //     selector / compare React islands (so they don't need to hit the Astro
 //     content layer at runtime).
@@ -89,15 +89,17 @@ function parseFrontmatter(raw) {
   return obj;
 }
 
+const isContentFile = (f) => f.endsWith('.md') || f.endsWith('.mdx');
+
 function loadKootams() {
   return readdirSync(KOOTAMS_DIR)
-    .filter((f) => f.endsWith('.md'))
+    .filter(isContentFile)
     .map((f) => parseFrontmatter(readFileSync(join(KOOTAMS_DIR, f), 'utf8')));
 }
 
 function loadDeities() {
   const out = {};
-  for (const f of readdirSync(DEITIES_DIR).filter((x) => x.endsWith('.md'))) {
+  for (const f of readdirSync(DEITIES_DIR).filter(isContentFile)) {
     const fm = parseFrontmatter(readFileSync(join(DEITIES_DIR, f), 'utf8'));
     if (fm.slug) out[fm.slug] = fm;
   }

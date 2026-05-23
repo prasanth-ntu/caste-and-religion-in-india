@@ -107,9 +107,11 @@ export default function ScrollyTimeline({ events, id }: Props) {
   // sort ascending by year_start
   const sorted = useMemo(() => [...events].sort((a, b) => a.year_start - b.year_start), [events]);
 
-  // Hydration sentinel — see ChartSkeleton.astro.
+  // Hydration sentinel — set AFTER the first successful D3 draw (see the
+  // draw() callbacks below), not just on mount, so ChartSkeleton.astro only
+  // hides the placeholder once the chart actually has pixels to show.
   const rootRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  const markHydrated = useCallback(() => {
     rootRef.current?.setAttribute('data-hydrated', 'true');
   }, []);
 
@@ -238,6 +240,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
       const width = container.clientWidth;
       const height = container.clientHeight;
       if (width === 0 || height === 0) return;
+      markHydrated();
 
       const margin = { top: 24, right: 16, bottom: 24, left: 16 };
       const innerH = height - margin.top - margin.bottom;
@@ -388,7 +391,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
     const ro = new ResizeObserver(draw);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [sorted, activeIndex, isMobile, minYear, maxYear, reducedMotion]);
+  }, [sorted, activeIndex, isMobile, minYear, maxYear, reducedMotion, markHydrated]);
 
   // ---------- Mobile bottom strip (D3, horizontal — era bands + axis only) ----------
   // Dots/circles are rendered by React buttons below, so D3 only draws the background.
@@ -402,6 +405,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
       const width = container.clientWidth;
       const height = container.clientHeight;
       if (width === 0 || height === 0) return;
+      markHydrated();
 
       const margin = { top: 4, right: 24, bottom: 18, left: 24 };
       const innerW = width - margin.left - margin.right;
@@ -454,7 +458,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
     const ro = new ResizeObserver(draw);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [sorted, isMobile, minYear, maxYear]);
+  }, [sorted, isMobile, minYear, maxYear, markHydrated]);
 
   // auto-scroll mobile strip to keep the active event in view
   useEffect(() => {

@@ -334,13 +334,13 @@ const tierBadge: Record<string, string> = {
         Want to compare this lineage with another? See{' '}
         {isKadai ? (
           <>
-            <a href="/compare?a=kadai&b=maniyan" class="font-medium underline">Kadai vs Maniyan</a>,{' '}
-            <a href="/compare?a=kadai&b=senganni" class="font-medium underline">Kadai vs Senganni</a>, or pick any pair on{' '}
+            <a href="/compare?a=kadai&b=maniyan#chart" class="font-medium underline">Kadai vs Maniyan</a>,{' '}
+            <a href="/compare?a=kadai&b=senganni#chart" class="font-medium underline">Kadai vs Senganni</a>, or pick any pair on{' '}
             <a href="/compare" class="font-medium underline">the compare page →</a>
           </>
         ) : (
           <>
-            <a href={`/compare?a=${d.slug}&b=kadai`} class="font-medium underline">
+            <a href={`/compare?a=${d.slug}&b=kadai#chart`} class="font-medium underline">
               {d.name} vs Kadai
             </a>{' '}
             or open the full{' '}

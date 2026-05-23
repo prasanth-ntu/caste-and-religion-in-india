@@ -70,12 +70,20 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
     (() => {
       const skel = document.getElementById(skelId);
       if (!skel) return;
+      let hidden = false;
       const hide = () => {
+        if (hidden) return;
+        hidden = true;
         skel.style.display = 'none';
         skel.setAttribute('aria-hidden', 'true');
       };
+      // Hard safety: hide after 15s no matter what, so the placeholder never
+      // becomes a permanent dead block above the chart if the React island
+      // fails to ever set `data-hydrated` (broken JS, blocked script, etc.).
+      const safetyTimer = setTimeout(hide, 15000);
       const start = performance.now();
       const wireUp = () => {
+        if (hidden) return;
         const tgt = document.getElementById(target);
         if (!tgt) {
           // Element not in DOM yet; retry up to 8s then give up.
@@ -84,6 +92,7 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
           return;
         }
         if (tgt.getAttribute('data-hydrated') === 'true') {
+          clearTimeout(safetyTimer);
           hide();
           return;
         }
@@ -92,6 +101,7 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
         // cheap to keep alive; we disconnect only once hydration is confirmed.
         const obs = new MutationObserver(() => {
           if (tgt.getAttribute('data-hydrated') === 'true') {
+            clearTimeout(safetyTimer);
             hide();
             obs.disconnect();
           }
@@ -99,6 +109,7 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
         obs.observe(tgt, { attributes: true, attributeFilter: ['data-hydrated'] });
         // Handle race: data-hydrated set between getElementById and observe().
         if (tgt.getAttribute('data-hydrated') === 'true') {
+          clearTimeout(safetyTimer);
           hide();
           obs.disconnect();
         }

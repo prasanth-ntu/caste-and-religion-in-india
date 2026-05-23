@@ -67,6 +67,28 @@ export default function LineageCompare({
     if (bindToUrl && mounted) writeUrl(aSlug, bSlug);
   }, [aSlug, bSlug, bindToUrl, mounted]);
 
+  // When the user lands on /compare?...#chart (e.g. via the "Open full
+  // compare view" CTA from a lineage page), jump straight to the table so
+  // the intro doesn't hide the thing they came to see.
+  useEffect(() => {
+    if (!mounted) return;
+    if (!bindToUrl) return;
+    if (typeof window === 'undefined') return;
+    if (window.location.hash !== '#chart') return;
+    const a = find(aSlug);
+    const b = find(bSlug);
+    if (!a || !b || a.slug === b.slug) return;
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById('chart');
+      if (!el) return;
+      el.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [mounted, bindToUrl, aSlug, bSlug]);
+
   const a = find(aSlug);
   const b = find(bSlug);
 
@@ -169,7 +191,7 @@ export default function LineageCompare({
 function CompareGrid({ a, b, compact }: { a: ManifestEntry; b: ManifestEntry; compact: boolean }) {
   const rows = useMemo(() => buildRows(a, b), [a, b]);
   return (
-    <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm">
+    <div id="chart" className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm scroll-mt-24">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-stone-200 bg-stone-50">
