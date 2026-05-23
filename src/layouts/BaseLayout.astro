@@ -4,12 +4,22 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
 }
 
 const {
   title = 'Decoded — Caste & Religion in India',
   description = 'An evidence-tiered, interactive exploration of caste and religion in India. Phase 1 scaffold.',
+  ogImage,
+  ogType = 'website',
 } = Astro.props;
+
+// Build absolute URLs. Astro.site is set in astro.config.mjs.
+const siteUrl = Astro.site ?? new URL('https://decoded.prasanth.io');
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const ogImageUrl = new URL(ogImage ?? '/og-image.png', siteUrl).toString();
+const siteName = 'decoded.prasanth.io';
 ---
 
 <!doctype html>
@@ -22,6 +32,23 @@ const {
     <meta name="description" content={description} />
     <title>{title}</title>
 
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,6 +57,11 @@ const {
     />
   </head>
   <body class="min-h-screen bg-stone-50 font-sans text-stone-900 antialiased">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-stone-900 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-stone-500"
+      >Skip to main content</a
+    >
     <slot />
 
     <footer class="mt-16 border-t border-stone-200 bg-white">

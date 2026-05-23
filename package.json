@@ -24,6 +24,7 @@
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/geojson": "^7946.0.16"
   }
 }

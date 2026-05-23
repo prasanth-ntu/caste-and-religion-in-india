@@ -12,7 +12,7 @@ const { id, n } = Astro.props;
     href={`#src-${id}`}
     title={id}
     class="no-underline hover:underline"
-    aria-label={`Source: ${id}`}
+    aria-label={`Reference ${n ?? id}: ${id}`}
   >
     [{n ?? id}]
   </a>

@@ -55,7 +55,6 @@ const catClasses = categoryStyles[d.category];
     type="button"
     class="ritual-flip-btn group relative block w-full text-left"
     aria-pressed="false"
-    aria-label={`${d.name} — tap to flip and reveal what evidence says`}
     data-flip-trigger
   >
     <div
@@ -75,7 +74,7 @@ const catClasses = categoryStyles[d.category];
           </span>
           <FactTier tier={d.tier} />
         </div>
-        <h3 class="text-xl font-semibold text-stone-900">{d.name}</h3>
+        <h2 class="text-xl font-semibold text-stone-900">{d.name}</h2>
         <div class="mt-3 flex-1">
           <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">
             Tradition says
@@ -103,7 +102,7 @@ const catClasses = categoryStyles[d.category];
           </span>
           <FactTier tier={d.tier} />
         </div>
-        <h3 class="text-lg font-semibold text-stone-900">{d.name}</h3>
+        <h2 class="text-lg font-semibold text-stone-900">{d.name}</h2>
         <div class="mt-3 flex-1 space-y-3 overflow-auto">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wider text-sky-700">

@@ -578,12 +578,12 @@ export default function ScrollyTimeline({ events }: Props) {
                         {ev.year_end != null ? ` – ${formatYear(ev.year_end)}` : ''}
                       </span>
                     </div>
-                    <h3
+                    <h2
                       id={headingId}
                       className="text-xl font-bold text-stone-900 sm:text-2xl"
                     >
                       {ev.title}
-                    </h3>
+                    </h2>
                     <p className="mt-3 text-stone-700">{ev.summary}</p>
                     <div className="mt-4">
                       <TierBadge tier={ev.tier} />
@@ -643,9 +643,9 @@ export default function ScrollyTimeline({ events }: Props) {
                       {ev.year_end != null ? ` – ${formatYear(ev.year_end)}` : ''}
                     </span>
                   </div>
-                  <h3 id={headingId} className="text-lg font-bold text-stone-900">
+                  <h2 id={headingId} className="text-lg font-bold text-stone-900">
                     {ev.title}
-                  </h3>
+                  </h2>
                   <p className="mt-2 text-sm text-stone-700">{ev.summary}</p>
                   <div className="mt-3 flex items-center gap-2">
                     <TierBadge tier={ev.tier} />
@@ -707,6 +707,7 @@ export default function ScrollyTimeline({ events }: Props) {
                       }`}
                     >
                       <span
+                        aria-hidden="true"
                         className="block rounded-full ring-2 ring-white"
                         style={{
                           backgroundColor: cMeta.color,
@@ -715,7 +716,10 @@ export default function ScrollyTimeline({ events }: Props) {
                           transition: reducedMotion ? 'none' : 'all 200ms ease',
                         }}
                       />
-                      <span className="mt-1 text-[9px] font-medium text-stone-600">
+                      <span
+                        aria-hidden="true"
+                        className="mt-1 text-[9px] font-medium text-stone-600"
+                      >
                         {ev.year_start < 0
                           ? `${Math.abs(ev.year_start)}B`
                           : ev.year_start}
