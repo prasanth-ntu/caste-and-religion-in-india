@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+
+const communities = [
+  {
+    en: 'Kongu Vellala Gounder',
+    ta: 'கொங்கு வேளாள கவுண்டர்',
+    region: 'Kongu Nadu (western Tamil Nadu)',
+    note: 'The user’s community. Vellala cultivator caste-cluster with 145-kootam structure. By far the largest and most-cited Gounder community.',
+    highlight: true,
+  },
+  {
+    en: 'Vettuva Gounder',
+    ta: 'வேட்டுவ கவுண்டர்',
+    region: 'Salem, Erode, Coimbatore',
+    note: 'Traditionally a hunter-warrior community (வேட்டுவன் = hunter). Distinct lineage and history from Kongu Vellala despite sharing the title.',
+  },
+  {
+    en: 'Urali Gounder',
+    ta: 'உராளி கவுண்டர்',
+    region: 'Erode, Coimbatore',
+    note: 'Administrators / land-managers; distinct community though regionally adjacent.',
+  },
+  {
+    en: 'Nattu Gounder',
+    ta: 'நாட்டு கவுண்டர்',
+    region: 'North Tamil Nadu',
+    note: 'Smaller community using the title; separate lineage.',
+  },
+  {
+    en: 'Kurumba Gounder',
+    ta: 'குறும்ப கவுண்டர்',
+    region: 'Nilgiris',
+    note: 'Pastoralist community in the Nilgiris hills; entirely separate community from the plains-Vellala Gounders.',
+  },
+];
+---
+
+<BaseLayout
+  title="Gounder — Decoded"
+  description="Deep-dive on the Gounder title — its etymology, function as village headman, and how multiple unrelated Tamil communities use the same title."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Gounder</span>
+    </nav>
+
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-amber-700">Title · பட்டம்</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Gounder</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          கவுண்டர்
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        A title, not a caste. In the Kongu region, "Gounder" indexes Kongu Vellala identity — but the same title is used by several other Tamil communities with entirely different histories. This is a clarifying section many community members get wrong.
+      </p>
+    </header>
+
+    {/* Etymology */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Etymology
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சொல் வரலாறு</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          The Tamil form is <strong>kavundan / kāvundan</strong> (கவுண்டன்), with the honorific plural <strong>kavundar</strong> (கவுண்டர்). The most-cited internal Tamil derivation glosses it as "village headman" or "land-holder", connecting it to the role of the local Naattaanmai (நாட்டாண்மை) or Pattakaarar (பட்டக்காரர்).
+        </p>
+        <p>
+          A second school of etymology, more frequently noted in academic writing, traces the title to the Kannada/Tulu <strong>Gowda</strong> via the Ganga dynasty's <em>Gangadikara Gowda</em> headmen — a Kannada land-tenure title that diffused into Tamil-speaking Kongu through political contact during the Hoysala and pre-Vijayanagara periods. On this reading, Gounder / Gowda are the same title in different regional pronunciations.
+        </p>
+        <p>
+          The two etymologies are not mutually exclusive — a Kannada-origin word can settle into Tamil and acquire local re-glosses — and neither is securely demonstrable from the surviving record alone. <FactTier tier="yellow" />
+        </p>
+      </div>
+    </section>
+
+    {/* Function */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Function — village headman, chief adjudicator
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">பங்கு</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          In the Kongu countryside, the Gounder was historically the village-level adjudicator — convening kootam panchayats, settling marriage and land disputes, and acting as the lineage's representative in inter-village affairs. The position was hereditary within particular households but with community ratification: a Naattaanmai or Pattakaarar who lost the confidence of the kootam could be replaced.
+        </p>
+        <p>
+          <Claim tier="yellow" sources={["kootam-totem-system", "kootam-exogamy-rule"]}>
+            The Gounder's authority operated within the 145-kootam structure: enforcing exogamy across kootams, recording lineage through Kuladeivam shrine visits, and adjudicating disputes between kootams within the Kongu Vellala community.
+          </Claim>
+          The role is less prominent in the modern administrative-state era — formal courts and panchayati raj have absorbed most of its dispute-resolution functions — but ritual and marriage authority within the community persists, particularly in rural areas.
+        </p>
+      </div>
+    </section>
+
+    {/* Critical: distinguishing communities */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Other communities using the Gounder title
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">வேறு சமூகங்கள்</span>
+      </h2>
+      <p class="mt-2 max-w-2xl text-stone-600">
+        This is the section that gets confused most often. "Gounder" is a title shared across several unrelated Tamil communities — they share a word, not a lineage. A Kongu Vellala Gounder and a Vettuva Gounder are not in the same caste.
+      </p>
+
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">Community</th>
+              <th class="hidden px-4 py-3 md:table-cell">Region</th>
+              <th class="px-4 py-3">Note</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            {communities.map((c) => (
+              <tr class={c.highlight ? 'bg-rose-50' : ''}>
+                <td class="px-4 py-3">
+                  <p class={`font-medium ${c.highlight ? 'text-rose-900' : 'text-stone-900'}`}>
+                    {c.en}
+                    {c.highlight && (
+                      <span class="ml-2 rounded-full bg-rose-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-900">
+                        your community
+                      </span>
+                    )}
+                  </p>
+                  <p class="font-tamil text-xs text-stone-600">{c.ta}</p>
+                </td>
+                <td class="hidden px-4 py-3 text-stone-700 md:table-cell">{c.region}</td>
+                <td class="px-4 py-3 text-stone-700">{c.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-3 text-sm text-stone-600">
+        Vanniyar communities are sometimes also referenced under "Gounder" in colloquial speech, but the formal Vanniyar Kula Kshatriya identification is distinct from the Gounder title; we leave that to the Vanniyar deep-dive (TBD).
+      </p>
+    </section>
+
+    {/* Modern transition */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Modern transition — from cultivator to industrialist
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">தற்காலம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          The 20th-century economic history of the Kongu Vellala Gounder community is one of the more remarkable agrarian-to-industrial transitions in modern South India. Capital accumulated in late-19th-century cotton and turmeric trade was reinvested in cotton ginning, then in textile mills, then in pump-set manufacture, then in knitwear export. By the 1990s, <strong>Coimbatore</strong> was a national centre of textile machinery and pump manufacturing, and <strong>Tiruppur</strong> alone accounted for a major share of India's knitwear exports. <FactTier tier="green" />
+        </p>
+        <p>
+          The economic history here is well-documented in industrial-economics literature on Tamil Nadu — Tiruppur's growth has been the subject of dozens of academic papers as a case of agrarian-capital-led mid-tech industrialisation without significant external industrial parentage. The Gounder community was the dominant ownership cohort throughout this transition.
+        </p>
+        <p>
+          The community's contemporary BC/MBC reservation classification, voting patterns, and political organisation (notably around the Kongu Munnetra Kazhagam and other Kongu-specific outfits) are downstream of this economic transition rather than upstream of it. We treat the political-economy dimension in the Reservation page; here we flag only that the Gounder title today carries a substantial industrial-capital connotation that the 19th-century usage did not.
+        </p>
+      </div>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a href="/lineage/kongu" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Region</p>
+            <p class="font-medium text-stone-900">Kongu Nadu</p>
+            <p class="mt-1 text-xs text-stone-600">Where the Gounder title is most prevalent.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/vellala" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Caste cluster</p>
+            <p class="font-medium text-stone-900">Vellala</p>
+            <p class="mt-1 text-xs text-stone-600">The cultivator caste-cluster behind the Kongu Vellala Gounder.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/konur" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-rose-300 hover:bg-rose-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Kuladeivam</p>
+            <p class="font-medium text-stone-900">Konur Kaliamman</p>
+            <p class="mt-1 text-xs text-stone-600">Kadai Kootam clan deity.</p>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,159 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Claim from '../../../components/Claim.astro';
+import KootamForceGraph from '../../../components/viz/KootamForceGraph.tsx';
+
+const all = await getCollection('kootams');
+
+// Stable order: kadai first (highlighted), then named entries alphabetically, then numbered stubs.
+const isStub = (slug: string) => /^kootam-\d{3}$/.test(slug);
+
+const sorted = [...all].sort((a, b) => {
+  if (a.data.slug === 'kadai') return -1;
+  if (b.data.slug === 'kadai') return 1;
+  const aStub = isStub(a.data.slug);
+  const bStub = isStub(b.data.slug);
+  if (aStub !== bStub) return aStub ? 1 : -1;
+  return a.data.slug.localeCompare(b.data.slug);
+});
+
+// Denormalise for the React island (no Astro refs over the wire).
+const kootams = sorted.map((entry) => {
+  const d = entry.data;
+  return {
+    slug: d.slug,
+    name: d.name,
+    tamilName: d.totem.tamil_name,
+    totemType: d.totem.type,
+    totemSpecies: d.totem.species,
+    region: d.region,
+    deity: d.deity ? (typeof d.deity === 'string' ? d.deity : d.deity.id) : undefined,
+    exogamyWith: (d.exogamy_with ?? []).map((r: any) => (typeof r === 'string' ? r : r.id)),
+    isStub: isStub(d.slug),
+    isHighlight: d.slug === 'kadai',
+  };
+});
+
+const namedCount = kootams.filter((k) => !k.isStub).length;
+const stubCount = kootams.length - namedCount;
+---
+
+<BaseLayout
+  title="The 145 Kootams — Decoded"
+  description="A force-directed graph of all 145 Kongu Vellala kootams, colored by totem type, with the Kadai (quail) kootam highlighted. Filterable by totem and searchable."
+>
+  <main class="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Kootams</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Section B · V3</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">The 145 Kootams</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          145 குலங்கள்
+        </span>
+      </h1>
+      <p class="mt-3 max-w-3xl text-base text-stone-600">
+        Every Kongu Vellala Gounder belongs to a kootam — an exogamous patrilineal clan with its
+        own totem species. The 145 is the count; this graph is the first published attempt to
+        visualise all of them in one frame.
+      </p>
+    </header>
+
+    <section class="prose prose-stone mb-10 max-w-none text-stone-800">
+      <p>
+        A <strong>kootam</strong> (கூட்டம்) is a clan-lineage group, transmitted patrilineally,
+        marked by a <strong>totem</strong> (குலச்சின்னம்) — typically a bird, tree, fish, or
+        flower. The totem is not worshipped; it is the kootam's signature. Members traditionally
+        do not harm or eat the totem species, and they do not marry within their own kootam.{' '}
+        <Claim tier="yellow" sources={["wikipedia-kongu-vellalar", "kongu-mandala-satakam"]}>
+          The Kongu Vellala community organises itself around 145 kootams, each with a totem
+          species. Two people sharing a kootam should not marry; specified maaman-machan
+          (மாமன்-மச்சான்) cross-cousin pairings between distinct kootams are preferred.
+        </Claim>
+      </p>
+      <p>
+        The rule isn't ornamental.{' '}
+        <Claim tier="rational" sources={["wikipedia-kongu-vellalar", "nakatsuka-2017-natgen", "moorjani-2013-ajhg"]}>
+          Within a closed endogamous caste with strong founder-event signatures, a strict clan
+          exogamy rule materially expands the effective mating network — a population-level
+          mating-network protocol that reduces inbreeding while preserving caste endogamy. It is
+          a rational compromise given the constraint, not a divine instruction.
+        </Claim>
+      </p>
+      <p>
+        Why is this dataset patchy? Community ethnography of the 145 is fragmented across
+        Tamil-language regional publications, family records, and oral tradition; no single
+        canonical machine-readable list of all 145 names with verified totem-species
+        attributions sits in the public domain. This visualisation surfaces what is publicly
+        documented and explicitly stubs the rest. {namedCount} are populated with researched
+        attributions ({stubCount} are placeholders pending community review). Each node is
+        clickable — open the drawer for the profile or jump to the full per-kootam page.{' '}
+        <Claim tier="yellow" sources={["wikipedia-kongu-vellalar"]}>
+          Members of a kootam traditionally treat their totem species as off-limits for harm or
+          consumption.
+        </Claim>
+      </p>
+    </section>
+
+    <section class="mb-10">
+      <KootamForceGraph kootams={kootams} client:visible />
+    </section>
+
+    {/* Legend */}
+    <section class="mb-10 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-xl border border-stone-200 bg-white p-4 text-sm">
+        <h2 class="mb-2 text-sm font-semibold text-stone-800">How to read the graph</h2>
+        <ul class="list-disc space-y-1 pl-5 text-stone-700">
+          <li><span class="font-semibold">Colour</span> = totem class (bird, tree, fish, flower, other).</li>
+          <li><span class="font-semibold">★ Pulsing rose halo</span> = the Kadai kootam — the author's own.</li>
+          <li><span class="font-semibold">Edges</span> = documented maaman-machan cross-cousin exogamy partners.</li>
+          <li><span class="font-semibold">Translucent dots</span> = stub entries pending community research.</li>
+          <li>Click any node to open its drawer; drag to nudge the simulation.</li>
+        </ul>
+      </div>
+      <div class="rounded-xl border border-stone-200 bg-white p-4 text-sm">
+        <h2 class="mb-2 text-sm font-semibold text-stone-800">Filter &amp; search</h2>
+        <ul class="list-disc space-y-1 pl-5 text-stone-700">
+          <li>Tap the totem-type pills above the graph to hide/show classes.</li>
+          <li>Toggle <strong>Hide stubs</strong> to focus on researched kootams.</li>
+          <li>Type into the search box to filter by English or Tamil name.</li>
+          <li>On mobile (&lt;640px), the force simulation gracefully degrades to a grouped card grid; all filters still apply.</li>
+        </ul>
+      </div>
+    </section>
+
+    {/* Contribute */}
+    <section class="rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white p-6">
+      <h2 class="text-xl font-semibold text-stone-900">
+        🤝 Contribute a kootam
+        <span class="ml-2 font-tamil text-base font-medium text-stone-600">பங்களிக்கவும்</span>
+      </h2>
+      <p class="mt-2 text-sm text-stone-700">
+        If you know the verified name, totem species, region, or traditional exogamy partners for
+        any of the stub kootams (slugs <code class="rounded bg-stone-100 px-1">kootam-001</code>
+        through <code class="rounded bg-stone-100 px-1">kootam-120</code>), please open a pull
+        request. Community oral tradition counts — please cite your source (an elder by name, a
+        printed regional publication, a Kongu Vellala association list) so the tier badge can be
+        set honestly.
+      </p>
+      <p class="mt-3">
+        <a
+          href="https://github.com/prasanth-ntu/caste-and-religion-in-india"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+        >
+          Open GitHub repository →
+        </a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,5 +1,0 @@
-[     162ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4322/node_modules/.vite/deps/chunk-MONWTLAF.js?v=a64b56a9:20102
-[     178ms] [LOG] [ScrollyTimeline] compute, refs: 16 16 @ http://localhost:4322/src/components/viz/ScrollyTimeline.tsx:131
-[    3483ms] [LOG] [ScrollyTimeline] compute, refs: 16 16 @ http://localhost:4322/src/components/viz/ScrollyTimeline.tsx:131
-[   14835ms] [LOG] [ScrollyTimeline] compute, refs: 16 16 @ http://localhost:4322/src/components/viz/ScrollyTimeline.tsx?t=1779521263149:131
-[   14835ms] [LOG] [ScrollyTimeline] sizes: [[0,0,0],[1,0,0],[2,0,0],[3,0,0],[4,0,0],[5,0,0],[6,0,0],[7,0,0],[8,0,0],[9,0,0],[10,0,0],[11,0,0],[12,0,0],[13,0,0],[14,0,0],[15,0,0]] @ http://localhost:4322/src/components/viz/ScrollyTimeline.tsx?t=1779521263149:137

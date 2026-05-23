@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+
+const subgroups = [
+  { en: 'Saiva Pillai', ta: 'சைவ பிள்ளை', note: 'Saivite, often temple-affiliated; concentrated in the Cauvery delta and Tondai country.' },
+  { en: 'Karkatha (Kondaikatti)', ta: 'கொண்டைகட்டி வேளாளர்', note: 'Tondai-country Vellala; the "knotted-tuft" reference is to a distinctive hairstyle.' },
+  { en: 'Kongu Vellala Gounder', ta: 'கொங்கு வேளாள கவுண்டர்', note: 'Western Tamil Nadu; 145-kootam structure; Gounder title — the user’s community.' },
+  { en: 'Tuluva Vellalar (Mudaliar)', ta: 'துளுவ வேளாளர் / முதலியார்', note: 'Northern Tamil; Mudaliar title common; some sub-groups trace migration from Tulu Nadu (coastal Karnataka).' },
+  { en: 'Saiva Pillai (Sri Lankan)', ta: 'ஈழ வேளாளர்', note: 'Jaffna-region Vellala; historically the demographic majority of northern Sri Lankan Tamils.' },
+];
+---
+
+<BaseLayout
+  title="Vellala — Decoded"
+  description="Deep-dive on the Vellala caste-cluster: etymology, Sangam origins, sub-groups, irrigation legacy, and the contested 'noble cultivator' narrative."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Vellala</span>
+    </nav>
+
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-emerald-700">Caste cluster · ஜாதிக் கொத்து</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Vellala</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          வேளாளர்
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        The Tamil cultivator caste-cluster. A category that sweeps in several historically distinct regional sub-groups — including the Kongu Vellala Gounder — and that has been variously mapped onto the four-varna schema, with disagreement that has never really resolved.
+      </p>
+    </header>
+
+    {/* Etymology */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Etymology
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சொல் வரலாறு</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          The most commonly cited Tamil derivation is <strong>vellam</strong> (வெள்ளம், flood / abundant water) + <strong>aanmai</strong> (ஆண்மை, mastery / governance) — "masters of water" — referencing the community's historical role in tank and well irrigation. Alternative derivations relate the word to <em>vēl</em> (வேள், chieftain) or to the Velir clans of the Sangam era.
+        </p>
+        <p>
+          Folk etymologies are common in caste names and are usually retrospective. The "masters of water" gloss is plausible and resonant; it is also, frankly, flattering to the community. We treat it as a popular etymology with a real material referent (the documented irrigation systems) rather than a securely established linguistic origin.
+          <FactTier tier="yellow" />
+        </p>
+      </div>
+    </section>
+
+    {/* Sangam origin */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Sangam-era origin
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சங்க கால தோற்றம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="yellow" sources={["vellala-kaveri-origin"]}>
+            The Vellala cluster is most commonly hypothesised to have originated as elite land-owning cultivators of the Kaveri delta and other wet-rice zones during and after the Sangam era, expanding subsequently into Kongu, Tondai, and Pandya country.
+          </Claim>
+          The Sangam corpus references <em>ulavar</em> (உழவர், ploughmen / cultivators) as a respected category, and the Velir chieftain class is well-attested. Whether the historical Velir are a direct ancestor of the modern Vellala is a separate, harder question.
+        </p>
+        <p>
+          <Claim tier="green" sources={["vellala-tank-irrigation"]}>
+            The Vellala-led tank-and-well irrigation systems are well-documented in inscriptions and medieval administrative records across the Kaveri delta, Kongu region, and Tondai country.
+          </Claim>
+          This is the strongest piece of evidence for the cluster's material identity — the actual hydraulic engineering, attested across centuries.
+        </p>
+      </div>
+    </section>
+
+    {/* Sub-groups */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Sub-groups within the cluster
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">உட்பிரிவுகள்</span>
+      </h2>
+      <p class="mt-2 max-w-2xl text-stone-600">
+        "Vellala" is a category, not a single endogamous group. These regional sub-groups have historically not intermarried freely, and several use different titles (Pillai, Mudaliar, Gounder).
+      </p>
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">Sub-group</th>
+              <th class="hidden px-4 py-3 sm:table-cell">Tamil</th>
+              <th class="px-4 py-3">Note</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            {subgroups.map((s) => (
+              <tr>
+                <td class="px-4 py-3 font-medium text-stone-900">{s.en}</td>
+                <td class="hidden px-4 py-3 font-tamil text-stone-700 sm:table-cell">{s.ta}</td>
+                <td class="px-4 py-3 text-stone-700">{s.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* Varna placement contested */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Varna placement — contested and historically variable
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">வர்ண நிலை</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          Within the four-varna schema, the Vellala mapping is genuinely contested. Different sub-groups have at different times claimed Kshatriya status, Vaishya status, "Sat-Shudra" status, or rejected the four-varna schema entirely as a Sanskritic imposition irrelevant to Tamil society. None of these claims is securely demonstrable as the "original" position; all of them have political stakes — see the colonial-census timeline for the period when these claims were systematically codified and contested in writing.
+        </p>
+        <p>
+          The honest answer is: the Vellala caste-cluster, like most Tamil cultivator castes, sat outside the cleanest applications of the four-varna template and was forced into one box or another by the colonial classification machinery.
+        </p>
+      </div>
+    </section>
+
+    {/* Contested historiography */}
+    <section class="mb-12 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+      <h2 class="flex items-center gap-2 text-xl font-semibold text-amber-900">
+        Contested historiography
+        <FactTier tier="yellow" />
+      </h2>
+      <div class="prose prose-stone mt-3 max-w-none text-stone-800">
+        <p>
+          The dominant narrative about the Vellala — "noble cultivator, master of water, ritually respected, descended from the Sangam-era Velir chieftains" — is partly community self-representation. It is not false, but it is also not the whole picture.
+        </p>
+        <p>
+          The same hydraulic systems that the Vellala managed were worked by labouring castes; the same kootam structure that organised the Kongu Vellala excluded outsiders from intermarriage; the same "noble cultivator" framing operated as a status claim against neighbouring communities in colonial-era enumeration disputes. The romanticised version of the Vellala story tends to centre the management role and leave the broader rural labour ecology in the background.
+        </p>
+        <p>
+          This is not a unique problem with the Vellala. Almost every Indian caste's narrative about itself does this; the goal of this project is to flag it, not to pick a side.
+        </p>
+      </div>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a href="/lineage/kongu" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Region</p>
+            <p class="font-medium text-stone-900">Kongu Nadu</p>
+            <p class="mt-1 text-xs text-stone-600">The western Tamil region.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/gounder" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Title</p>
+            <p class="font-medium text-stone-900">Gounder (கவுண்டர்)</p>
+            <p class="mt-1 text-xs text-stone-600">Headman title used by Kongu Vellala.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/overview/varna-vs-jati" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-sky-300 hover:bg-sky-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Overview</p>
+            <p class="font-medium text-stone-900">Varna vs Jati</p>
+            <p class="mt-1 text-xs text-stone-600">Where Vellala sits in the larger schema.</p>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>

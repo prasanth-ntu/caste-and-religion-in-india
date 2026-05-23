@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# pre-commit hook — blocks commits containing transient test/debug artifacts.
+#
+# Triggered by `git commit`. Exits non-zero if any staged file matches a
+# transient-artifact pattern. Bypass with `--no-verify` if you really mean it.
+#
+# Also flags suspicious *new* binary files (PNG/JPG) at the repo root or in
+# directories that shouldn't normally hold images — agents sometimes invent
+# filenames that the .gitignore patterns don't catch.
+#
+# To install (run once per clone):
+#   git config core.hooksPath .githooks
+
+set -euo pipefail
+
+# Patterns that should NEVER be committed.
+TRANSIENT_PATTERNS=(
+  'verify-.*\.(png|jpg|jpeg)$'
+  '.*-screenshot\.(png|jpg|jpeg)$'
+  '^bug[0-9]*-.*\.(png|jpg|jpeg)$'
+  '^test-.*\.(png|jpg|jpeg)$'
+  '^\.playwright-mcp/'
+  '^.*\.playwright-mcp/'
+  '^/tmp/.*'
+  '^scratch-.*'
+  '^tmp-.*'
+)
+
+# "Suspicious" new image locations: image files added at the repo root or under
+# src/ (excluding src/assets/ and public/). Agents sometimes drop screenshots
+# next to source files.
+SUSPICIOUS_IMAGE_REGEX='^(([^/]+\.(png|jpg|jpeg))|src/(?!assets/).*\.(png|jpg|jpeg))$'
+
+added_files=$(git diff --cached --name-only --diff-filter=A 2>/dev/null || true)
+all_staged=$(git diff --cached --name-only 2>/dev/null || true)
+
+flagged=()
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  for pat in "${TRANSIENT_PATTERNS[@]}"; do
+    if [[ "$f" =~ $pat ]]; then
+      flagged+=("$f  (transient pattern: $pat)")
+      break
+    fi
+  done
+done <<< "$all_staged"
+
+# Check newly-added images in suspicious locations
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  if echo "$f" | grep -Eq '\.(png|jpg|jpeg)$'; then
+    # Allow images in public/ or src/assets/
+    if [[ "$f" != public/* && "$f" != src/assets/* && "$f" != assets/* ]]; then
+      # Check if it's a top-level image or in a non-asset src/ subdir
+      if [[ "$f" != */* ]] || [[ "$f" == src/* ]]; then
+        # Skip if already matched above (avoid duplicates)
+        already=0
+        for existing in "${flagged[@]:-}"; do
+          if [[ "$existing" == "$f"* ]]; then already=1; break; fi
+        done
+        [ $already -eq 0 ] && flagged+=("$f  (new image outside public/ or src/assets/)")
+      fi
+    fi
+  fi
+done <<< "$added_files"
+
+if [ ${#flagged[@]} -gt 0 ]; then
+  echo ""
+  echo "✗ pre-commit blocked: staged files look like transient agent artifacts."
+  echo ""
+  for entry in "${flagged[@]}"; do
+    echo "  - $entry"
+  done
+  echo ""
+  echo "Fix options:"
+  echo "  1. Run:  ./scripts/clean-test-artifacts.sh"
+  echo "     then re-stage and commit."
+  echo "  2. If these files are intentional, move images into public/ or"
+  echo "     src/assets/, or commit with --no-verify."
+  echo ""
+  exit 1
+fi
+
+exit 0

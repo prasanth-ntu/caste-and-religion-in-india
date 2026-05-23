@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+
+const districts = [
+  { name: 'Coimbatore', note: 'Modern industrial hub; historical Kongu Vellala heartland.' },
+  { name: 'Erode', note: 'Textile and turmeric trade; agrarian core.' },
+  { name: 'Tiruppur', note: 'Knitwear capital; rapid 20th-century urbanisation.' },
+  { name: 'Salem', note: 'Northern Kongu frontier; steel and sago.' },
+  { name: 'Namakkal', note: 'Poultry, lorry-body workshops; Konur village sits here.' },
+  { name: 'Karur', note: 'Home-textile exports; Cauvery valley edge.' },
+  { name: 'Dindigul', note: 'Southern Kongu frontier; sometimes included, sometimes not.' },
+];
+---
+
+<BaseLayout
+  title="Kongu Nadu — Decoded"
+  description="Deep-dive on Kongu Nadu, the western Tamil Nadu region that historically buffered the Chera, Chola, and Pandya kingdoms — and home of the Kongu Vellala Gounder community."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Kongu Nadu</span>
+    </nav>
+
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-amber-700">Region · நாடு</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Kongu Nadu</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          கொங்கு நாடு
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        The western Tamil country — seven districts of semi-arid plateau between the Cauvery to the south and the Western Ghats to the west, historically a meeting point of three crowned kingdoms and home to the Kongu Vellala Gounder community.
+      </p>
+    </header>
+
+    {/* Geography */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Geography
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">நிலவியல்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          Kongu Nadu spans roughly seven modern districts of western Tamil Nadu. It is bounded by the Western Ghats to the west, the Cauvery to the south, and the Salem-Dharmapuri uplands to the north. The land is semi-arid — far drier than the Cauvery delta — and historically depended on tank-fed (ஏரி, <em>eri</em>) and well-fed (கமலை, <em>kamalai</em>) irrigation rather than river-channel agriculture.
+        </p>
+        <p>
+          <Claim tier="green" sources={["vellala-tank-irrigation"]}>
+            The Vellala-led tank-and-well irrigation systems are widely credited as the engineering basis of medieval Kongu agriculture, supporting paddy, sugarcane, cotton, and millets on land that would otherwise have been marginal.
+          </Claim>
+          This is the material foundation of the "masters of water" framing for the Vellala caste-cluster — see the Vellala deep-dive for the historiographical caveats.
+        </p>
+      </div>
+
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">District</th>
+              <th class="px-4 py-3">Today</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            {districts.map((d) => (
+              <tr>
+                <td class="px-4 py-3 font-medium text-stone-900">{d.name}</td>
+                <td class="px-4 py-3 text-stone-700">{d.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* Pre-history */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Pre-history and Sangam era
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சங்க காலம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="green" sources={["wikipedia-sangam-period", "wikipedia-chera-dynasty", "wikipedia-chola-dynasty", "wikipedia-pandya-dynasty", "sangam-corpus"]}>
+            Tamilakam during the Sangam period (~300 BCE – 300 CE) was dominated by three crowned dynasties — Chera, Chola, and Pandya — with Kongu Nadu sitting at the intersection of their spheres.
+          </Claim>
+          The Kongu region was rarely the political core of any of the three; it was the frontier, the corridor, the place control oscillated through. Sangam-era texts reference Kongu as a distinct territory, and inscriptions from later centuries show repeated transfers of control.
+        </p>
+        <p>
+          <Claim tier="green" sources={["kongu-region-buffer"]}>
+            Kongu functioned as a buffer zone between the three crowned kingdoms — a feature that left it with a hybrid administrative inheritance and a distinct dialect of Tamil that persists today.
+          </Claim>
+        </p>
+        <p>
+          <Claim tier="yellow" sources={["kongu-vellala-velir-descent"]}>
+            One strand of Kongu Vellala self-history traces the community to the Velir chieftains of the Sangam era — minor rulers and chieftains attested in Sangam literature, distinct from the three crowned kings.
+          </Claim>
+          The Velir-descent claim is plausible and widely held within the community but is not securely demonstrable from the surviving textual record alone.
+        </p>
+      </div>
+    </section>
+
+    {/* Chola / Chera period */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Medieval — Chola, Chera, and the temple grants
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">இடைக்காலம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          From around the ninth century onward, Kongu was integrated into the imperial Chola order. The Chola state issued temple-land grants (devadana, brahmadeya) that consolidated agrarian institutions; the Vellala cultivator class was the operational counterpart of this institutional layer in the Kongu countryside.
+        </p>
+        <p>
+          <Claim tier="green" sources={["chola-temple-patronage"]}>
+            Chola-era temple grants and inscriptions document a layered agrarian society in which Vellala cultivator-landholders managed irrigation infrastructure and supplied the agricultural surplus that funded the temples.
+          </Claim>
+          The kootam-and-totem structure of the Kongu Vellala likely consolidated in this period, though precise dating is contested.
+        </p>
+        <p>
+          After the Chola decline (~13th century), Kongu passed through Hoysala, Vijayanagara, Madurai Nayak, and Mysore control in turn — administrative volatility that the village-level Vellala-Gounder land-tenure structures absorbed without major rupture. The Naattaanmai (நாட்டாண்மை) and Pattakaarar (பட்டக்காரர்) headman roles, attested into the colonial period, are continuities from this medieval layer.
+        </p>
+      </div>
+    </section>
+
+    {/* Modern industrial transition */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Modern — from agrarian to industrial
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">தற்காலம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          The 20th-century history of Kongu is a striking case of an agrarian region pivoting into mid-tech manufacturing without a major industrial parent state. By the late 20th century, Coimbatore was a textile and pump-manufacturing centre, Tiruppur was the country's knitwear capital, Karur exported home textiles to Europe and the US, and Namakkal was the lorry-body and poultry hub. Much of the capital that financed this transition was Kongu Vellala Gounder agricultural surplus reinvested.
+        </p>
+        <p>
+          This matters for the lineage story in two ways. First, it is the proximate reason the community's diaspora is now urban and overseas rather than rural. Second, it is the proximate reason the Kuladeivam shrines — including Konur Kaliamman — became <em>periodic</em> destinations rather than daily ones. The shrine, the kootam, the village survived the urban transition only because they were structured as life-event registries that could absorb dispersal.
+        </p>
+      </div>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a href="/lineage/vellala" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Caste cluster</p>
+            <p class="font-medium text-stone-900">Vellala (வேளாளர்)</p>
+            <p class="mt-1 text-xs text-stone-600">The wider cultivator caste-cluster.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/gounder" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Title</p>
+            <p class="font-medium text-stone-900">Gounder (கவுண்டர்)</p>
+            <p class="mt-1 text-xs text-stone-600">The Kongu Vellala headman title.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/konur" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-rose-300 hover:bg-rose-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Kuladeivam</p>
+            <p class="font-medium text-stone-900">Konur Kaliamman</p>
+            <p class="mt-1 text-xs text-stone-600">The Kadai Kootam clan deity.</p>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>

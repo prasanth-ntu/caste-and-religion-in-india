@@ -27,3 +27,13 @@ pnpm-debug.log*
 REVIEW.md
 CONTENT_REVIEW.md
 
+# transient agent test artifacts (screenshots, Playwright logs, etc.)
+# agents must clean these up; this is a safety net so they never get committed
+.playwright-mcp/
+verify-*.png
+verify-*.jpg
+bug*-before-*.png
+bug*-after-*.png
+*-screenshot.png
+test-*.png
+

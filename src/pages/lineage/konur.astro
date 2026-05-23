@@ -1,0 +1,412 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+import FestivalCalendar from '../../components/viz/FestivalCalendar.tsx';
+
+// Pilgrimage / lifecycle rituals tied to the Kuladeivam.
+const pilgrimage = [
+  {
+    name: { en: 'First tonsure', ta: 'மொட்டை' },
+    slug: 'tonsuring',
+    blurb:
+      "An infant's hair (most often a boy's, sometimes a girl's) is shaved at the village shrine in the first few years. The hair is offered to the deity.",
+    tier: 'rational' as const,
+    tierNote:
+      'The folk reason — clearing "ancestral" hair — has no biological basis; the rational reasons (lice/scalp hygiene in pre-modern conditions, community gathering) do.',
+  },
+  {
+    name: { en: 'Ear-piercing', ta: 'காது குத்து' },
+    slug: 'karnavedha',
+    blurb:
+      "Ear-piercing (காது குத்து / karnavedha) is performed at the village shrine, often alongside the first tonsure. Both girls and boys traditionally; boys' single-ear variants are seen in some lineages.",
+    tier: 'yellow' as const,
+    tierNote:
+      "Karnavedha is a samskara found across Hindu traditions. Specific acupressure-meridian explanations are speculative; the social and ritual-marker functions are well-attested.",
+  },
+  {
+    name: { en: 'Marriage permission', ta: 'திருமண அனுமதி' },
+    slug: 'marriage-permission',
+    blurb:
+      "Before fixing a wedding, the couple's families visit the Kuladeivam shrine, present offerings, and receive ritual permission (sometimes via a flower-drop or prasadam). Often combined with the kootam-exogamy check by elders.",
+    tier: 'yellow' as const,
+    tierNote:
+      "Community ethnography — practised by many Kongu Vellala families but not formally documented across all kootams. The exogamy enforcement function is well-attested.",
+  },
+  {
+    name: { en: 'Post-marriage first visit', ta: 'முதல் வருகை' },
+    slug: 'first-post-marriage-visit',
+    blurb:
+      "Newlyweds visit the Kuladeivam shrine in the first months of marriage to formally introduce the new daughter-in-law into the lineage's deity covenant.",
+    tier: 'yellow' as const,
+    tierNote:
+      'Documented in community practice; not centrally codified.',
+  },
+];
+
+// Diaspora villages — illustrative community list, not census-verified.
+const diaspora = [
+  { village: 'Kangayam', district: 'Tirupur', note: 'Long-standing Kadai presence; some families maintain Konur as Kuladeivam alongside local shrines.' },
+  { village: 'Avinashi', district: 'Tirupur', note: 'Mixed lineage area; Kadai households trace back to Konur for major life events.' },
+  { village: 'Dharapuram', district: 'Tirupur', note: 'Several Kadai branches; pilgrimage frequency varies by household.' },
+  { village: 'Erode (rural)', district: 'Erode', note: 'Industrial migration from agrarian villages; many still maintain the Konur tie.' },
+  { village: 'Tiruchengode', district: 'Namakkal', note: 'Closest urban centre to Konur for many Kadai families.' },
+  { village: 'Salem (rural)', district: 'Salem', note: 'Outer edge of the historical Kadai catchment.' },
+  { village: 'Coimbatore', district: 'Coimbatore', note: 'Twentieth-century migration; younger generations often return only for marriages.' },
+  { village: 'Chennai diaspora', district: 'Greater Chennai', note: 'Mid-twentieth-century onward; Konur visits typically scheduled around Panguni Uthiram.' },
+  { village: 'Bengaluru diaspora', district: 'Bengaluru', note: 'IT-era migration; pattern matches Chennai.' },
+  { village: 'Overseas (US / SG / GCC)', district: '—', note: 'Twenty-first-century diaspora; Konur visit often timed to home visits, not always annual.' },
+];
+
+// SVG iconography hotspots — illustrative placeholder of a stylised Amman figure.
+const iconHotspots = [
+  {
+    id: 'crown',
+    x: 50,
+    y: 12,
+    label: { en: 'Karagam / crown', ta: 'கரகம்' },
+    body:
+      'A decorated pot or crown (கரகம்) sits atop the goddess in many Amman processions. In village-Amman traditions, the karagam is sometimes the goddess herself, carried in procession.',
+  },
+  {
+    id: 'trident',
+    x: 78,
+    y: 38,
+    label: { en: 'Trishul / trident', ta: 'திரிசூலம்' },
+    body:
+      'The trident (திரிசூலம்) is associated with the Shakta tradition and the destruction of evil. In village Kaliamman shrines it is often planted in the ground beside the deity, sometimes as the primary aniconic form.',
+  },
+  {
+    id: 'tongue',
+    x: 50,
+    y: 30,
+    label: { en: 'Protruding tongue', ta: 'நீட்டிய நாக்கு' },
+    body:
+      'The Kali iconography includes a protruding tongue, conventionally interpreted as a sign of momentary restraint after a fierce act. Kaliamman shrines often soften this — Kaliamman is the village mother form, not the Mahakali warrior form.',
+  },
+  {
+    id: 'neem',
+    x: 18,
+    y: 55,
+    label: { en: 'Neem branch', ta: 'வேப்பிலை' },
+    body:
+      'Neem (வேப்பிலை) is offered at Amman shrines; the leaves are anti-microbial and traditionally hung at the doorway during pox outbreaks. The rational basis here is genuine — neem has documented anti-pathogenic properties.',
+  },
+  {
+    id: 'turmeric',
+    x: 82,
+    y: 60,
+    label: { en: 'Turmeric / kumkum', ta: 'மஞ்சள் / குங்குமம்' },
+    body:
+      'Turmeric (மஞ்சள்) and kumkum are central offerings. Turmeric has documented antiseptic properties; in village-shrine logic the offering also doubles as healing material for devotees.',
+  },
+];
+---
+
+<BaseLayout
+  title="Konur Kaliamman — Kuladeivam of the Kadai Kootam — Decoded"
+  description="Long-scroll page on Konur Kaliamman, Kuladeivam (clan deity) of the Kadai Kootam, with festival calendar, iconography, lifecycle rituals, and diaspora pilgrimage."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    {/* Breadcrumbs */}
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Konur Kaliamman</span>
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-12">
+      <p class="text-xs font-semibold uppercase tracking-widest text-rose-700">
+        Kuladeivam · குலதெய்வம்
+      </p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Konur Kaliamman</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          கோனூர் காளியம்மன்
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        Clan deity (Kuladeivam) of the Kadai Kootam within the Kongu Vellala Gounder community. The most personal node in the lineage — a village shrine in Namakkal district that several Kadai branches return to for life-event rituals.
+      </p>
+
+      {/* Location pill */}
+      <div class="mt-5 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-stone-700">
+        <svg class="h-4 w-4 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <span class="font-medium">Konur village</span>
+        <span class="text-stone-400">·</span>
+        <span>Namakkal district, Tamil Nadu</span>
+      </div>
+    </header>
+
+    {/* Section 1 — The Kuladeivam concept */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        The Kuladeivam concept
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">குலதெய்வம் என்றால் என்ன?</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          A Kuladeivam (குலதெய்வம், literally "clan deity") is a deity adopted by a specific lineage — typically a village goddess or local form of Shiva, Vishnu, or Murugan — to whom the lineage returns for major life events. It is not a sect, not a chosen deity, not a personal favourite. It is inherited, like a surname.
+        </p>
+        <p>
+          Functionally — and this is the part that survives even when you stop believing in the supernatural part — the Kuladeivam is a <strong>pre-bureaucratic genealogical registry</strong>. Before census rolls, before Aadhaar, before parish records, the village shrine kept track of who belonged to which lineage. Every tonsure, ear-piercing, and marriage produced a witness event at the same physical location. Diaspora branches that had moved hundreds of kilometres still had a coordinate they shared with their cousins. A great-grandmother and a great-grandchild born seventy years apart had visited the same compound.
+        </p>
+        <p>
+          The covenant is framed in supernatural language —
+          <Claim tier="red" sources={["wikipedia-kongu-vellalar"]}>
+            failure to visit the Kuladeivam for major life events is said to bring misfortune, illness, or infertility upon the family.
+          </Claim>
+          That specific causal claim is folklore, not evidence; there is no controlled data showing that pilgrimage attendance affects health outcomes. But the <em>social</em> function the threat enforces — periodic gatherings across a dispersing lineage, intergenerational signalling that "we are still one family" — is real and measurable.
+        </p>
+        <p>
+          The 145-kootam structure of the Kongu Vellala overlays this neatly.
+          <Claim tier="yellow" sources={["wikipedia-kongu-vellalar", "kongu-mandala-satakam"]}>
+            Each kootam has a totem and a set of associated Kuladeivam shrines; marriage rules require exogamy across kootams.
+          </Claim>
+          The Kuladeivam shrine is, in effect, the kootam's address.
+        </p>
+      </div>
+    </section>
+
+    {/* Section 2 — Why Konur specifically */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Why Konur specifically
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">ஏன் கோனூர்?</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          The Kadai Kootam is not concentrated in one village. Kadai families are scattered across the Kongu region — Kangayam, Erode, Tiruppur, Coimbatore, Namakkal — and outside it. So which Kaliamman, of the dozens of village Kaliamman shrines in the Kongu countryside, is <em>the</em> Kadai Kuladeivam?
+        </p>
+        <p>
+          The answer is geographic, not theological. The branches of the Kadai Kootam that settled in or around <strong>Konur village in Namakkal district</strong> consecrated the local Kaliamman shrine as their Kuladeivam, and their descendants — wherever they later moved — kept that tie. Other Kadai branches further west (toward Kangayam, Erode) often have a different Kaliamman shrine as their Kuladeivam. <span class="inline-flex items-baseline gap-1">This is <FactTier tier="yellow" /></span> — community ethnography, well-known to families but not centrally documented.
+        </p>
+        <p>
+          The practical implication: if you are a Kadai family in the Bengaluru or Chennai diaspora, your specific Kuladeivam shrine depends on which village your great-great-grandfather farmed in. There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster. The Konur shrine is one of them.
+        </p>
+      </div>
+    </section>
+
+    {/* Section 3 — Festival calendar */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Festival calendar
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">திருவிழா நாட்காட்டி</span>
+      </h2>
+      <p class="mt-2 max-w-2xl text-stone-600">
+        The Tamil solar year, with the festivals tied to Konur Kaliamman placed on their month. Click a marker (or tap a row on mobile) for the ritual details and evidence tier.
+      </p>
+      <div class="mt-6">
+        <FestivalCalendar client:visible />
+      </div>
+      <p class="mt-4 text-xs text-stone-500">
+        Today's Tamil month is approximated from the Gregorian calendar (Tamil solar months start around the 14th of each Gregorian month). For exact dates consult a Panchangam.
+      </p>
+    </section>
+
+    {/* Section 4 — Iconography */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Iconography
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">திருவுருவம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          Kaliamman (காளியம்மன்) is the village-goddess form of Kali — distinct from the Mahakali of the Shakta high tradition, though iconographically overlapping. In the Kongu countryside, Amman shrines tend to be small, often without the granite spire (vimana) of an agamic temple. The deity is frequently aniconic (a stone, a trident, or a karagam) rather than a fully sculpted figure.
+        </p>
+        <p class="text-sm text-stone-600">
+          The diagram below is <strong>illustrative</strong>, not a depiction of the actual Konur shrine. The hotspots describe iconographic elements common to village Kaliamman shrines across the Kongu region.
+        </p>
+      </div>
+
+      <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+        {/* Stylised SVG */}
+        <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white p-4">
+          <p class="mb-2 text-xs uppercase tracking-wide text-stone-500">Illustrative figure</p>
+          <div class="relative aspect-[3/4] w-full">
+            <svg
+              viewBox="0 0 100 130"
+              class="h-full w-full"
+              role="img"
+              aria-label="Stylised Amman figure with annotated iconographic hotspots"
+            >
+              {/* Background panel */}
+              <rect x="0" y="0" width="100" height="130" fill="#fef3c7" opacity="0.25" />
+              {/* Shrine arch */}
+              <path d="M20 110 L20 40 Q50 5 80 40 L80 110 Z" fill="#fef9c3" stroke="#a16207" stroke-width="0.5" />
+              {/* Crown */}
+              <path d="M40 18 L50 6 L60 18 Z" fill="#f59e0b" stroke="#92400e" stroke-width="0.5" />
+              {/* Face */}
+              <circle cx="50" cy="30" r="9" fill="#fde68a" stroke="#92400e" stroke-width="0.5" />
+              {/* Eyes */}
+              <circle cx="46" cy="29" r="0.9" fill="#1c1917" />
+              <circle cx="54" cy="29" r="0.9" fill="#1c1917" />
+              {/* Tongue */}
+              <path d="M48 33 Q50 38 52 33" fill="#dc2626" stroke="#7f1d1d" stroke-width="0.3" />
+              {/* Body */}
+              <path d="M38 40 Q50 48 62 40 L66 90 Q50 100 34 90 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
+              {/* Arms */}
+              <path d="M38 45 L20 65 L24 70 L40 55 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
+              <path d="M62 45 L82 60 L78 66 L60 55 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
+              {/* Trident in right hand */}
+              <line x1="80" y1="60" x2="84" y2="20" stroke="#78350f" stroke-width="0.8" />
+              <path d="M81 22 L84 14 L87 22 Z" fill="none" stroke="#78350f" stroke-width="0.6" />
+              <line x1="84" y1="22" x2="84" y2="14" stroke="#78350f" stroke-width="0.6" />
+              {/* Neem branch in left hand */}
+              <path d="M18 70 Q14 78 16 86" fill="none" stroke="#15803d" stroke-width="0.8" />
+              <ellipse cx="14" cy="74" rx="1.5" ry="0.7" fill="#16a34a" />
+              <ellipse cx="13" cy="78" rx="1.5" ry="0.7" fill="#16a34a" />
+              <ellipse cx="14" cy="82" rx="1.5" ry="0.7" fill="#16a34a" />
+              {/* Turmeric bowl */}
+              <ellipse cx="82" cy="78" rx="4" ry="1.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.4" />
+              <path d="M78 78 Q82 76 86 78 L86 81 Q82 83 78 81 Z" fill="#d97706" stroke="#78350f" stroke-width="0.4" />
+              {/* Hotspots */}
+              {iconHotspots.map((h) => (
+                <g class="icon-hotspot" data-id={h.id}>
+                  <circle cx={h.x} cy={h.y} r="3" fill="#ffffff" stroke="#0f172a" stroke-width="0.6" />
+                  <circle cx={h.x} cy={h.y} r="1.2" fill="#0f172a" />
+                  <title>{h.label.en} — {h.label.ta}</title>
+                </g>
+              ))}
+            </svg>
+          </div>
+          <p class="mt-3 text-xs text-stone-500">
+            Stylised; not based on a photograph of the Konur shrine. Hotspots map to common Kaliamman iconographic elements.
+          </p>
+        </div>
+
+        {/* Hotspot list */}
+        <ul class="space-y-3">
+          {iconHotspots.map((h, i) => (
+            <li class="rounded-xl border border-stone-200 bg-white p-4">
+              <div class="flex items-baseline gap-3">
+                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-900 text-xs font-semibold text-white">
+                  {i + 1}
+                </span>
+                <div>
+                  <p class="font-medium text-stone-900">{h.label.en}</p>
+                  <p class="font-tamil text-sm text-stone-600">{h.label.ta}</p>
+                </div>
+              </div>
+              <p class="mt-2 text-sm text-stone-700">{h.body}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    {/* Section 5 — Pilgrimage circuit */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Pilgrimage circuit — when Kadai families return
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">யாத்திரை</span>
+      </h2>
+      <p class="mt-2 max-w-2xl text-stone-600">
+        The life-events that trigger a Konur visit. Each is a row in the genealogical registry; each is also written up in the rituals section with its own evidence audit.
+      </p>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        {pilgrimage.map((p) => (
+          <article class="rounded-2xl border border-stone-200 bg-white p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-stone-900">{p.name.en}</h3>
+                <p class="font-tamil text-base text-stone-600">{p.name.ta}</p>
+              </div>
+              <FactTier tier={p.tier} />
+            </div>
+            <p class="mt-3 text-sm text-stone-700">{p.blurb}</p>
+            <p class="mt-2 text-xs italic text-stone-500">{p.tierNote}</p>
+            <a
+              href={`/rituals/${p.slug}`}
+              class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
+            >
+              Read the ritual page
+              <span aria-hidden="true">→</span>
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    {/* Section 6 — Diaspora */}
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Diaspora — who still returns
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">பரம்பரை</span>
+      </h2>
+      <div class="mt-2 flex items-baseline gap-2">
+        <p class="max-w-2xl text-stone-600">
+          A schematic of where Kadai Kootam families have settled and which still come back to Konur for life-event rituals. This list is community knowledge, not census data.
+        </p>
+        <FactTier tier="yellow" />
+      </div>
+
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">Settlement</th>
+              <th class="hidden px-4 py-3 sm:table-cell">District</th>
+              <th class="px-4 py-3">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            {diaspora.map((d) => (
+              <tr>
+                <td class="px-4 py-3 font-medium text-stone-900">{d.village}</td>
+                <td class="hidden px-4 py-3 text-stone-600 sm:table-cell">{d.district}</td>
+                <td class="px-4 py-3 text-stone-700">{d.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-3 text-xs text-stone-500">
+        Settlement names are illustrative of the diaspora pattern; precise household-level counts are not available. Submit corrections via the methodology page.
+      </p>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a
+            href="/lineage/kootams/kadai"
+            class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-rose-300 hover:bg-rose-50"
+          >
+            <p class="text-xs uppercase tracking-wide text-stone-500">Kootam</p>
+            <p class="font-medium text-stone-900">Kadai Kootam (கடை)</p>
+            <p class="mt-1 text-xs text-stone-600">Your clan — quail totem, 145-kootam structure.</p>
+          </a>
+        </li>
+        <li>
+          <a
+            href="/overview/varna-vs-jati"
+            class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-sky-300 hover:bg-sky-50"
+          >
+            <p class="text-xs uppercase tracking-wide text-stone-500">Overview</p>
+            <p class="font-medium text-stone-900">Varna vs Jati</p>
+            <p class="mt-1 text-xs text-stone-600">Where this leaf sits in the larger tree.</p>
+          </a>
+        </li>
+        <li>
+          <a
+            href="/rituals/tonsuring"
+            class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50"
+          >
+            <p class="text-xs uppercase tracking-wide text-stone-500">Ritual</p>
+            <p class="font-medium text-stone-900">First tonsure (மொட்டை)</p>
+            <p class="mt-1 text-xs text-stone-600">The most common Kuladeivam visit.</p>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>
