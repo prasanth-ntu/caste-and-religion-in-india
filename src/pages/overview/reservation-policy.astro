@@ -1,0 +1,175 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+import ReservationSankey from '../../components/viz/ReservationSankey.tsx';
+---
+
+<BaseLayout
+  title="Reservation policy — Decoded"
+  description="How India's caste-based reservation system channels population shares into seats. Tamil Nadu's 69% Act, the Mandal turning point, and where Kongu Vellala lands."
+>
+  <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    {/* Breadcrumb */}
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/overview/" class="hover:text-stone-900">Overview</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Reservation policy</span>
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-10">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Reservation policy</span>
+        <span lang="ta" class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          இடஒதுக்கீடு
+        </span>
+      </h1>
+      <p class="mt-3 max-w-2xl text-base text-stone-600">
+        Where caste categories meet the modern state: how India's reservation
+        system channels population shares into seats — and why Tamil Nadu
+        diverges from the national 50% ceiling.
+      </p>
+    </header>
+
+    {/* Intro prose */}
+    <section class="prose prose-stone mb-12 max-w-none text-stone-800 sm:text-lg">
+      <p>
+        Reservation is India's affirmative-action regime for caste-based seat
+        allocation in public education and government employment. The national
+        framework reserves 15% for Scheduled Castes, 7.5% for Scheduled Tribes,
+        and (after Mandal) 27% for Other Backward Classes — totalling 49.5%.
+        <Claim tier="green" sources={["wikipedia-reservation-in-india", "wikipedia-mandal-commission"]}>
+          The Supreme Court has held caste-based reservation to a 50% ceiling on
+          available seats in normal circumstances, set in Indra Sawhney v. Union
+          of India (1992).
+        </Claim>
+      </p>
+      <p>
+        <Claim tier="green" sources={["wikipedia-tn-reservation", "wikipedia-reservation-in-india"]}>
+          Tamil Nadu has maintained 69% caste-based reservation since the 1993
+          state Act, shielded from Supreme Court review by placement into the
+          Ninth Schedule of the Constitution via the 76th Amendment in 1994.
+        </Claim>
+        The sankey below shows where the seats actually go.
+      </p>
+    </section>
+
+    {/* Visualisation */}
+    <section class="mb-12">
+      <ReservationSankey client:visible />
+    </section>
+
+    {/* Substantive claims block */}
+    <section class="mb-12 space-y-5 rounded-2xl border border-stone-200 bg-stone-50 p-6">
+      <h2 class="text-lg font-semibold text-stone-900">Anchoring claims</h2>
+      <ul class="space-y-4 text-base leading-relaxed text-stone-800">
+        <li>
+          <Claim tier="green" sources={["wikipedia-mandal-commission", "wikipedia-reservation-in-india"]}>
+            The V. P. Singh government implemented the Mandal Commission's 27%
+            OBC reservation in central government employment on 7 August 1990 —
+            the moment that more than half the population gained reserved
+            access to central jobs for the first time.
+          </Claim>
+        </li>
+        <li>
+          <Claim
+            tier="green"
+            sources={["wikipedia-reservation-in-india", "wikipedia-tn-reservation", "wikipedia-mandal-commission"]}
+          >
+            Indra Sawhney v. Union of India (1992) established the 50%
+            reservation ceiling that Tamil Nadu's 69% Act circumvents via
+            Ninth Schedule placement.
+          </Claim>
+        </li>
+        <li>
+          <Claim tier="yellow" sources={["wikipedia-tn-reservation", "wikipedia-kongu-vellalar"]}>
+            Kongu Vellala Gounder is classified as a Backward Class (BC) in
+            Tamil Nadu's reservation list, despite the community's documented
+            socio-economic dominance in the Kongu Nadu districts. The
+            classification is a legal-administrative fact; whether it reflects
+            current substantive backwardness is politically contested and
+            periodically revised.
+          </Claim>
+        </li>
+      </ul>
+    </section>
+
+    {/* Yellow synthesis caveat block */}
+    <section class="mb-12 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900">
+      <div class="mb-2 flex items-center gap-2">
+        <FactTier tier="yellow" />
+        <p class="font-semibold text-amber-900">A note on the numbers shown</p>
+      </div>
+      <ul class="space-y-2 leading-relaxed">
+        <li>
+          The <strong>caste-category population shares</strong> (FC ~31%, BC ~30%,
+          MBC ~20%, SC ~16%, ST ~3% for Tamil Nadu; FC ~21%, OBC ~52%, SC ~16%,
+          ST ~8% for the 1989 central view) are <em>illustrative and rounded</em>.
+          Authoritative caste population data is patchy — the last full caste
+          census in India was 1931, and state-level estimates differ across
+          sources. Treat the bars as order-of-magnitude, not exact.
+        </li>
+        <li>
+          The <strong>reservation bucket percentages</strong> (TN's
+          30 + 20 + 18 + 1 = 69%; centre's 15 + 7.5 = 22.5% pre-Mandal) <em>are</em>
+          legislative facts and are exact.
+        </li>
+        <li>
+          The seat-allocation <strong>flows from population to bucket</strong>
+          are simplified for readability. Real allocation involves
+          sub-categorisation rules (Arunthathiyar within SC, DNC within MBC,
+          creamy-layer exclusion) that the diagram collapses.
+        </li>
+      </ul>
+    </section>
+
+    {/* Cross-links */}
+    <section class="mb-12">
+      <h2 class="mb-3 text-base font-semibold text-stone-900">Related</h2>
+      <div class="flex flex-wrap gap-2">
+        <a
+          href="/lineage/kongu/"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+          Kongu region
+        </a>
+        <a
+          href="/lineage/vellala/"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-amber-500" aria-hidden="true"></span>
+          Vellala lineage
+        </a>
+        <a
+          href="/overview/varna-vs-jati"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-indigo-500" aria-hidden="true"></span>
+          Varna vs Jati
+        </a>
+        <a
+          href="/overview/timeline"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-rose-500" aria-hidden="true"></span>
+          Timeline
+        </a>
+      </div>
+    </section>
+
+    {/* Back link */}
+    <section>
+      <a
+        href="/overview/"
+        class="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900"
+      >
+        <span aria-hidden="true">←</span>
+        Back to Overview
+      </a>
+    </section>
+  </main>
+</BaseLayout>
