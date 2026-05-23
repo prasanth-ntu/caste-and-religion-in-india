@@ -33,7 +33,7 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     </header>
 
     {/* Intro */}
-    <section class="prose prose-stone mb-12 max-w-none text-stone-800 sm:text-lg">
+    <section class="prose-editorial has-dropcap mx-auto mb-12 max-w-prose text-stone-800 sm:text-lg">
       <p>
         <Claim tier="green" sources={["wikipedia-varna-hinduism"]}>
           The four-varna schema — Brahmin, Kshatriya, Vaishya, Shudra — is a textual category that appears in late-Vedic literature, most famously in the Purusha-Sukta hymn of the Rig Veda (RV 10.90).
@@ -59,9 +59,9 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     {/* Visualization */}
     <section class="mb-6">
       <div class="relative">
-        <ChartSkeleton class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati radial…" />
+        <ChartSkeleton target="varna-jati-radial" class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati radial…" />
         <div class="relative z-10">
-          <VarnaJatiRadial client:visible />
+          <VarnaJatiRadial id="varna-jati-radial" client:visible />
         </div>
       </div>
       <p class="mt-4 text-sm text-stone-600">

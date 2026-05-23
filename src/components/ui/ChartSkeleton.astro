@@ -8,10 +8,16 @@
 // React chart paints, it visually covers the skeleton; once mounted, we set
 // `aria-hidden="true"` on the skeleton element so screen readers don't see it.
 //
+// Auto-hide on hydration
+//   Pass `target="<id-of-chart-root>"`. When the matching React island sets
+//   `data-hydrated="true"` on its root, the skeleton will hide itself
+//   (`display:none` + `aria-hidden=true`). If `target` is omitted, the
+//   skeleton stays visible — legacy callers continue to work unchanged.
+//
 // Usage (in a .astro file):
 //   <div class="relative">
-//     <ChartSkeleton class="absolute inset-0" />
-//     <GeneticsChart client:visible />
+//     <ChartSkeleton class="absolute inset-0" target="genetics-chart" />
+//     <GeneticsChart id="genetics-chart" client:visible />
 //   </div>
 //
 // Props
@@ -19,18 +25,33 @@
 //   aspect     CSS aspect ratio for the skeleton (default `16/10`). Ignored if
 //              the caller already constrains height via `class`.
 //   ariaLabel  Screen-reader label (defaults to "Loading chart…").
+//   target     Optional id of the chart island root to watch for
+//              `data-hydrated="true"`. When set + observed, the skeleton
+//              hides itself. Falls back to a max 8s wait.
 // =============================================================================
 
 interface Props {
   class?: string;
   aspect?: string;
   ariaLabel?: string;
+  target?: string;
 }
 
-const { class: classProp = '', aspect = '16/10', ariaLabel = 'Loading chart…' } = Astro.props;
+const {
+  class: classProp = '',
+  aspect = '16/10',
+  ariaLabel = 'Loading chart…',
+  target,
+} = Astro.props;
+
+// A stable-per-render id so the inline script can resolve the skeleton root.
+// crypto.randomUUID() is available in Node 18+ and modern browsers; Astro runs
+// this at build time, so it's the Node version that executes here.
+const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
 ---
 
 <div
+  id={skelId}
   class:list={[
     'chart-skeleton relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-100',
     classProp,
@@ -43,6 +64,50 @@ const { class: classProp = '', aspect = '16/10', ariaLabel = 'Loading chart…' 
   <div class="chart-skeleton__shimmer" aria-hidden="true"></div>
   <span class="sr-only">{ariaLabel}</span>
 </div>
+
+{target && (
+  <script define:vars={{ skelId, target }}>
+    (() => {
+      const skel = document.getElementById(skelId);
+      if (!skel) return;
+      const hide = () => {
+        skel.style.display = 'none';
+        skel.setAttribute('aria-hidden', 'true');
+      };
+      const start = performance.now();
+      const wireUp = () => {
+        const tgt = document.getElementById(target);
+        if (!tgt) {
+          if (performance.now() - start > 8000) return; // give up
+          setTimeout(wireUp, 100);
+          return;
+        }
+        if (tgt.getAttribute('data-hydrated') === 'true') {
+          hide();
+          return;
+        }
+        const obs = new MutationObserver(() => {
+          if (tgt.getAttribute('data-hydrated') === 'true') {
+            hide();
+            obs.disconnect();
+          }
+        });
+        obs.observe(tgt, { attributes: true, attributeFilter: ['data-hydrated'] });
+        // Also poll once more in case React's useEffect ran between getElementById
+        // and observe() (rare race).
+        if (tgt.getAttribute('data-hydrated') === 'true') {
+          hide();
+          obs.disconnect();
+          return;
+        }
+        // Graceful fallback: stop observing after the remaining budget;
+        // leave skeleton visible if the island never hydrated.
+        setTimeout(() => obs.disconnect(), 8000);
+      };
+      wireUp();
+    })();
+  </script>
+)}
 
 <style>
   .chart-skeleton__shimmer {

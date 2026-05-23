@@ -24,6 +24,9 @@ export interface KootamNodeInput {
 
 export interface KootamForceGraphProps {
   kootams: KootamNodeInput[];
+  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
+   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
+  id?: string;
 }
 
 type TotemType = 'bird' | 'tree' | 'fish' | 'flower' | 'other';
@@ -61,9 +64,14 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 }
 
 // ---------- Main component ----------
-export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
+export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  useEffect(() => {
+    containerRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
 
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [layoutMode, setLayoutMode] = useState<'force' | 'grid'>('force');
@@ -430,7 +438,7 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} id={id} className="relative w-full">
       {/* Controls */}
       <div className="mb-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">

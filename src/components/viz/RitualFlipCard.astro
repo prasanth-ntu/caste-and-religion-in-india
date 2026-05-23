@@ -60,12 +60,12 @@ const catClasses = categoryStyles[d.category];
 >
   <button
     type="button"
-    class="ritual-flip-btn group relative block w-full min-h-[44px] min-w-[44px] text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+    class="ritual-flip-btn group relative block w-full min-h-[44px] min-w-[44px] overflow-hidden text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
     aria-pressed="false"
     data-flip-trigger
   >
     <div
-      class="ritual-flip-inner relative h-full min-h-[300px] w-full transition-transform duration-500"
+      class="ritual-flip-inner relative h-[400px] w-full transition-transform duration-500"
       style="transform-style: preserve-3d;"
     >
       {/* FRONT — Tradition */}
@@ -93,7 +93,7 @@ const catClasses = categoryStyles[d.category];
           <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">
             Tradition says
           </p>
-          <p class="mt-1 text-sm leading-relaxed text-stone-700">{d.tradition_says}</p>
+          <p class="mt-1 line-clamp-5 text-sm leading-relaxed text-stone-700">{d.tradition_says}</p>
         </div>
         <p
           class="mt-4 text-right text-sm font-medium text-stone-500 group-hover:text-stone-700"
@@ -118,7 +118,7 @@ const catClasses = categoryStyles[d.category];
           <FactTier tier={d.tier} />
         </div>
         <h2 class="text-lg font-semibold text-stone-900">{d.name}</h2>
-        <div class="mt-3 flex-1 space-y-3 overflow-auto">
+        <div class="mt-3 max-h-full flex-1 space-y-3 overflow-auto">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wider text-sky-700">
               Evidence says

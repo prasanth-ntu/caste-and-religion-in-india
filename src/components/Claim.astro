@@ -1,6 +1,6 @@
 ---
 import { getEntry } from 'astro:content';
-import ClaimEvidenceToggle from './ClaimEvidenceToggle.tsx';
+import { ClaimBadge, ClaimEvidencePanel } from './ClaimEvidenceToggle.tsx';
 import Cite from './Cite.astro';
 
 type Tier = 'green' | 'yellow' | 'red' | 'rational';
@@ -32,16 +32,31 @@ if (!resolvedSummary && sources.length > 0) {
     /* missing source — leave summary undefined */
   }
 }
+
+// Stable per-render id used to wire the inline badge to its sibling block
+// panel via a CustomEvent on `document`. UUID slice is collision-safe across
+// many claims on a single page without needing a server-side counter.
+const claimId = crypto.randomUUID().slice(0, 8);
+const hasEvidence = Boolean(resolvedSummary && resolvedSummary.trim().length > 0);
 ---
 
 <span class="claim">
   <slot />
   {sources.map((id, i) => <Cite id={id} n={i + 1} />)}
   <span class="ml-1 inline-block align-middle">
-    <ClaimEvidenceToggle
+    <ClaimBadge
       tier={tier}
-      evidenceSummary={resolvedSummary}
+      claimId={claimId}
+      hasEvidence={hasEvidence}
       client:visible
     />
   </span>
 </span>
+{hasEvidence && resolvedSummary && (
+  <ClaimEvidencePanel
+    tier={tier}
+    claimId={claimId}
+    evidenceSummary={resolvedSummary}
+    client:visible
+  />
+)}

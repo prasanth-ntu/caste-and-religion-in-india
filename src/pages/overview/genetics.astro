@@ -35,7 +35,7 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     </header>
 
     {/* Intro prose */}
-    <section class="prose prose-stone prose-editorial has-dropcap mb-12 max-w-prose text-stone-800 sm:text-lg">
+    <section class="prose-editorial has-dropcap mx-auto mb-12 max-w-prose text-stone-800 sm:text-lg">
       <p>
         Three landmark papers reframed Indian population genetics in the 21st century.
         <Claim tier="green" sources={["reich-2009-nature", "moorjani-2013-ajhg"]}>
@@ -73,9 +73,9 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     {/* Visualisations */}
     <section class="mb-10">
       <div class="relative">
-        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading genetics charts…" />
+        <ChartSkeleton target="genetics-chart" class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading genetics charts…" />
         <div class="relative z-10">
-          <GeneticsChart client:visible />
+          <GeneticsChart id="genetics-chart" client:visible />
         </div>
       </div>
     </section>

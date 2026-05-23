@@ -1,12 +1,6 @@
-import { useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import FactTierTooltip from './FactTierTooltip';
 import type { Tier } from './ui/TierTooltip';
-
-export interface ClaimEvidenceToggleProps {
-  tier: Tier;
-  /** Inline evidence summary. If absent or empty, the badge renders without a toggle. */
-  evidenceSummary?: string;
-}
 
 const TIER_RULE_CLASS: Record<Tier, string> = {
   green: 'border-l-emerald-600',
@@ -15,56 +9,121 @@ const TIER_RULE_CLASS: Record<Tier, string> = {
   rational: 'border-l-violet-700',
 };
 
+const TOGGLE_EVENT = 'claim:toggle';
+
+interface ClaimToggleDetail {
+  claimId: string;
+  open: boolean;
+}
+
+export interface ClaimBadgeProps {
+  tier: Tier;
+  claimId: string;
+  hasEvidence: boolean;
+}
+
 /**
- * Wraps FactTierTooltip in a click-to-expand affordance. When an
- * `evidenceSummary` is provided, the badge becomes a button that toggles a
- * stone-50 inline block with the summary text. When absent, the badge renders
- * exactly as before (no toggle UI). Hover popover (tier explanation) still
- * works through FactTierTooltip — this control only adds the click behavior.
+ * Inline portion of an evidence-bearing claim badge. Renders the tier emoji
+ * (via FactTierTooltip, preserving hover-popover behavior) plus a ▾ caret to
+ * signal the click-to-expand affordance. Clicking dispatches a CustomEvent on
+ * `document` keyed by `claimId`; the sibling <ClaimEvidencePanel> listens for
+ * that event and toggles its own visibility. This split lets the panel live as
+ * a true block sibling of the inline claim span, which avoids the
+ * "block-inside-inline" HTML invalidity that previously broke paragraph flow.
  *
- * Visual spec:
- *   - 1.5px left rule in the tier color
- *   - stone-50 background, stone-700 italic 12px body
- *   - 200ms slide-down via max-height transition
- *   - respects prefers-reduced-motion via global CSS rule
+ * When `hasEvidence` is false, the badge renders without a button wrapper or
+ * caret (pure inline tier indicator).
  */
-export function ClaimEvidenceToggle({ tier, evidenceSummary }: ClaimEvidenceToggleProps) {
+export function ClaimBadge({ tier, claimId, hasEvidence }: ClaimBadgeProps) {
   const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const hasEvidence = Boolean(evidenceSummary && evidenceSummary.trim().length > 0);
+  const panelId = `claim-evidence-${claimId}`;
 
   if (!hasEvidence) {
     return <FactTierTooltip tier={tier} />;
   }
 
+  const handleClick = () => {
+    const next = !open;
+    setOpen(next);
+    document.dispatchEvent(
+      new CustomEvent<ClaimToggleDetail>(TOGGLE_EVENT, {
+        detail: { claimId, open: next },
+      })
+    );
+  };
+
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        className="inline-flex items-center align-middle bg-transparent border-0 p-0 m-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
-        title={open ? 'Hide evidence' : 'Show evidence'}
-      >
-        <FactTierTooltip tier={tier} />
-      </button>
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-expanded={open}
+      aria-controls={panelId}
+      className="inline-flex items-center align-middle bg-transparent border-0 p-0 m-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+      title={open ? 'Hide evidence' : 'Show evidence'}
+    >
+      <FactTierTooltip tier={tier} />
       <span
-        id={panelId}
-        role="region"
-        aria-label="Evidence summary"
-        className={`block w-full overflow-hidden transition-[max-height,opacity] duration-[200ms] ease-out ${
-          open ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'
+        aria-hidden="true"
+        className={`ml-0.5 inline-block text-[10px] leading-none text-stone-500 transition-transform duration-150 ${
+          open ? 'rotate-180' : ''
         }`}
       >
-        <span
-          className={`block rounded-r bg-stone-50 border-l-[1.5px] ${TIER_RULE_CLASS[tier]} px-3 py-2 text-[12px] italic leading-snug text-stone-700`}
-        >
-          {evidenceSummary}
-        </span>
+        ▾
       </span>
-    </>
+    </button>
   );
 }
 
-export default ClaimEvidenceToggle;
+export interface ClaimEvidencePanelProps {
+  tier: Tier;
+  claimId: string;
+  evidenceSummary: string;
+}
+
+/**
+ * Block-level expansion panel for a claim's evidence summary. Rendered as a
+ * <span class="block ..."> rather than a <div>, so it remains valid HTML when
+ * the parent ancestor is a <p> (block-level <div> inside <p> would be invalid
+ * and force browsers to break the paragraph). Listens to document-level
+ * `claim:toggle` events and matches on `claimId`.
+ */
+export function ClaimEvidencePanel({
+  tier,
+  claimId,
+  evidenceSummary,
+}: ClaimEvidencePanelProps) {
+  const [open, setOpen] = useState(false);
+  const panelId = `claim-evidence-${claimId}`;
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<ClaimToggleDetail>;
+      if (ce.detail?.claimId === claimId) {
+        setOpen(ce.detail.open);
+      }
+    };
+    document.addEventListener(TOGGLE_EVENT, handler);
+    return () => document.removeEventListener(TOGGLE_EVENT, handler);
+  }, [claimId]);
+
+  return (
+    <span
+      id={panelId}
+      data-claim-evidence-panel={claimId}
+      role="region"
+      aria-label="Evidence summary"
+      hidden={!open}
+      className={`block overflow-hidden transition-[max-height,opacity] duration-[200ms] ease-out ${
+        open ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'
+      }`}
+    >
+      <span
+        className={`block rounded-r bg-stone-50 border-l-[1.5px] ${TIER_RULE_CLASS[tier]} px-3 py-2 text-[12px] italic leading-snug text-stone-700`}
+      >
+        {evidenceSummary}
+      </span>
+    </span>
+  );
+}
+
+export default ClaimBadge;

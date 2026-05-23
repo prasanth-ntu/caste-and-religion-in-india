@@ -156,8 +156,8 @@ export function Toggle({
   className = '',
 }: ToggleProps) {
   const base =
-    'relative inline-flex items-center rounded-full border border-stone-300 bg-white p-1 ' +
-    'min-h-[44px] sm:min-h-[40px] text-xs font-medium ' +
+    'relative inline-flex items-center rounded-full border border-stone-300 bg-white ' +
+    'min-h-[40px] sm:min-h-[36px] text-xs font-medium ' +
     'focus-within:ring-2 focus-within:ring-indigo-500';
   return (
     <button
@@ -171,17 +171,20 @@ export function Toggle({
       {/* Sliding pill */}
       <span
         aria-hidden="true"
-        className={`absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-indigo-50 ring-1 ring-indigo-300 transition-transform duration-200 ${
-          pressed ? 'translate-x-full' : 'translate-x-0'
-        }`}
+        className="absolute top-[2px] bottom-[2px] left-[2px] w-[calc(50%-2px)] rounded-full bg-indigo-50 ring-1 ring-indigo-200 transition-transform duration-200 ease-out"
+        style={{ transform: `translateX(${pressed ? '100%' : '0'})` }}
       />
       <span
-        className={`relative z-10 px-3 ${pressed ? 'text-stone-500' : 'text-indigo-700'}`}
+        className={`relative z-10 flex-1 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
+          pressed ? 'text-stone-500' : 'text-indigo-700'
+        }`}
       >
         {labelOff}
       </span>
       <span
-        className={`relative z-10 px-3 ${pressed ? 'text-indigo-700' : 'text-stone-500'}`}
+        className={`relative z-10 flex-1 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
+          pressed ? 'text-indigo-700' : 'text-stone-500'
+        }`}
       >
         {labelOn}
       </span>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import manifest from '../../data/lineage-manifest.json';
+import { PATHS, type PathId as SequencedPathId } from '../../data/paths';
 
 type PathId = 'family' | 'evidence' | 'curious' | 'browse' | '';
 
@@ -172,6 +173,26 @@ export default function Explorer() {
     setPathName(found?.label ?? '');
     safeSet(LS_PATH, id);
     if (safeGet(LS_STOP) === null) safeSet(LS_STOP, '0');
+
+    // For sequenced paths (family, curious), prime the PathProgress amber bar
+    // so it appears from stop 0 ("Starting the … path — stop 1 of N: X →") on
+    // whichever content page the user lands on next. Evidence + browse are not
+    // sequenced lanes, so they get no path-progress wiring.
+    if (id === 'family' || id === 'curious') {
+      try {
+        const sequencedId = id as SequencedPathId;
+        const total = PATHS[sequencedId].stops.length;
+        localStorage.setItem(
+          `pathProgress.${sequencedId}`,
+          JSON.stringify({ stop: 0, total, updatedAt: new Date().toISOString() }),
+        );
+        localStorage.setItem('pathProgress.active', sequencedId);
+        window.dispatchEvent(new CustomEvent('decoded:path-progress-changed'));
+      } catch {
+        /* ignore */
+      }
+    }
+
     markShown();
     setScreen(2);
   }

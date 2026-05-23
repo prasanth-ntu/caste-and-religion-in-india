@@ -14,6 +14,9 @@ export type TimelineEvent = {
 
 type Props = {
   events: TimelineEvent[];
+  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
+   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
+  id?: string;
 };
 
 type EraName = 'Sangam' | 'Classical' | 'Medieval' | 'Colonial' | 'Modern';
@@ -100,9 +103,15 @@ function TierBadge({ tier }: { tier: TimelineEvent['tier'] }) {
   );
 }
 
-export default function ScrollyTimeline({ events }: Props) {
+export default function ScrollyTimeline({ events, id }: Props) {
   // sort ascending by year_start
   const sorted = useMemo(() => [...events].sort((a, b) => a.year_start - b.year_start), [events]);
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -525,7 +534,7 @@ export default function ScrollyTimeline({ events }: Props) {
   }
 
   return (
-    <div className="relative">
+    <div ref={rootRef} id={id} className="relative">
       {/* Desktop / tablet layout */}
       <div className="hidden sm:grid sm:grid-cols-[1fr_320px] sm:gap-8 lg:grid-cols-[1fr_420px] lg:gap-12">
         {/* Left: scrolling prose column */}

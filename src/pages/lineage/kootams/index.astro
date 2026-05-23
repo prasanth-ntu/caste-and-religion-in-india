@@ -115,9 +115,9 @@ const stubCount = kootams.length - namedCount;
 
     <section class="mb-10">
       <div class="relative">
-        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading kootam force graph…" />
+        <ChartSkeleton target="kootam-force-graph" class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading kootam force graph…" />
         <div class="relative z-10">
-          <KootamForceGraph kootams={kootams} client:visible />
+          <KootamForceGraph id="kootam-force-graph" kootams={kootams} client:visible />
         </div>
       </div>
     </section>

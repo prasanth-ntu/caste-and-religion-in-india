@@ -52,6 +52,34 @@ function setSsrCardsHidden(hidden: boolean) {
   else el.classList.remove('hidden');
 }
 
+/**
+ * Sync the prominent Hub → Profile bridge callout to match the visitor's
+ * current kootam selection. SSR ships with the Kadai default already filled
+ * in, so we only need to mutate when slug !== DEFAULT_SLUG. We also restore
+ * the Kadai default when the visitor switches back.
+ */
+function updateBridge(currentSlug: string) {
+  if (typeof document === 'undefined') return;
+  const bridgeSection = document.getElementById('lineage-hub-bridge');
+  if (!bridgeSection) return;
+
+  const nameEl = bridgeSection.querySelector('[data-bridge-name]');
+  const deityEl = bridgeSection.querySelector('[data-bridge-deity]');
+  const linkEl = bridgeSection.querySelector('[data-bridge-link]') as HTMLAnchorElement | null;
+
+  const m = manifest.find((x) => x.slug === currentSlug);
+  if (!m) return;
+
+  if (nameEl) nameEl.textContent = m.name;
+  if (deityEl) {
+    const deityName = m.deity?.name || '—';
+    const totemEmoji = m.totemEmoji || '🪶';
+    const totemLabel = m.totemSpecies || m.totemType || '—';
+    deityEl.innerHTML = `Kuladeivam: ${deityName} · Totem: <span aria-hidden="true">${totemEmoji}</span> ${totemLabel}`;
+  }
+  if (linkEl) linkEl.href = `/lineage/k/${m.slug}/`;
+}
+
 export default function LineageHubAdapter() {
   const [slug, setSlug] = useState<string>(DEFAULT_SLUG);
   const [hydrated, setHydrated] = useState(false);
@@ -61,10 +89,12 @@ export default function LineageHubAdapter() {
     const next = readCurrentSlug();
     setSlug(next);
     setSsrCardsHidden(next !== DEFAULT_SLUG);
+    updateBridge(next);
     const onChange = () => {
       const n = readCurrentSlug();
       setSlug(n);
       setSsrCardsHidden(n !== DEFAULT_SLUG);
+      updateBridge(n);
     };
     window.addEventListener('decoded:lineage-changed', onChange);
     window.addEventListener('storage', onChange);
@@ -73,6 +103,7 @@ export default function LineageHubAdapter() {
       window.removeEventListener('decoded:lineage-changed', onChange);
       window.removeEventListener('storage', onChange);
       setSsrCardsHidden(false);
+      updateBridge(DEFAULT_SLUG);
     };
   }, []);
 

@@ -42,9 +42,21 @@ function findPath(node: d3.HierarchyNode<TreeNode>, predicate: (n: TreeNode) => 
   return target.ancestors().reverse();
 }
 
-export default function VarnaJatiRadial() {
+interface VarnaJatiRadialProps {
+  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
+   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
+  id?: string;
+}
+
+export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Hydration sentinel — flips on first client render so the SSR ChartSkeleton
+  // sibling can detect we are alive and hide itself.
+  useEffect(() => {
+    containerRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
 
   const [size, setSize] = useState({ width: 800, height: 800 });
   const [isMobile, setIsMobile] = useState(false);
@@ -181,7 +193,7 @@ export default function VarnaJatiRadial() {
   }, [laidOut, size, activePathIds, isMobile, inView]);
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} id={id} className="relative w-full">
       {/* Legend */}
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-600">
         {(['root', 'varna', 'caste-cluster', 'sub-jati', 'kootam'] as CasteLevel[]).map((lv) => (

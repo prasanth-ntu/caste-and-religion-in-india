@@ -550,10 +550,21 @@ function SankeyChart({ era }: { era: Era }) {
 // =============================================================================
 // Top-level component
 // =============================================================================
-export default function ReservationSankey() {
+interface ReservationSankeyProps {
+  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
+   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
+  id?: string;
+}
+
+export default function ReservationSankey({ id }: ReservationSankeyProps = {}) {
   const [era, setEra] = useState<Era>('current-tn');
+  // Hydration sentinel — see ChartSkeleton.astro.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
   return (
-    <div className="space-y-6">
+    <div ref={rootRef} id={id} className="space-y-6">
       {/* Year/era toggle */}
       <div
         role="radiogroup"

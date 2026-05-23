@@ -141,15 +141,44 @@ const konurMeta = formatMeta('everyone', 4);
     {/* The map — centerpiece */}
     <section class="mb-12">
       <div class="relative">
-        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading zoom map…" />
+        <ChartSkeleton target="zoom-map" class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading zoom map…" />
         <div class="relative z-10">
-          <ZoomMap client:visible />
+          <ZoomMap id="zoom-map" client:visible />
         </div>
       </div>
       <p class="mt-3 text-xs text-stone-500">
         Boundaries are simplified for legibility, not survey-accurate. Snap to a stage with the
         buttons; pinch / scroll to free-zoom; click the rose pin at Konur for the temple page.
       </p>
+    </section>
+
+    {/* Hub → Profile bridge: prominent callout linking to the visitor's kootam profile.
+        SSR-defaulted to Kadai; LineageHubAdapter swaps name/deity/link on hydration. */}
+    <section
+      id="lineage-hub-bridge"
+      class="my-8 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-5 sm:p-6"
+      data-default-lineage="kadai"
+    >
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm uppercase tracking-wide text-indigo-700/80">Your kootam</p>
+          <p class="mt-1 font-display text-2xl text-stone-900" data-bridge-name>Kadai</p>
+          <p class="mt-0.5 text-sm text-stone-600" data-bridge-deity>Kuladeivam: Konur Kaliamman · Totem: <span aria-hidden="true">🦅</span> Eagle</p>
+        </div>
+        <a
+          href="/lineage/k/kadai/"
+          data-bridge-link
+          class="inline-flex items-center justify-center rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+        >
+          View full profile →
+        </a>
+      </div>
+      <ul class="mt-4 grid grid-cols-2 gap-3 text-xs text-stone-600 sm:grid-cols-4">
+        <li class="flex items-center gap-1.5"><span aria-hidden="true">🪶</span> Totem &amp; origin</li>
+        <li class="flex items-center gap-1.5"><span aria-hidden="true">🛕</span> Kuladeivam &amp; temple</li>
+        <li class="flex items-center gap-1.5"><span aria-hidden="true">🌳</span> Ancestors &amp; exogamy</li>
+        <li class="flex items-center gap-1.5"><span aria-hidden="true">📚</span> Sources &amp; claims</li>
+      </ul>
     </section>
 
     {/*

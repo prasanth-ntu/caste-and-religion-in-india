@@ -58,10 +58,18 @@ function nearestStage(k: number): StageId {
 
 interface ZoomMapProps {
   height?: number; // optional explicit height for SSR / testing
+  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
+   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
+  id?: string;
 }
 
-export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
+export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  useEffect(() => {
+    containerRef.current?.setAttribute('data-hydrated', 'true');
+  }, []);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const gRef = useRef<SVGGElement | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
@@ -258,7 +266,7 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
 
   // ---------------- Render ----------------
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} id={id} className="relative w-full">
       {/* Stage controls */}
       <div
         className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2"

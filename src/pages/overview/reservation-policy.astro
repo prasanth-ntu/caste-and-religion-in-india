@@ -37,7 +37,7 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     </header>
 
     {/* Intro prose */}
-    <section class="prose prose-stone mb-12 max-w-none text-stone-800 sm:text-lg">
+    <section class="prose-editorial has-dropcap mx-auto mb-12 max-w-prose text-stone-800 sm:text-lg">
       <p>
         Reservation is India's affirmative-action regime for caste-based seat
         allocation in public education and government employment. The national
@@ -62,9 +62,9 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     {/* Visualisation */}
     <section class="mb-12">
       <div class="relative">
-        <ChartSkeleton class="absolute inset-0 -z-0" aspect="16/10" ariaLabel="Loading reservation sankey…" />
+        <ChartSkeleton target="reservation-sankey" class="absolute inset-0 -z-0" aspect="16/10" ariaLabel="Loading reservation sankey…" />
         <div class="relative z-10">
-          <ReservationSankey client:visible />
+          <ReservationSankey id="reservation-sankey" client:visible />
         </div>
       </div>
     </section>

@@ -1,61 +1,28 @@
 import { useEffect, useState } from 'react';
+import { PATHS, type PathId } from '../../data/paths';
 
 /**
- * Thin amber bar that surfaces a user's active curated path (set on /explore).
+ * Thin amber bar that surfaces a user's active curated path (set on /explore
+ * or from the Explorer popup).
  *
  * localStorage contract:
- *   - `pathProgress.<pathId>`: JSON `{ stop: number, total: number, updatedAt: string }`
+ *   - `pathProgress.<pathId>`: JSON `{ stop: number, total: number, updatedAt?: string }`
  *     stop = the *current* zero-indexed stop the user has reached.
+ *     stop === 0 means "just selected the path, hasn't visited any stop yet".
  *   - `pathProgress.active`: the active pathId, or absent.
  *
- * The bar appears only when `active` is set AND that path has stop > 0 AND
- * `stop < total` (so there's a next stop to point at).
+ * The bar appears when `active` is set AND `0 <= stop < total` (so there's a
+ * next stop to point at). At stop === 0 the copy reads "Starting the …";
+ * at stop > 0 it reads "Continuing the …".
  *
  * Dismiss (×) clears `pathProgress.active` but leaves per-path progress intact,
- * so the user can resume by re-activating from /explore.
+ * so the user can resume by re-activating from /explore or the Explorer.
  */
-
-type PathId = 'researcher' | 'family' | 'curious';
 
 type PathProgressRecord = {
   stop: number;
   total: number;
-  updatedAt: string;
-};
-
-const PATHS: Record<
-  PathId,
-  { name: string; stops: Array<{ href: string; title: string }> }
-> = {
-  researcher: {
-    name: 'researcher',
-    stops: [
-      { href: '/overview/varna-vs-jati', title: 'Varna vs Jati' },
-      { href: '/overview/genetics', title: 'Genetics' },
-      { href: '/overview/timeline', title: 'Timeline' },
-      { href: '/overview/reservation-policy', title: 'Reservation policy' },
-      { href: '/sources', title: 'Sources' },
-    ],
-  },
-  family: {
-    name: 'family historian',
-    stops: [
-      { href: '/lineage', title: 'Pick your kootam' },
-      { href: '/lineage/k/kadai', title: 'Kadai kootam' },
-      { href: '/lineage/konur', title: 'Konur Kaliamman' },
-      { href: '/lineage/ancestors', title: 'Ancestor practices' },
-      { href: '/contribute', title: 'Contribute' },
-    ],
-  },
-  curious: {
-    name: 'curious reader',
-    stops: [
-      { href: '/', title: 'What this site is about' },
-      { href: '/overview/varna-vs-jati', title: 'The big picture' },
-      { href: '/lineage/konur', title: 'Why a village goddess' },
-      { href: '/rituals/tonsuring', title: 'Decoding a ritual' },
-    ],
-  },
+  updatedAt?: string;
 };
 
 function safeGet(key: string): string | null {
@@ -118,12 +85,16 @@ export default function PathProgress() {
   }, []);
 
   if (!mounted || !active || !progress) return null;
-  if (progress.stop <= 0) return null;
+  if (progress.stop < 0) return null;
   if (progress.stop >= progress.total) return null;
 
   const path = PATHS[active];
-  const nextStop = path.stops[progress.stop]; // zero-indexed = next one
+  if (!path) return null;
+  const nextStop = path.stops[progress.stop]; // zero-indexed = next one to visit
   if (!nextStop) return null;
+
+  const isStarting = progress.stop === 0;
+  const stopNumber = progress.stop + 1;
 
   function dismiss() {
     safeRemove('pathProgress.active');
@@ -143,7 +114,7 @@ export default function PathProgress() {
         >
           <span aria-hidden="true">↳</span>
           <span className="truncate">
-            Continuing the {path.name} path — stop {progress.stop + 1} of {progress.total}: {nextStop.title} →
+            {isStarting ? 'Starting' : 'Continuing'} the {path.name} path — stop {stopNumber} of {progress.total}: {nextStop.title} →
           </span>
         </a>
         <button

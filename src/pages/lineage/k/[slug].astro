@@ -102,6 +102,11 @@ const tierBadge: Record<string, string> = {
   }
 >
   <main id="main-content" class="mx-auto max-w-3xl px-6 py-10 sm:py-14">
+    {/* Hub back-link: bridges this profile page to the /lineage/ directory. */}
+    <nav aria-label="Breadcrumb" class="mb-3 text-sm text-stone-500">
+      <a href="/lineage/" class="hover:text-indigo-700">← All kootams</a>
+    </nav>
+
     {/* Sticky selector bar */}
     <div class="sticky top-0 z-20 -mx-6 mb-6 border-b border-stone-200 bg-stone-50/95 px-6 py-3 backdrop-blur">
       <LineageSelector client:load />
