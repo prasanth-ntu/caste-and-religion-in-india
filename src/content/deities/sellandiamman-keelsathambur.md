@@ -4,14 +4,16 @@ name: Sellandiamman Kovil (Keelsathambur)
 tamil_name: செல்லாண்டியம்மன் கோவில்
 tradition: Folk Shaktism (Kuladeivam)
 village: Keelsathambur
-iconography: 'Not yet documented — research pending.'
+iconography: 'Amman (mother-goddess) form. Vilayan kulam tradition associates the deity with the Vilva (Bael) tree, sacred to Shiva. Full murti iconography pending field documentation.'
 festivals: []
 claims: []
-attestation: oral-family
+attestation: community
 ---
 
 # Sellandiamman Kovil, Keelsathambur
 
-Kuladeivam (clan deity) for some [[vilayan]] kulam lineages in the Kongu region. Temple is located in **Keelsathambur**, Tamil Nadu.
+Kuladeivam (clan deity) for [[vilayan]] kulam lineages in the Kongu region. The author's cousin's family worships at the **Keelsathambur** temple, Tamil Nadu.
 
-🟡 **Family-attested, not yet published-cited.** Iconography, founding tradition, annual festival schedule, and exact administrative district pending research and community input. Contributions welcome.
+Community sources (Global Kongu Foundation, tamil.wiki) also link Vilayan lineages more broadly to **Sri Sellandiamman** temples at **Karur** and **Thalai Nallur** — so the Sellandiamman ↔ Vilayan binding is regional, with multiple temple instances rather than a single canonical site.
+
+🟡 **Community-attested** via aggregator sources and family oral history. Annual festival schedule, exact administrative district for Keelsathambur, and field iconography pending in-person documentation. Contributions welcome.

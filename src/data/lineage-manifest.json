@@ -26,13 +26,13 @@
   {
     "slug": "maniyan",
     "name": "Maniyan Kulam",
-    "tamilName": "மணியன்",
-    "totemEmoji": "✶",
-    "totemType": "other",
-    "totemSpecies": "Not yet verified — community attestation pending",
+    "tamilName": "மணியன் (நாவல் மரம்)",
+    "totemEmoji": "🌳",
+    "totemType": "tree",
+    "totemSpecies": "Naval Maram (Jamun / Indian Blackberry — Syzygium cumini)",
     "region": "Kongu Nadu",
     "status": "documented",
-    "attestation": "oral-family",
+    "attestation": "community",
     "deity": {
       "slug": "navaladiyan-kovil-mohanur",
       "name": "Navaladiyan Kovil (Mohanur)",
@@ -41,19 +41,19 @@
       "district": "Namakkal",
       "tradition": "Folk / Village deity (Kuladeivam)",
       "festivals": [],
-      "attestation": "oral-family"
+      "attestation": "community"
     }
   },
   {
     "slug": "senganni",
     "name": "Senganni Kootam",
-    "tamilName": "செங்கண்ணி",
-    "totemEmoji": "✶",
-    "totemType": "other",
-    "totemSpecies": "Not yet verified — community attestation pending",
+    "tamilName": "செங்கண்ணி (வேங்கை மரம்)",
+    "totemEmoji": "🌳",
+    "totemType": "tree",
+    "totemSpecies": "Vengai Maram (Indian Kino tree — Pterocarpus marsupium)",
     "region": "Kongu Nadu",
     "status": "documented",
-    "attestation": "oral-family",
+    "attestation": "community",
     "deity": {
       "slug": "pudhu-vengarai-amman",
       "name": "Pudhu Vengarai Amman",
@@ -62,19 +62,19 @@
       "district": "Namakkal",
       "tradition": "Folk Shaktism (Kuladeivam)",
       "festivals": [],
-      "attestation": "oral-family"
+      "attestation": "community"
     }
   },
   {
     "slug": "vilayan",
     "name": "Vilayan Kulam",
-    "tamilName": "விளையன்",
-    "totemEmoji": "✶",
-    "totemType": "other",
-    "totemSpecies": "Not yet verified — community attestation pending",
+    "tamilName": "விளையன் (வில்வ மரம்)",
+    "totemEmoji": "🌳",
+    "totemType": "tree",
+    "totemSpecies": "Vilva Maram (Bael tree — Aegle marmelos)",
     "region": "Kongu Nadu",
     "status": "documented",
-    "attestation": "oral-family",
+    "attestation": "community",
     "deity": {
       "slug": "sellandiamman-keelsathambur",
       "name": "Sellandiamman Kovil (Keelsathambur)",
@@ -83,7 +83,7 @@
       "district": "",
       "tradition": "Folk Shaktism (Kuladeivam)",
       "festivals": [],
-      "attestation": "oral-family"
+      "attestation": "community"
     }
   },
   {

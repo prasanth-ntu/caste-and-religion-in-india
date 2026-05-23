@@ -2,9 +2,9 @@
 slug: senganni
 name: Senganni Kootam
 totem:
-  type: other
-  species: 'Not yet verified — community attestation pending'
-  tamil_name: செங்கண்ணி
+  type: tree
+  species: 'Vengai Maram (Indian Kino tree — Pterocarpus marsupium)'
+  tamil_name: செங்கண்ணி (வேங்கை மரம்)
 region: Kongu Nadu
 deity: pudhu-vengarai-amman
 exogamy_with: []
@@ -12,25 +12,29 @@ claims:
   - kootam-exogamy-rule
   - kootam-totem-system
 status: documented
-attestation: oral-family
+attestation: community
 ---
 
 # Senganni Kootam
 
-Senganni (செங்கண்ணி) is one of the kootams of the Kongu Vellala Gounder community. Attested here via **oral family history** (a friend of this site's author). 🟡
+Senganni (செங்கண்ணி), also rendered **Sengannan Kulam**, is one of the kootams of the Kongu Vellala Gounder community. The author's friend's lineage. 🟡
 
 ## The totem
 
-The Tamil root *sengaṇṇi* (செங்கண்ணி) literally reads as "red-eyed" and historically maps to plant/flower totems in some southern clan systems — but the kootam-level mapping is community-specific. **Research needed** — contributions welcome.
+The totemic tree is the **Vengai Maram** (வேங்கை மரம்) — *Pterocarpus marsupium*, the Indian Kino tree. The tree is known for its blood-red gum / sap, which community tradition reads as a symbol of strength and vitality.
+
+## Etymology
+
+The kootam name is linked in community sources to the **Vengarai** region, historically abundant with Vengai trees — the same root that names the kuladeivam's temple village.
 
 ## Kuladeivam
 
-The clan deity for this Senganni lineage is **Pudhu Vengarai Amman**, with the temple in **Vengarai**, Namakkal district. Annual festival schedule, iconography, and founding-ancestor narrative pending community input.
+The clan deity is **Pudhu Vengarai Amman**, with the temple in **Vengarai**, Namakkal district.
 
 ## Exogamy
 
-Standard Kongu Vellala exogamy rules apply — Senganni members do not marry within the Senganni kootam. Specific preferred exogamy partners are not yet documented here.
+Standard Kongu Vellala exogamy rules apply — Senganni members do not marry within the Senganni kootam. Specific preferred partner kootams pending community input.
 
 ## Status
 
-🟡 **Family-attested, not yet published-cited.** Contributions with published ethnographic sources welcome.
+🟡 **Community-attested via aggregator sources** (Global Kongu Foundation kootam pages, family oral history). Not yet cross-checked against published academic ethnography. Contributions with published citations welcome.

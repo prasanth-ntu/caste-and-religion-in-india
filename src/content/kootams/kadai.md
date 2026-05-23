@@ -33,7 +33,11 @@ The quail is the *kulachinnam* (குலச்சின்னம்) of this ko
 
 ## Kuladeivam
 
-For many Kadai lineages in the Kongu region, the clan deity (kuladeivam) is **Konur Kaliamman**, with annual visits during the Aadi and Panguni Uthiram festivals.
+For many Kadai lineages in the Kongu region, the clan deity (kuladeivam) is **Konur Kaliamman**, with annual visits during the Aadi and Panguni Uthiram festivals. Community sources also link Kadai lineages to **Putpavana Nathar** (Poonthurai) and **Pasupatheeswarar** (Karur) — Shaiva temples within the historical Kadai-clan territory.
+
+## Title
+
+Community tradition records that Kadai clan leaders historically held the title **Poonthurai Naadan** (rulers of Poonthurai Nadu) — a regional headman designation, not a varna/jati rank. 🟡
 
 ## Exogamy
 

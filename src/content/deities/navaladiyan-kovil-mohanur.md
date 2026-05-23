@@ -5,14 +5,16 @@ tamil_name: நாவலடியான் கோவில்
 tradition: Folk / Village deity (Kuladeivam)
 village: Mohanur
 district: Namakkal
-iconography: 'Not yet documented — research pending.'
+iconography: 'Deity name literally means "He who sits beneath the Naval (Jamun) tree" — iconographically associated with the Naval Maram (Syzygium cumini), the totem tree of the Maniyan kulam. Full murti iconography pending field documentation.'
 festivals: []
 claims: []
-attestation: oral-family
+attestation: community
 ---
 
 # Navaladiyan Kovil, Mohanur
 
-Kuladeivam (clan deity) for some [[maniyan]] kulam lineages in the Kongu region. Temple is located in **Mohanur**, Namakkal district, Tamil Nadu.
+Kuladeivam (clan deity) for [[maniyan]] kulam lineages in the Kongu region. Temple is located in **Mohanur**, Namakkal district, Tamil Nadu.
 
-🟡 **Family-attested, not yet published-cited.** Iconography, founding tradition, annual festival schedule, and the deity's full theological context are pending research and community input. Contributions welcome.
+The name **Navaladiyan** (நாவலடியான்) literally reads as "He who sits beneath the Naval tree" — the *naval maram* (நாவல் மரம், *Syzygium cumini*, Jamun) being the totemic tree of the Maniyan kulam. The deity-tree linkage is the most direct totem-to-kuladeivam encoding among the documented Kongu Vellala kootams on this site.
+
+🟡 **Community-attested** via aggregator sources (Global Kongu Foundation, [konguvellalarkulam.com](https://kovil.konguvellalarkulam.com/om/maniyan-kulam)) and family oral history. Annual festival schedule and field iconography pending in-person documentation. Contributions welcome.

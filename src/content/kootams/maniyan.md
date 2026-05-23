@@ -2,9 +2,9 @@
 slug: maniyan
 name: Maniyan Kulam
 totem:
-  type: other
-  species: 'Not yet verified — community attestation pending'
-  tamil_name: மணியன்
+  type: tree
+  species: 'Naval Maram (Jamun / Indian Blackberry — Syzygium cumini)'
+  tamil_name: மணியன் (நாவல் மரம்)
 region: Kongu Nadu
 deity: navaladiyan-kovil-mohanur
 exogamy_with: []
@@ -12,25 +12,29 @@ claims:
   - kootam-exogamy-rule
   - kootam-totem-system
 status: documented
-attestation: oral-family
+attestation: community
 ---
 
 # Maniyan Kulam
 
-Maniyan (மணியன்) is one of the kootams of the Kongu Vellala Gounder community. Attested here via **oral family history** (a cousin of this site's author). 🟡
+Maniyan (மணியன்) is one of the kootams of the Kongu Vellala Gounder community. The author's cousin's lineage. 🟡
 
 ## The totem
 
-The totemic species associated with the Maniyan name has not yet been independently verified against published ethnography. The Tamil root *maṇi* (மணி) commonly denotes "bell" or "gem," but the kootam-level totem mapping is community-specific and may differ. **Research needed** — contributions welcome.
+The totemic tree is the **Naval Maram** (நாவல் மரம்) — *Syzygium cumini*, the Jamun or Indian Blackberry. The kuladeivam name itself — **Navaladiyan**, "He who sits beneath the Naval tree" — encodes the totem.
 
 ## Kuladeivam
 
-The clan deity for this Maniyan lineage is **Navaladiyan Kovil** in [Mohanur](https://en.wikipedia.org/wiki/Mohanur), Namakkal district. Annual festival schedules, iconography, and the founding-ancestor narrative are pending community/family input.
+The clan deity is **Navaladiyan Kovil** in [Mohanur](https://en.wikipedia.org/wiki/Mohanur), Namakkal district.
+
+## Lineage branches
+
+Major sub-branches reported in community sources include **Muthur Maniyan** and **Mohanur Maniyan**, all considered *pangalis* (brother clans) — i.e. exogamy among them is also prohibited.
 
 ## Exogamy
 
-Standard Kongu Vellala exogamy rules apply — Maniyan members do not marry within the Maniyan kulam. Specific preferred exogamy partners are not yet documented here.
+Standard Kongu Vellala exogamy rules apply — Maniyan members do not marry within the Maniyan kulam or its pangali sub-branches. Specific preferred maaman-machan partner kootams pending community input.
 
 ## Status
 
-🟡 **Family-attested, not yet published-cited.** This entry exists so the site can demonstrate the lineage-selector feature with a real second variant. The author's cousin identifies as Maniyan / Navaladiyan Kovil, Mohanur. If you have published ethnographic sources for this kootam, please contribute.
+🟡 **Community-attested via aggregator sources** (Global Kongu Foundation kootam pages, family oral history). Not yet cross-checked against published academic ethnography. Contributions with published citations welcome.

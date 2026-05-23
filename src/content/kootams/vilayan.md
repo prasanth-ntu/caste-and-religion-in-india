@@ -2,9 +2,9 @@
 slug: vilayan
 name: Vilayan Kulam
 totem:
-  type: other
-  species: 'Not yet verified — community attestation pending'
-  tamil_name: விளையன்
+  type: tree
+  species: 'Vilva Maram (Bael tree — Aegle marmelos)'
+  tamil_name: விளையன் (வில்வ மரம்)
 region: Kongu Nadu
 deity: sellandiamman-keelsathambur
 exogamy_with: []
@@ -12,25 +12,29 @@ claims:
   - kootam-exogamy-rule
   - kootam-totem-system
 status: documented
-attestation: oral-family
+attestation: community
 ---
 
 # Vilayan Kulam
 
-Vilayan (விளையன்) is one of the kootams of the Kongu Vellala Gounder community. Attested here via **oral family history** (a cousin of this site's author). 🟡
+Vilayan (விளையன்) is one of the kootams of the Kongu Vellala Gounder community. The author's cousin's lineage. 🟡
 
 ## The totem
 
-The Tamil root *viḷai-* (விளை-) connotes "yield" or "produce" (cf. *viḷaiccal* "harvest"), and several Kongu kootam names map to crop/plant-related totems. The exact mapping for Vilayan is community-specific. **Research needed** — contributions welcome.
+The totemic tree is the **Vilva Maram** (வில்வ மரம்) — *Aegle marmelos*, the Bael tree. The Vilva is sacred to Shiva across Tamil religious tradition, and clan members are traditionally forbidden from cutting the tree or using it for fuel.
+
+## Etymology
+
+Community sources derive the name from the Tamil root *viḷai-* ("to yield" / "to cultivate"), reflecting the agrarian self-image of the kulam.
 
 ## Kuladeivam
 
-The clan deity for this Vilayan lineage is **Sellandiamman Kovil**, with the temple in **Keelsathambur**. Annual festival schedule, iconography, and founding-ancestor narrative pending community input.
+The clan deity is **Sellandiamman Kovil**. The author's cousin's family worships at the Keelsathambur temple; community sources also associate Vilayan lineages with Sri Sellandiamman temples at **Karur** and **Thalai Nallur**.
 
 ## Exogamy
 
-Standard Kongu Vellala exogamy rules apply — Vilayan members do not marry within the Vilayan kulam. Specific preferred exogamy partners are not yet documented here.
+Standard Kongu Vellala exogamy rules apply — Vilayan members do not marry within the Vilayan kulam. Specific preferred partner kootams pending community input.
 
 ## Status
 
-🟡 **Family-attested, not yet published-cited.** Contributions with published ethnographic sources welcome.
+🟡 **Community-attested via aggregator sources** (Global Kongu Foundation kootam pages, family oral history). Not yet cross-checked against published academic ethnography. Contributions with published citations welcome.
