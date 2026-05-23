@@ -1,0 +1,19 @@
+---
+interface Props {
+  id: string;
+  n?: number;
+}
+
+const { id, n } = Astro.props;
+---
+
+<sup class="text-[0.7em] text-sky-700">
+  <a
+    href={`#src-${id}`}
+    title={id}
+    class="no-underline hover:underline"
+    aria-label={`Source: ${id}`}
+  >
+    [{n ?? id}]
+  </a>
+</sup>

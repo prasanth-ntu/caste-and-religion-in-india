@@ -1,0 +1,43 @@
+---
+type Tier = 'green' | 'yellow' | 'red' | 'rational';
+
+interface Props {
+  tier: Tier;
+}
+
+const { tier } = Astro.props;
+
+const meta: Record<Tier, { emoji: string; label: string; classes: string }> = {
+  green: {
+    emoji: '🟢',
+    label: 'Well-established',
+    classes: 'bg-green-50 text-green-800 ring-green-200',
+  },
+  yellow: {
+    emoji: '🟡',
+    label: 'Plausible / debated',
+    classes: 'bg-amber-50 text-amber-800 ring-amber-200',
+  },
+  red: {
+    emoji: '🔴',
+    label: 'Myth / unverified',
+    classes: 'bg-red-50 text-red-800 ring-red-200',
+  },
+  rational: {
+    emoji: '⚖️',
+    label: 'Rational basis',
+    classes: 'bg-sky-50 text-sky-800 ring-sky-200',
+  },
+};
+
+const { emoji, label, classes } = meta[tier];
+---
+
+<span
+  class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset align-middle ${classes}`}
+  role="status"
+  aria-label={`Evidence tier: ${label}`}
+>
+  <span aria-hidden="true">{emoji}</span>
+  <span>{label}</span>
+</span>

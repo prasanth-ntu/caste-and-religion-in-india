@@ -1,0 +1,10 @@
+slug: sangam-period
+year_start: -300
+year_end: 300
+era: Sangam
+title: Sangam Period
+summary: Classical period of Tamil literature and the three crowned kingdoms (Chera, Chola, Pandya). Earliest written attestations of social groupings in Tamilakam.
+tier: green
+sources:
+  - wikipedia-kongu-vellalar
+category: political

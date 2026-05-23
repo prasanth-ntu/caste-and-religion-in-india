@@ -1,0 +1,45 @@
+---
+type Section = 'A' | 'B' | 'C';
+
+interface Props {
+  section: Section;
+  href: string;
+  label: string;
+}
+
+const { section, href, label } = Astro.props;
+
+const styles: Record<Section, { icon: string; classes: string; name: string }> = {
+  A: {
+    icon: 'A',
+    classes: 'bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100',
+    name: 'Overview',
+  },
+  B: {
+    icon: 'B',
+    classes: 'bg-emerald-50 text-emerald-800 ring-emerald-200 hover:bg-emerald-100',
+    name: 'Lineage',
+  },
+  C: {
+    icon: 'C',
+    classes: 'bg-rose-50 text-rose-800 ring-rose-200 hover:bg-rose-100',
+    name: 'Rituals',
+  },
+};
+
+const { icon, classes, name } = styles[section];
+---
+
+<a
+  href={href}
+  class={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${classes}`}
+  aria-label={`Cross-link to ${name}: ${label}`}
+>
+  <span
+    class="flex h-4 w-4 items-center justify-center rounded-full bg-white/60 text-[10px] font-bold"
+    aria-hidden="true"
+  >
+    {icon}
+  </span>
+  <span>{label}</span>
+</a>
