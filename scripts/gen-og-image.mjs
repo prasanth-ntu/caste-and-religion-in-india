@@ -5,6 +5,13 @@
 //
 // Renders an SVG composition and converts it to PNG via @resvg/resvg-js.
 // Re-run only when the design changes; the resulting PNG is committed.
+//
+// TODO Phase 3 follow-up: regenerate with Fraunces title + lineage tagline.
+//   The current PNG uses Inter for the title and a generic site tagline. The
+//   editorial pass calls for a Fraunces serif title (matching the in-page
+//   wordmark) and a lineage-flavoured tagline (e.g. "From the Kongu Vellala
+//   Gounder lineage outward"). Resvg needs Fraunces available locally to
+//   embed; add font loading + tagline swap when picking this up.
 
 import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync } from 'node:fs';

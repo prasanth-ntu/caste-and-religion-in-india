@@ -31,6 +31,8 @@ export interface ZoomStage {
   lineageSlug: string;
   /** Short prose used in the breadcrumb / focused-stage card. */
   description: string;
+  /** Caption shown during the auto-advance "Tell me the story" mode. */
+  narrativeCaption?: string;
 }
 
 export const stages: ZoomStage[] = [
@@ -42,6 +44,8 @@ export const stages: ZoomStage[] = [
     lineageSlug: 'india',
     description:
       'The civilisational frame — 1.4 billion people, four notional varnas, thousands of jatis.',
+    narrativeCaption:
+      'We start with India — 1.4 billion people, four notional varnas, and thousands of jatis stitched into a single subcontinent.',
   },
   {
     id: 'tamil-nadu',
@@ -51,6 +55,8 @@ export const stages: ZoomStage[] = [
     lineageSlug: 'tamil-nadu',
     description:
       'The Tamil-speaking state. Subdivided into Chola, Pandya, Tondai, and Kongu Nadus.',
+    narrativeCaption:
+      'Zoom into Tamil Nadu — a Tamil-speaking state historically split into Chola, Pandya, Tondai, and Kongu Nadus.',
   },
   {
     id: 'kongu',
@@ -60,6 +66,8 @@ export const stages: ZoomStage[] = [
     lineageSlug: 'kongu',
     description:
       'Western Tamil Nadu — seven districts straddling the Cauvery uplands.',
+    narrativeCaption:
+      'Now Kongu Nadu — the western seven districts straddling the Cauvery uplands, homeland of the Kongu Vellala Gounders.',
   },
   {
     id: 'konur',
@@ -69,6 +77,8 @@ export const stages: ZoomStage[] = [
     lineageSlug: 'konur',
     description:
       'The Kadai-Kootam kuladeivam village — Konur Kaliamman temple as the emotional core.',
+    narrativeCaption:
+      'And finally Konur — the Kadai-Kootam kuladeivam village, with Konur Kaliamman temple as the emotional core of this lineage.',
   },
 ];
 

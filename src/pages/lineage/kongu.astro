@@ -4,6 +4,7 @@ import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 const districts = [
   { name: 'Coimbatore', note: 'Modern industrial hub; historical Kongu Vellala heartland.' },
@@ -51,7 +52,7 @@ const districts = [
         Geography
         <span class="ml-2 font-tamil text-xl font-medium text-stone-600">நிலவியல்</span>
       </h2>
-      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
         <p>
           Kongu Nadu spans roughly seven modern districts of western Tamil Nadu. It is bounded by the Western Ghats to the west, the Cauvery to the south, and the Salem-Dharmapuri uplands to the north. The land is semi-arid — far drier than the Cauvery delta — and historically depended on tank-fed (ஏரி, <em>eri</em>) and well-fed (கமலை, <em>kamalai</em>) irrigation rather than river-channel agriculture.
         </p>
@@ -175,5 +176,18 @@ const districts = [
         </li>
       </ul>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/lineage/vellala',
+        title: 'Vellala',
+        sub: 'The agrarian caste cluster the Kongu Vellala belong to.',
+      }}
+      related={{
+        label: 'Related lineage',
+        items: [{ href: '/lineage/kootams', title: 'Browse all 145 kootams' }],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
   </main>
 </BaseLayout>

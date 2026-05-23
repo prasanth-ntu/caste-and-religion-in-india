@@ -52,6 +52,20 @@
   color: var(--color-primary);
 }
 
+/* Pull-quote / marginalia utility — Fraunces italic, amber accent rule.
+   Apply to <blockquote class="pull-quote"> for in-flow editorial emphasis on
+   a standout sentence pulled from the surrounding prose. */
+.pull-quote {
+  border-left: 2px solid var(--color-accent); /* amber-700 */
+  padding-left: 0.875rem;
+  margin: 1.25rem 0;
+  font-family: var(--font-display); /* Fraunces */
+  font-style: italic;
+  font-size: 1.1rem;
+  color: rgb(68 64 60); /* stone-700 */
+  line-height: 1.5;
+}
+
 /* Universal focus-visible ring (interactive elements opt in via the .focus-ring class
    or via tailwind utilities; this is the editorial default). */
 .focus-ring:focus-visible {

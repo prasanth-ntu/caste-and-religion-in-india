@@ -2,11 +2,13 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SourcesFilterClient from '../../components/viz/SourcesFilterClient';
+import PathProgress from '../../components/site/PathProgress.tsx';
 import {
   getSourceBacklinks,
   type Backlink,
   type BacklinkCollection,
 } from '../../lib/graph.ts';
+import { formatMeta, type Audience } from '../../lib/reading-time';
 
 type SourceType = 'paper' | 'book' | 'wiki' | 'inscription' | 'oral';
 
@@ -21,6 +23,7 @@ type Card = {
   year?: number;
   url?: string;
   backlinks: Backlink[];
+  audience?: Audience;
 };
 const cards: Card[] = [];
 for (const s of all) {
@@ -33,6 +36,7 @@ for (const s of all) {
     year: s.data.year,
     url: s.data.url,
     backlinks: bls,
+    audience: s.data.audience,
   });
 }
 
@@ -74,6 +78,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
   title="Sources — Decoded"
   description="The full bibliography behind every claim on this site — papers, books, wiki references, inscriptions, and oral sources, with backlinks to where each is cited."
 >
+  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
@@ -113,6 +118,7 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
         {cards.map((c) => {
           const visible = c.backlinks.slice(0, 5);
           const overflow = c.backlinks.slice(5);
+          const meta = formatMeta(c.audience, undefined);
           return (
             <article
               class="source-card rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -151,6 +157,10 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
                       </a>
                     )}
                   </div>
+                  <p class="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>{meta.audience}</span>
+                  </p>
                 </div>
                 <a
                   href={`/sources/${c.id}/`}

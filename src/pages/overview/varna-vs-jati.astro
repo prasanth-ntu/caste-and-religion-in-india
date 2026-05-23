@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import VarnaJatiRadial from '../../components/viz/VarnaJatiRadial.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 ---
 
 <BaseLayout
@@ -97,5 +98,18 @@ import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
         This tree is representative, not authoritative. It over-samples South Indian groups (specifically the Tamil Vellala lineage) because the project anchors at one personal leaf. A complete jati census of the subcontinent would not be a tree at all — many jatis fit awkwardly under any single varna bucket, and the colonial census-takers spent fifty years arguing about exactly that.
       </p>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/overview/timeline',
+        title: 'Caste over time',
+        sub: 'Two millennia from Vedic varna to the modern census category.',
+      }}
+      related={{
+        label: 'Related lineage',
+        items: [{ href: '/lineage', title: 'See one lineage instantiated' }],
+      }}
+      backTo={{ href: '/overview', label: 'Overview hub' }}
+    />
   </main>
 </BaseLayout>

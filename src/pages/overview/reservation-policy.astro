@@ -4,6 +4,7 @@ import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import ReservationSankey from '../../components/viz/ReservationSankey.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 ---
 
 <BaseLayout
@@ -177,5 +178,18 @@ import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
         Back to Overview
       </a>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/sources',
+        title: 'Sources index',
+        sub: 'Where the data behind the policy graph lives.',
+      }}
+      related={{
+        label: 'Related lineage',
+        items: [{ href: '/lineage/ancestors', title: 'Ancestor practices — pre-quota material culture' }],
+      }}
+      backTo={{ href: '/overview', label: 'Overview hub' }}
+    />
   </main>
 </BaseLayout>

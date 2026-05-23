@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ScrollyTimeline from '../../components/viz/ScrollyTimeline.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 type EventShape = {
   slug: string;
@@ -112,7 +113,7 @@ if (events.length < 5) {
       </p>
     </header>
 
-    <section class="mb-12 max-w-3xl space-y-4 text-stone-700">
+    <section class="prose-editorial has-dropcap mb-12 max-w-3xl space-y-4 text-stone-700">
       <p>
         Caste is most often described as <em>timeless</em>, <em>ancient</em>, and <em>unchanging</em>
         — a static social order handed down without alteration from Vedic antiquity. The historical
@@ -177,5 +178,18 @@ if (events.length < 5) {
         </li>
       </ul>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/overview/reservation-policy',
+        title: 'Reservation policy',
+        sub: 'How the post-independence quota system maps to varna and jati.',
+      }}
+      related={{
+        label: 'Related sources',
+        items: [{ href: '/sources?type=wiki', title: 'Reference / encyclopedic sources' }],
+      }}
+      backTo={{ href: '/overview', label: 'Overview hub' }}
+    />
   </main>
 </BaseLayout>

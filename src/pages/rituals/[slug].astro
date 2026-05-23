@@ -3,6 +3,7 @@ import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FactTier from '../../components/FactTier.astro';
 import Claim from '../../components/Claim.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 export async function getStaticPaths() {
   const all = await getCollection('rituals');
@@ -274,5 +275,36 @@ for (const sid of allSourceIds) {
         </a>
       </p>
     </section>
+
+    {(() => {
+      const tiesToKuladeivam =
+        d.category === 'kuladeivam' || d.category === 'kootam';
+      const relatedItems = tiesToKuladeivam
+        ? [
+            {
+              href: '/lineage/konur',
+              title: 'How this ties to the kuladeivam',
+            },
+          ]
+        : [{ href: '/sources', title: 'Sources cited on this site' }];
+      const readNext = tiesToKuladeivam
+        ? {
+            href: '/lineage/konur',
+            title: 'Konur Kaliamman',
+            sub: 'A concrete kuladeivam — the Kadai Kootam clan shrine.',
+          }
+        : {
+            href: '/rituals',
+            title: 'All rituals',
+            sub: 'Browse the full ritual index.',
+          };
+      return (
+        <RelatedNav
+          readNext={readNext}
+          related={{ label: 'Related', items: relatedItems }}
+          backTo={{ href: '/rituals', label: 'Rituals hub' }}
+        />
+      );
+    })()}
   </main>
 </BaseLayout>

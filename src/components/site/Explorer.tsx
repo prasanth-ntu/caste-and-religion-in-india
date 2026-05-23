@@ -512,7 +512,7 @@ function CuriousCta({ onAfterAction }: { onAfterAction: () => void }) {
         A short, guided walk through the strongest evidence — about 5 minutes.
       </p>
       <a
-        href="/?tour=curious&stop=1"
+        href="/explore?path=curious"
         onClick={onAfterAction}
         className="block w-full rounded-xl bg-indigo-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >

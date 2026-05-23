@@ -1,0 +1,226 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FactTier from '../components/FactTier.astro';
+import Claim from '../components/Claim.astro';
+import Cite from '../components/Cite.astro';
+---
+
+<BaseLayout
+  title="Style reference — Decoded"
+  description="Internal style reference: type scale, colour tokens, motion durations, and sample components."
+>
+  {/* Style page is reachable by direct URL only. Not linked from navigation.
+      BaseLayout already emits a site-wide <meta name="robots" content="noindex, nofollow">,
+      so this page is excluded from search engines without any per-page meta. */}
+  <main id="main-content" class="mx-auto max-w-prose px-6 py-12 sm:py-16">
+    <header class="mb-12">
+      <p class="text-xs font-semibold uppercase tracking-widest text-stone-500">Internal · reference</p>
+      <h1 class="mt-2 font-display text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
+        Style reference
+      </h1>
+      <p class="mt-4 text-base text-stone-600 sm:text-lg">
+        A one-page tour of the tokens, components, and motion this site uses. Not linked from
+        navigation; reachable by direct URL at <code class="rounded bg-stone-100 px-1.5 py-0.5 text-sm">/style</code>.
+      </p>
+    </header>
+
+    {/* ─────────────────── Type scale ─────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-bold tracking-tight text-stone-900">Type scale</h2>
+      <p class="mt-2 text-sm text-stone-600">
+        Display in <strong>Fraunces</strong> (serif, variable optical sizing).
+        Body in <strong>Inter</strong>. Tamil in <strong>Noto Sans Tamil</strong>.
+      </p>
+
+      <div class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Display · 5xl · Fraunces 700</p>
+          <p class="font-display text-5xl font-bold tracking-tight text-stone-900">Decoded</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Display · 3xl · Fraunces 600</p>
+          <p class="font-display text-3xl font-semibold tracking-tight text-stone-900">Caste, codified.</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Display · italic · Fraunces 500</p>
+          <p class="font-display text-2xl font-medium italic text-stone-700">what is taught vs. what is documented</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Body · base · Inter 400</p>
+          <p class="font-sans text-base text-stone-800">
+            The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly.
+          </p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Body · sm · Inter 500</p>
+          <p class="font-sans text-sm font-medium text-stone-700">
+            Caption / meta text — slightly heavier weight to compensate for smaller size.
+          </p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wide text-stone-500">Tamil · 2xl · Noto Sans Tamil 500</p>
+          <p lang="ta" class="font-tamil text-2xl font-medium text-stone-700">தெளிவு — சாதி, மதம்</p>
+        </div>
+      </div>
+    </section>
+
+    {/* ─────────────────── Colour tokens ─────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-bold tracking-tight text-stone-900">Colour tokens</h2>
+      <p class="mt-2 text-sm text-stone-600">
+        Editorial paper / ink palette. CSS custom properties live in
+        <code class="rounded bg-stone-100 px-1 py-0.5 text-xs">src/styles/global.css</code>.
+      </p>
+
+      <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {[
+          { name: 'paper',   token: '--color-paper',   hex: '#fafaf9', text: 'text-stone-900' },
+          { name: 'cream',   token: '--color-cream',   hex: '#fdfcf9', text: 'text-stone-900' },
+          { name: 'rule',    token: '--color-rule',    hex: '#e7e5e4', text: 'text-stone-900' },
+          { name: 'ink',     token: '--color-ink',     hex: '#1c1917', text: 'text-stone-50' },
+          { name: 'primary', token: '--color-primary', hex: '#4338ca', text: 'text-stone-50' },
+          { name: 'accent',  token: '--color-accent',  hex: '#b45309', text: 'text-stone-50' },
+        ].map((c) => (
+          <div class="overflow-hidden rounded-xl border border-stone-200">
+            <div class={`flex h-16 items-end px-3 py-2 ${c.text}`} style={`background:${c.hex}`}>
+              <span class="text-xs font-semibold">{c.name}</span>
+            </div>
+            <div class="bg-white px-3 py-2 text-xs text-stone-600">
+              <code class="font-mono">{c.token}</code>
+              <p class="mt-0.5 font-mono text-[11px] text-stone-500">{c.hex}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Tier colours</h3>
+      <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { name: 'green',    token: '--color-tier-green',    hex: '#047857' },
+          { name: 'yellow',   token: '--color-tier-yellow',   hex: '#b45309' },
+          { name: 'red',      token: '--color-tier-red',      hex: '#be123c' },
+          { name: 'rational', token: '--color-tier-rational', hex: '#6d28d9' },
+        ].map((c) => (
+          <div class="overflow-hidden rounded-xl border border-stone-200">
+            <div class="flex h-12 items-end px-3 py-2 text-stone-50" style={`background:${c.hex}`}>
+              <span class="text-xs font-semibold">{c.name}</span>
+            </div>
+            <div class="bg-white px-3 py-1.5 text-[11px] text-stone-600">
+              <code class="font-mono">{c.token}</code>
+              <p class="font-mono text-stone-500">{c.hex}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* ─────────────────── Motion durations ─────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-bold tracking-tight text-stone-900">Motion durations</h2>
+      <p class="mt-2 text-sm text-stone-600">
+        Easing: <code class="rounded bg-stone-100 px-1 py-0.5 text-xs">--ease-editorial</code> —
+        <code class="ml-1 font-mono">cubic-bezier(0.22, 1, 0.36, 1)</code>. Reduced motion clamps
+        durations to 0.01ms globally.
+      </p>
+
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">Token</th>
+              <th class="px-4 py-3">Value</th>
+              <th class="px-4 py-3">Use</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs">--dur-fast</td>
+              <td class="px-4 py-3 font-mono text-xs">160ms</td>
+              <td class="px-4 py-3 text-stone-700">Hover affordances, tier-badge state changes.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs">--dur-base</td>
+              <td class="px-4 py-3 font-mono text-xs">260ms</td>
+              <td class="px-4 py-3 text-stone-700">Popovers, drawer slides, default transitions.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs">--dur-slow</td>
+              <td class="px-4 py-3 font-mono text-xs">420ms</td>
+              <td class="px-4 py-3 text-stone-700">Page-level view-transitions, large layout moves.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* ─────────────────── Components ─────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-bold tracking-tight text-stone-900">Components</h2>
+
+      <h3 class="mt-6 font-display text-lg font-semibold text-stone-900">FactTier badge</h3>
+      <div class="mt-3 flex flex-wrap gap-3 rounded-2xl border border-stone-200 bg-white p-4">
+        <FactTier tier="green" />
+        <FactTier tier="yellow" />
+        <FactTier tier="red" />
+        <FactTier tier="rational" />
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Claim with inline citation</h3>
+      <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-5 text-stone-800">
+        <p>
+          <Claim tier="green" sources={["moorjani-2013-ajhg"]}>
+            After ~1900 BP, admixture sharply slowed: most jati groups transitioned to strict
+            endogamy, freezing the ANI/ASI ratio in place.
+          </Claim>
+        </p>
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Standalone Cite chip</h3>
+      <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-5 text-stone-800">
+        <p>
+          A typical sentence with a footnote-style reference <Cite id="bayly-1999-caste" n={1} />
+          rendered at the end. Hover the chip for a source preview.
+        </p>
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Pull-quote</h3>
+      <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-5">
+        <blockquote class="pull-quote">
+          The Kuladeivam shrine is, in effect, the kootam's address.
+        </blockquote>
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Editorial card</h3>
+      <div class="mt-3 rounded-2xl border border-stone-200 bg-cream p-6">
+        <p class="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+          Material practice · செயல்பாடு
+        </p>
+        <h4 class="mt-2 font-display text-xl font-semibold tracking-tight text-stone-900">
+          Tank-fed irrigation
+        </h4>
+        <p class="mt-2 text-sm text-stone-700">
+          The hydraulic infrastructure — earthen tank bunds, sluice gates, command-area channels —
+          is the most concretely preserved part of the Vellala material legacy.
+        </p>
+        <div class="mt-3"><FactTier tier="green" /></div>
+      </div>
+
+      <h3 class="mt-8 font-display text-lg font-semibold text-stone-900">Drop-cap (prose-editorial)</h3>
+      <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-5">
+        <div class="prose-editorial has-dropcap text-stone-800">
+          <p>
+            Caste is most often described as timeless, ancient, and unchanging — a static social
+            order handed down without alteration from Vedic antiquity. The historical record tells
+            a very different story. The categories that feel permanent today were repeatedly remade
+            by political power, scribal practice, and bureaucratic accident.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <p class="mt-12 text-xs text-stone-500">
+      This page is excluded from search engines via a per-page robots meta. Update tokens in
+      <code class="rounded bg-stone-100 px-1 py-0.5">src/styles/global.css</code>; this page reads from there.
+    </p>
+  </main>
+</BaseLayout>

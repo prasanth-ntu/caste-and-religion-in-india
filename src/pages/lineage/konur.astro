@@ -6,6 +6,7 @@ import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import FestivalCalendar from '../../components/viz/FestivalCalendar.tsx';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 // Pilgrimage / lifecycle rituals tied to the Kuladeivam.
 const pilgrimage = [
@@ -156,7 +157,7 @@ const iconHotspots = [
         The Kuladeivam concept
         <span class="ml-2 font-tamil text-xl font-medium text-stone-600">குலதெய்வம் என்றால் என்ன?</span>
       </h2>
-      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
         <p>
           A Kuladeivam (குலதெய்வம், literally "clan deity") is a deity adopted by a specific lineage — typically a village goddess or local form of Shiva, Vishnu, or Murugan — to whom the lineage returns for major life events. It is not a sect, not a chosen deity, not a personal favourite. It is inherited, like a surname.
         </p>
@@ -196,6 +197,9 @@ const iconHotspots = [
         <p>
           The practical implication: if you are a Kadai family in the Bengaluru or Chennai diaspora, your specific Kuladeivam shrine depends on which village your great-great-grandfather farmed in. There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster. The Konur shrine is one of them.
         </p>
+        <blockquote class="pull-quote">
+          There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster.
+        </blockquote>
       </div>
     </section>
 
@@ -416,5 +420,25 @@ const iconHotspots = [
     </section>
 
     <LineageCompareOverlay client:idle currentSlug="kadai" />
+
+    <RelatedNav
+      readNext={{
+        href: '/lineage/ancestors',
+        title: 'Ancestor practices',
+        sub: 'Burial, naadu-kal, and inherited material culture.',
+      }}
+      related={{
+        label: 'Related rituals',
+        items: [
+          {
+            href: '/rituals?kootam=kadai',
+            title: 'How rituals tie to the kuladeivam',
+            lineage: 'kadai',
+          },
+        ],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+      lineageAware={true}
+    />
   </main>
 </BaseLayout>

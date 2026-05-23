@@ -153,6 +153,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </section>
 
     {/* ───────────────────────── Tier legend strip ───────────────────────── */}
+    {/* Phase 3 follow-up needed: the tier chips below currently expose tooltips
+        via the native `title` attribute (hover-only on desktop, ignored by
+        keyboard users). Replace with a focusable popover (button + aria-describedby
+        on a stone-50 panel) when the header-level tier legend popover is built;
+        the two should share the same component. */}
     <section class="mx-auto max-w-6xl px-6 py-12">
       <div class="flex flex-wrap items-center justify-center gap-3">
         <span

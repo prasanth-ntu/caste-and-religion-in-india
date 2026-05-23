@@ -1,0 +1,143 @@
+---
+/**
+ * RelatedNav — contextual cross-links rendered at the bottom of a content page.
+ *
+ * Layout: top divider, then a 3-column grid on sm+: [Read next] [Related X] [Back to hub].
+ * Stacks on mobile.
+ *
+ * Each cell:
+ *   - 11px uppercase stone-500 tracking-wider label
+ *   - content below (card / link list / chevron link)
+ *
+ * Lineage-aware mode:
+ *   When `lineageAware` is true, a tiny inline <script> reads
+ *   `localStorage.decoded.lineage` and, if a non-default kootam (anything other
+ *   than `kadai`) is selected, hides Related-item links that carry a
+ *   `data-lineage`/`data-region` mismatch. Items without those attributes are
+ *   left visible (graceful fallback).
+ */
+
+export interface Props {
+  readNext?: { href: string; title: string; sub?: string };
+  related?: {
+    label: string;
+    items: Array<{
+      href: string;
+      title: string;
+      lineage?: string; // optional kootam slug filter for lineage-aware
+      region?: string; // optional region filter for lineage-aware
+    }>;
+  };
+  backTo?: { href: string; label: string };
+  lineageAware?: boolean;
+}
+
+const { readNext, related, backTo, lineageAware = false } = Astro.props as Props;
+
+const focusRing =
+  'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50';
+---
+
+<nav
+  class="mt-16 border-t border-stone-200 pt-8"
+  aria-label="Related and next content"
+  data-related-nav={lineageAware ? 'lineage-aware' : null}
+>
+  <div class="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
+    {/* Read next */}
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        Read next
+      </p>
+      {readNext ? (
+        <a
+          href={readNext.href}
+          class={`mt-2 block rounded-lg border border-stone-200 bg-white p-4 transition-colors hover:border-indigo-300 hover:bg-stone-50 ${focusRing}`}
+        >
+          <span class="block text-sm font-semibold text-stone-900">
+            {readNext.title}
+          </span>
+          {readNext.sub && (
+            <span class="mt-1 block text-xs leading-snug text-stone-600">
+              {readNext.sub}
+            </span>
+          )}
+        </a>
+      ) : (
+        <p class="mt-2 text-xs italic text-stone-400">—</p>
+      )}
+    </div>
+
+    {/* Related */}
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        {related?.label ?? 'Related'}
+      </p>
+      {related && related.items.length > 0 ? (
+        <ul class="mt-2 space-y-1.5" data-related-list>
+          {related.items.map((it) => (
+            <li
+              data-related-item
+              data-lineage={it.lineage ?? null}
+              data-region={it.region ?? null}
+            >
+              <a
+                href={it.href}
+                class={`block rounded text-sm text-stone-700 hover:text-indigo-700 ${focusRing}`}
+              >
+                {it.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-2 text-xs italic text-stone-400">—</p>
+      )}
+    </div>
+
+    {/* Back to hub */}
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        Back to hub
+      </p>
+      {backTo ? (
+        <a
+          href={backTo.href}
+          class={`mt-2 inline-flex items-center gap-1 rounded text-sm text-stone-700 hover:text-indigo-700 ${focusRing}`}
+        >
+          <span aria-hidden="true">←</span>
+          <span>{backTo.label}</span>
+        </a>
+      ) : (
+        <p class="mt-2 text-xs italic text-stone-400">—</p>
+      )}
+    </div>
+  </div>
+
+  {lineageAware && (
+    <script is:inline>
+      (function () {
+        try {
+          var raw = window.localStorage.getItem('decoded.lineage');
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          var selected = parsed && parsed.kootam;
+          if (!selected || selected === 'kadai') return;
+          var nav = document.querySelector('[data-related-nav="lineage-aware"]');
+          if (!nav) return;
+          var items = nav.querySelectorAll('[data-related-item]');
+          items.forEach(function (li) {
+            var lin = li.getAttribute('data-lineage');
+            // If item is tagged for a specific lineage AND that doesn't match
+            // the selected one, hide it. Untagged items stay visible.
+            if (lin && lin !== selected) {
+              li.style.display = 'none';
+            }
+          });
+        } catch (_) {
+          /* graceful no-op */
+        }
+      })();
+    </script>
+  )}
+</nav>

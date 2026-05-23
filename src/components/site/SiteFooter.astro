@@ -114,7 +114,7 @@ const lanes: Lane[] = [
     <div class="mt-10 flex flex-col items-start justify-between gap-3 border-t border-stone-200 pt-6 text-xs text-stone-500 sm:flex-row sm:items-center">
       <a
         href="/"
-        class={`flex items-baseline gap-1 rounded-sm ${focusRing}`}
+        class={`wordmark-underline flex items-baseline gap-1 rounded-sm ${focusRing}`}
         aria-label="Decoded — home"
       >
         <span class="font-display text-base font-semibold tracking-tight text-stone-800">
@@ -135,3 +135,27 @@ const lanes: Lane[] = [
     </div>
   </div>
 </footer>
+
+<style>
+  /* Wordmark underline — animates a left→right indigo fill on hover/focus.
+     Implemented via a linear-gradient background sized from 0% to 100% so the
+     transition is GPU-friendly. A transparent border-bottom reserves vertical
+     space so the underline appearance doesn't shift the baseline. */
+  .wordmark-underline {
+    border-bottom: 1px solid transparent;
+    background-image: linear-gradient(to right, var(--color-primary), var(--color-primary));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 220ms var(--ease-editorial);
+  }
+  .wordmark-underline:hover,
+  .wordmark-underline:focus-visible {
+    background-size: 100% 1px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wordmark-underline {
+      transition: none;
+    }
+  }
+</style>

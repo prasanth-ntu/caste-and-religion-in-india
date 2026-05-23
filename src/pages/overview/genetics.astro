@@ -4,6 +4,7 @@ import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import GeneticsChart from '../../components/viz/GeneticsChart.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 ---
 
 <BaseLayout
@@ -34,7 +35,7 @@ import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
     </header>
 
     {/* Intro prose */}
-    <section class="prose prose-stone mb-12 max-w-prose text-stone-800 sm:text-lg">
+    <section class="prose prose-stone prose-editorial has-dropcap mb-12 max-w-prose text-stone-800 sm:text-lg">
       <p>
         Three landmark papers reframed Indian population genetics in the 21st century.
         <Claim tier="green" sources={["reich-2009-nature", "moorjani-2013-ajhg"]}>
@@ -143,5 +144,18 @@ import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
         Back to Overview
       </a>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/overview/varna-vs-jati',
+        title: 'Varna vs Jati',
+        sub: 'How the four-bucket textual category sits over the thousands of jatis.',
+      }}
+      related={{
+        label: 'Related sources',
+        items: [{ href: '/sources?type=paper', title: 'Peer-reviewed papers cited here' }],
+      }}
+      backTo={{ href: '/overview', label: 'Overview hub' }}
+    />
   </main>
 </BaseLayout>

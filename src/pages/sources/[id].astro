@@ -7,6 +7,7 @@ import {
   COLLECTION_LABELS,
   type BacklinkCollection,
 } from '../../lib/graph.ts';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 export async function getStaticPaths() {
   const all = await getCollection('sources');
@@ -182,5 +183,20 @@ const authorLine =
         </a>
       </p>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/sources',
+        title: 'All sources',
+        sub: 'Filter by type — paper, book, wiki, inscription, oral.',
+      }}
+      related={{
+        label: 'Related',
+        items: [
+          { href: `/sources?type=${d.type}`, title: `More ${d.type} sources` },
+        ],
+      }}
+      backTo={{ href: '/sources', label: 'Sources hub' }}
+    />
   </main>
 </BaseLayout>

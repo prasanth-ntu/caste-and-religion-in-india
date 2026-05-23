@@ -1,7 +1,20 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PathProgress from '../../components/site/PathProgress.tsx';
+import { formatMeta, type Audience } from '../../lib/reading-time';
 
-const subpages = [
+type Subpage = {
+  href: string;
+  title: string;
+  tamil: string;
+  desc: string;
+  status: 'ready' | 'stub';
+  color: string;
+  readTime: number;
+  audience: Audience;
+};
+
+const subpages: Subpage[] = [
   {
     href: '/overview/varna-vs-jati',
     title: 'Varna vs Jati',
@@ -10,6 +23,8 @@ const subpages = [
       'A radial dendrogram from Indian society down to one kootam. Resolves the most common confusion: varna is a textual category of four; jati is the lived reality of thousands.',
     status: 'ready',
     color: 'indigo',
+    readTime: 5,
+    audience: 'everyone',
   },
   {
     href: '/overview/timeline',
@@ -19,6 +34,8 @@ const subpages = [
       'Scrollytelling from Sangam-era inscriptions through Chola temple grants, British 1881 census codification, the 1950 Constitution, and Mandal.',
     status: 'stub',
     color: 'amber',
+    readTime: 5,
+    audience: 'curious',
   },
   {
     href: '/overview/genetics',
@@ -28,6 +45,8 @@ const subpages = [
       'ANI / ASI admixture over four millennia and per-jati founder-event severity. Why endogamy shows up in the DNA.',
     status: 'stub',
     color: 'emerald',
+    readTime: 8,
+    audience: 'researchers',
   },
   {
     href: '/overview/reservation-policy',
@@ -37,6 +56,8 @@ const subpages = [
       'Sankey of caste category → education seats → government jobs, with Tamil Nadu’s 69% reservation as a case study.',
     status: 'ready',
     color: 'rose',
+    readTime: 6,
+    audience: 'everyone',
   },
 ];
 
@@ -52,6 +73,7 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
   title="Overview — Decoded"
   description="Section A: India-wide caste system. Varna vs jati, timeline, genetics, reservation policy."
 >
+  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
@@ -73,6 +95,7 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
       {
         subpages.map((p) => {
           const c = colorMap[p.color];
+          const meta = formatMeta(p.audience, p.readTime);
           return (
             <a
               href={p.href}
@@ -96,6 +119,13 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
               </div>
               <p class="mt-1 font-tamil text-base text-stone-600">{p.tamil}</p>
               <p class="mt-3 text-sm leading-relaxed text-stone-700">{p.desc}</p>
+              <p class="mt-3 flex items-center gap-1.5 text-xs text-stone-500">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span>{meta.time}</span>
+                <span aria-hidden="true">·</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>{meta.audience}</span>
+              </p>
             </a>
           );
         })

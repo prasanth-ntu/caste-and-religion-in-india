@@ -4,6 +4,7 @@ import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 const communities = [
   {
@@ -75,7 +76,7 @@ const communities = [
         Etymology
         <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சொல் வரலாறு</span>
       </h2>
-      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
         <p>
           The Tamil form is <strong>kavundan / kāvundan</strong> (கவுண்டன்), with the honorific plural <strong>kavundar</strong> (கவுண்டர்). The most-cited internal Tamil derivation glosses it as "village headman" or "land-holder", connecting it to the role of the local Naattaanmai (நாட்டாண்மை) or Pattakaarar (பட்டக்காரர்).
         </p>
@@ -199,5 +200,20 @@ const communities = [
         </li>
       </ul>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/lineage/kootams',
+        title: 'The 145 kootams',
+        sub: 'Browse the totemic clans inside the Kongu Vellala Gounder structure.',
+      }}
+      related={{
+        label: 'Related lineage',
+        items: [
+          { href: '/lineage/konur', title: 'Konur Kaliamman — Kadai Kootam shrine' },
+        ],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
   </main>
 </BaseLayout>

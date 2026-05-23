@@ -71,6 +71,13 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
   const [activeStage, setActiveStage] = useState<StageId>('india');
   const [currentK, setCurrentK] = useState(1);
   const [showTemplePopover, setShowTemplePopover] = useState(false);
+  // ---------------- Story mode (auto-advance) ----------------
+  const [playing, setPlaying] = useState(false);
+  const [storyIndex, setStoryIndex] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const storyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const STORY_DWELL_MS = 4000;
   // Defer SVG rendering until after mount; avoids hydration mismatch from
   // tiny float precision differences in projection output between Node and
   // the browser.
@@ -184,6 +191,68 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
     snapToStage(stagesById[activeStage], true);
   }, [activeStage, snapToStage]);
 
+  // ---------------- Story-mode controls ----------------
+  const toggleStory = useCallback(() => {
+    // Reduced motion: don't auto-advance. Jump straight to the last stage.
+    if (reducedMotionRef.current) {
+      const last = stages[stages.length - 1];
+      setStoryIndex(stages.length - 1);
+      setCompleted(true);
+      setPlaying(false);
+      snapToStage(last, false);
+      return;
+    }
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    // Starting fresh or replaying after completion.
+    if (completed) {
+      setStoryIndex(0);
+      setCompleted(false);
+      snapToStage(stages[0], true);
+    } else {
+      // Begin from current storyIndex; snap to that stage to align.
+      snapToStage(stages[storyIndex], true);
+    }
+    setPlaying(true);
+  }, [playing, completed, storyIndex, snapToStage]);
+
+  // Advance through stages while playing (and not hover-paused).
+  useEffect(() => {
+    if (!playing || hoverPaused) return;
+    if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
+    storyTimerRef.current = setTimeout(() => {
+      const next = storyIndex + 1;
+      if (next >= stages.length) {
+        // Reached the end.
+        setPlaying(false);
+        setCompleted(true);
+        return;
+      }
+      setStoryIndex(next);
+      snapToStage(stages[next], true);
+    }, STORY_DWELL_MS);
+    return () => {
+      if (storyTimerRef.current) {
+        clearTimeout(storyTimerRef.current);
+        storyTimerRef.current = null;
+      }
+    };
+  }, [playing, hoverPaused, storyIndex, snapToStage]);
+
+  // Cleanup timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
+    };
+  }, []);
+
+  const storyButtonLabel = playing ? '⏸ Pause' : completed ? '▶ Replay' : '▶ Tell me the story';
+  const storyCaption =
+    stages[storyIndex]?.narrativeCaption ?? stages[storyIndex]?.description ?? '';
+  const captionVisible = playing || (completed && storyIndex === stages.length - 1);
+
   // ---------------- Visibility per current k ----------------
   const layers = visibleLayers(currentK);
 
@@ -205,7 +274,11 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
               role="tab"
               aria-pressed={active}
               aria-selected={active}
-              onClick={() => snapToStage(s, true)}
+              onClick={() => {
+                // Manual stage selection pauses any active story playback.
+                if (playing) setPlaying(false);
+                snapToStage(s, true);
+              }}
               className={[
                 'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
                 active
@@ -229,10 +302,42 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
         </button>
       </div>
 
+      {/* Story-mode control */}
+      <div className="mb-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleStory}
+          aria-pressed={playing}
+          title={
+            reducedMotionRef.current
+              ? 'Auto-advance disabled · reduced motion is enabled'
+              : undefined
+          }
+          className={[
+            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+            playing
+              ? 'border-indigo-300 bg-indigo-100 text-indigo-900 shadow-sm'
+              : 'border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50',
+          ].join(' ')}
+        >
+          {storyButtonLabel}
+        </button>
+        {reducedMotionRef.current && (
+          <span className="text-xs text-stone-500">Auto-advance disabled · reduced motion</span>
+        )}
+      </div>
+
       {/* Map SVG */}
       <div
         className="relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 shadow-inner"
         style={{ height: size.height }}
+        data-zoom-map-story-mode={playing ? 'playing' : completed ? 'completed' : 'idle'}
+        onMouseEnter={() => {
+          if (playing) setHoverPaused(true);
+        }}
+        onMouseLeave={() => {
+          if (hoverPaused) setHoverPaused(false);
+        }}
       >
         {!mounted && (
           <div className="flex h-full items-center justify-center text-sm text-stone-400">
@@ -450,6 +555,35 @@ export default function ZoomMap({ height: heightProp }: ZoomMapProps = {}) {
         {showTemplePopover && layers.templePin && (
           <KonurPopover onClose={() => setShowTemplePopover(false)} />
         )}
+
+        {/* Story-mode caption + progress dots */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-12 flex flex-col items-center gap-2"
+          aria-hidden={!captionVisible}
+        >
+          <div
+            key={`caption-${storyIndex}`}
+            role="status"
+            aria-live="polite"
+            className="max-w-[70%] rounded-lg bg-stone-900/70 p-3 text-center text-[14px] leading-snug text-white shadow-lg backdrop-blur-sm transition-opacity duration-[180ms]"
+            style={{ opacity: captionVisible ? 1 : 0 }}
+          >
+            {storyCaption}
+          </div>
+          {(playing || completed) && (
+            <div className="flex gap-1" aria-label="Story progress">
+              {stages.map((_s, i) => (
+                <span
+                  key={`dot-${i}`}
+                  className={[
+                    'h-2 w-2 rounded-full transition-colors',
+                    i === storyIndex ? 'bg-indigo-500' : 'bg-stone-300',
+                  ].join(' ')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Breadcrumb */}

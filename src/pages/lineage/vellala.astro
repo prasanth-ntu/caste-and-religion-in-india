@@ -4,6 +4,7 @@ import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 
 const subgroups = [
   { en: 'Saiva Pillai', ta: 'சைவ பிள்ளை', note: 'Saivite, often temple-affiliated; concentrated in the Cauvery delta and Tondai country.' },
@@ -49,7 +50,7 @@ const subgroups = [
         Etymology
         <span class="ml-2 font-tamil text-xl font-medium text-stone-600">சொல் வரலாறு</span>
       </h2>
-      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
         <p>
           The most commonly cited Tamil derivation is <strong>vellam</strong> (வெள்ளம், flood / abundant water) + <strong>aanmai</strong> (ஆண்மை, mastery / governance) — "masters of water" — referencing the community's historical role in tank and well irrigation. Alternative derivations relate the word to <em>vēl</em> (வேள், chieftain) or to the Velir clans of the Sangam era.
         </p>
@@ -175,5 +176,20 @@ const subgroups = [
         </li>
       </ul>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/lineage/gounder',
+        title: 'Gounder',
+        sub: 'The headman title carried by Kongu Vellala families.',
+      }}
+      related={{
+        label: 'Related overview',
+        items: [
+          { href: '/overview/varna-vs-jati', title: 'Varna vs Jati — where Vellala sits' },
+        ],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
   </main>
 </BaseLayout>

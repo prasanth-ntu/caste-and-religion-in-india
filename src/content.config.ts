@@ -12,6 +12,9 @@ const sources = defineCollection({
     url: z.string().url().optional(),
     archived_url: z.string().url().optional(),
     notes: z.string().optional(),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -24,6 +27,9 @@ const claims = defineCollection({
     sources: z.array(reference('sources')).default([]),
     rebuttal: z.string().optional(),
     evidence_summary: z.string(),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -43,6 +49,9 @@ const kootams = defineCollection({
     claims: z.array(reference('claims')).default([]),
     status: z.enum(['documented', 'stub']).default('documented'),
     attestation: z.enum(['academic', 'community', 'oral-family']).optional(),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -67,6 +76,9 @@ const deities = defineCollection({
     festivals: z.array(z.string()).default([]),
     claims: z.array(reference('claims')).default([]),
     attestation: z.enum(['academic', 'community', 'oral-family']).optional(),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -86,6 +98,9 @@ const lineageNodes = defineCollection({
       })
       .optional(),
     claims: z.array(reference('claims')).default([]),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -112,6 +127,9 @@ const rituals = defineCollection({
     relatedLineage: z.array(reference('lineage-nodes')).default([]),
     relatedPolicy: z.array(reference('claims')).default([]),
     claims: z.array(reference('claims')).default([]),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 
@@ -135,6 +153,9 @@ const timelineEvents = defineCollection({
       'colonial',
       'other',
     ]),
+    // Hub-card meta (Phase 3.6) — optional.
+    audience: z.enum(['everyone', 'researchers', 'curious']).optional(),
+    read_time: z.number().optional(),
   }),
 });
 

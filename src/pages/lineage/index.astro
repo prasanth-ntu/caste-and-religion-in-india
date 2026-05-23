@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PathProgress from '../../components/site/PathProgress.tsx';
 import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
@@ -8,8 +9,20 @@ import LineageSelector from '../../components/LineageSelector.tsx';
 import LineagePersonalSentence from '../../components/LineagePersonalSentence.tsx';
 import LineageHubAdapter from '../../components/LineageHubAdapter.tsx';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import { formatMeta, type Audience } from '../../lib/reading-time';
 
-const cards = [
+type Card = {
+  href: string;
+  icon: string;
+  title: string;
+  titleTa: string;
+  body: string;
+  accent: string;
+  readTime: number;
+  audience: Audience;
+};
+
+const cards: Card[] = [
   {
     href: '/lineage/kongu',
     icon: '🌾',
@@ -17,6 +30,8 @@ const cards = [
     titleTa: 'பகுதி',
     body: 'Kongu Nadu — the semi-arid western Tamil Nadu plateau, watered by tank and well, fought over for centuries by Chera, Chola, and Pandya.',
     accent: 'bg-amber-50 border-amber-200 hover:border-amber-400',
+    readTime: 5,
+    audience: 'everyone',
   },
   {
     href: '/lineage/vellala',
@@ -25,6 +40,8 @@ const cards = [
     titleTa: 'சாதி',
     body: 'Vellalar — the cultivator caste-cluster of the Tamil country. Kongu Vellala is the western branch.',
     accent: 'bg-emerald-50 border-emerald-200 hover:border-emerald-400',
+    readTime: 6,
+    audience: 'everyone',
   },
   {
     href: '/lineage/gounder',
@@ -33,6 +50,8 @@ const cards = [
     titleTa: 'பட்டம்',
     body: 'Gounder (கவுண்டர்) — a Kongu honorific, used across multiple agrarian communities, not a caste in itself.',
     accent: 'bg-sky-50 border-sky-200 hover:border-sky-400',
+    readTime: 4,
+    audience: 'everyone',
   },
   {
     href: '/lineage/kootams',
@@ -41,6 +60,8 @@ const cards = [
     titleTa: '145 குலங்கள்',
     body: 'The exogamous clan structure — each with its own totem (bird, tree, fish). Kadai = quail. This is the defining structure of Kongu Vellala identity.',
     accent: 'bg-violet-50 border-violet-200 hover:border-violet-400',
+    readTime: 8,
+    audience: 'curious',
   },
   {
     href: '/lineage/ancestors',
@@ -49,14 +70,19 @@ const cards = [
     titleTa: 'முன்னோர் செய்தவை',
     body: 'What Vellala actually did — paddy, cotton, sugarcane, kamalai well-lifts, eri tanks, Naattaanmai headmen, hero stones. Tier-tagged material practice over a stylised Kongu landscape.',
     accent: 'bg-lime-50 border-lime-200 hover:border-lime-400',
+    readTime: 7,
+    audience: 'researchers',
   },
 ];
+
+const konurMeta = formatMeta('everyone', 4);
 ---
 
 <BaseLayout
   title="Lineage — Decoded"
   description="A semantic-zoom map of the personal lineage from India to Konur — Kongu Vellala Gounder, Kadai Kootam, Konur Kaliamman."
 >
+  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     {/* Lineage selector — at the top so visitors can switch lineage immediately */}
     <section class="mb-8">
@@ -141,7 +167,9 @@ const cards = [
           <span class="ml-2 font-tamil text-lg font-medium text-stone-600">அடுக்குகள்</span>
         </h2>
         <div class="grid gap-4 sm:grid-cols-2">
-          {cards.map((c) => (
+          {cards.map((c) => {
+            const meta = formatMeta(c.audience, c.readTime);
+            return (
             <a
               href={c.href}
               class={`group flex items-start gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-all ${c.accent}`}
@@ -153,13 +181,21 @@ const cards = [
                   <span class="ml-2 font-tamil text-sm font-medium text-stone-500">{c.titleTa}</span>
                 </span>
                 <span class="mt-1 block text-sm text-stone-600">{c.body}</span>
+                <span class="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <span>{meta.time}</span>
+                  <span aria-hidden="true">·</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span>{meta.audience}</span>
+                </span>
                 <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-700 group-hover:underline">
                   Open
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </span>
               </span>
             </a>
-          ))}
+            );
+          })}
         </div>
 
         {/* The emotional-core card — distinct */}
@@ -180,6 +216,13 @@ const cards = [
               <strong>Konur Kaliamman</strong> — the Kadai-Kootam kuladeivam. A village goddess
               in Namakkal district, festival cycle and iconography mapped, with the Kadai
               diaspora's return-rite still observed across generations.
+            </span>
+            <span class="mt-2 flex items-center gap-1.5 text-xs text-rose-700/80">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              <span>{konurMeta.time}</span>
+              <span aria-hidden="true">·</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>{konurMeta.audience}</span>
             </span>
             <span class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-rose-800 group-hover:underline">
               Visit the temple page

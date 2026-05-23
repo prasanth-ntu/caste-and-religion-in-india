@@ -1,5 +1,6 @@
 ---
 import FactTier from '../FactTier.astro';
+import { formatMeta, type Audience } from '../../lib/reading-time';
 
 type Tier = 'green' | 'yellow' | 'red' | 'rational';
 type Category =
@@ -21,14 +22,19 @@ interface RitualData {
   evidence_says: string;
   tier: Tier;
   rational_basis?: string;
+  audience?: Audience;
+  read_time?: number;
 }
 
 interface Props {
   entry: { data: RitualData; id?: string; slug?: string };
+  readTime?: number;
+  audience?: Audience;
 }
 
-const { entry } = Astro.props;
+const { entry, readTime, audience } = Astro.props;
 const d = entry.data;
+const meta = formatMeta(audience ?? d.audience, readTime ?? d.read_time);
 
 const categoryStyles: Record<Category, string> = {
   birth: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
@@ -76,6 +82,13 @@ const catClasses = categoryStyles[d.category];
           <FactTier tier={d.tier} />
         </div>
         <h2 class="text-xl font-semibold text-stone-900">{d.name}</h2>
+        <p class="mt-1 flex items-center gap-1.5 text-xs text-stone-500">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span>{meta.time}</span>
+          <span aria-hidden="true">·</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>{meta.audience}</span>
+        </p>
         <div class="mt-3 flex-1">
           <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">
             Tradition says

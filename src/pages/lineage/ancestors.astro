@@ -5,6 +5,7 @@ import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import AncestorPractices from '../../components/viz/AncestorPractices.tsx';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
 ---
 
 <BaseLayout
@@ -59,7 +60,7 @@ import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
       <p class="mt-2 max-w-2xl text-stone-600">
         Of everything above, these are the pieces with the strongest documentary support.
       </p>
-      <div class="prose prose-stone mt-4 max-w-prose text-stone-800 sm:text-lg">
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-prose text-stone-800 sm:text-lg">
         <p>
           <Claim tier="green" sources={["vellala-tank-irrigation"]}>
             Kongu Vellala communities historically specialised in tank-fed (ஏரி) and well-fed (கமலை) irrigation in the semi-arid Kongu region, supporting paddy, cotton, sugarcane, and millet cultivation.
@@ -141,5 +142,20 @@ import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
         <a href="/lineage" class="font-medium text-emerald-700 hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">← Back to Lineage</a>
       </p>
     </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/overview/genetics',
+        title: 'Population genetics',
+        sub: 'Where the genetic record agrees (and disagrees) with the oral pedigree.',
+      }}
+      related={{
+        label: 'Related sources',
+        items: [
+          { href: '/sources', title: 'Sources for Vellala material practice' },
+        ],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
   </main>
 </BaseLayout>

@@ -5,6 +5,7 @@ import Claim from '../../../components/Claim.astro';
 import LineageSelector from '../../../components/LineageSelector.tsx';
 import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
 import VarnaJatiLocator from '../../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../../components/site/RelatedNav.astro';
 
 export async function getStaticPaths() {
   const all = await getCollection('kootams');
@@ -357,5 +358,47 @@ const tierBadge: Record<string, string> = {
     </section>
 
     {!isStub && <LineageCompareOverlay client:idle currentSlug={d.slug} />}
+
+    {isStub ? (
+      <RelatedNav
+        readNext={{
+          href: '/contribute',
+          title: 'Contribute on GitHub',
+          sub: 'Help fill in totem species, kuladeivam, and exogamy partners for this kootam.',
+        }}
+        related={{
+          label: 'Related lineage',
+          items: [
+            { href: '/lineage/kootams', title: 'Browse all 145 kootams' },
+            { href: '/lineage/gounder', title: 'Gounder — the 145-kootam structure' },
+          ],
+        }}
+        backTo={{ href: '/lineage/kootams', label: 'The 145 kootams' }}
+      />
+    ) : (
+      <RelatedNav
+        readNext={
+          isKadai
+            ? {
+                href: '/lineage/konur',
+                title: 'Konur Kaliamman',
+                sub: 'The Kadai Kootam kuladeivam — full temple page.',
+              }
+            : {
+                href: '/lineage/konur',
+                title: 'Konur Kaliamman (★ Kadai)',
+                sub: "How a kuladeivam looks up close — the author's lineage.",
+              }
+        }
+        related={{
+          label: 'Related lineage',
+          items: [
+            { href: `/compare?a=${d.slug}`, title: `Compare ${d.name} with another lineage` },
+            { href: '/lineage/gounder', title: 'Gounder — 145-kootam structure' },
+          ],
+        }}
+        backTo={{ href: '/lineage/kootams', label: 'The 145 kootams' }}
+      />
+    )}
   </main>
 </BaseLayout>

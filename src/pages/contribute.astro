@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection, getEntry } from 'astro:content';
+import RelatedNav from '../components/site/RelatedNav.astro';
 
 const kootams = await getCollection('kootams');
 
@@ -211,5 +212,13 @@ function newIssueUrl(slug: string, name: string) {
         </li>
       </ol>
     </section>
+
+    <RelatedNav
+      related={{
+        label: 'Related',
+        items: [{ href: '/lineage/kootams', title: 'Browse the 145' }],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
   </main>
 </BaseLayout>

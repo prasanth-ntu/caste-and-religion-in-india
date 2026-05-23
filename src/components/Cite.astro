@@ -1,19 +1,45 @@
 ---
+import { getEntry } from 'astro:content';
+import CiteWithPreview from './CiteWithPreview.tsx';
+
 interface Props {
   id: string;
   n?: number;
 }
 
 const { id, n } = Astro.props;
+const displayN = n ?? 1;
+
+// Resolve source metadata at SSR time so the popover preview has real data
+// without a per-citation network roundtrip on the client.
+const entry = await getEntry('sources', id);
+
+if (!entry) {
+  // Soft-fail: render a plain link chip pointing at the (likely 404) source
+  // page so dangling references stay visible during authoring without
+  // breaking the build.
+}
+
+const source = entry
+  ? {
+      id: entry.data.id,
+      type: entry.data.type,
+      title: entry.data.title,
+      authors: entry.data.authors ?? [],
+      year: entry.data.year,
+      notes: entry.data.notes,
+    }
+  : null;
 ---
 
-<sup class="text-[0.7em] text-sky-700">
+{source ? (
+  <CiteWithPreview n={displayN} source={source} client:visible />
+) : (
   <a
-    href={`#src-${id}`}
-    title={id}
-    class="no-underline hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
-    aria-label={`Reference ${n ?? id}: ${id}`}
+    href={`/sources/${id}`}
+    aria-label={`Reference ${displayN}: ${id}`}
+    class="ml-0.5 inline-flex items-center rounded-full bg-stone-100 px-1.5 py-px text-[11px] font-medium text-stone-700 ring-1 ring-inset ring-stone-200 no-underline align-baseline hover:bg-stone-200 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
   >
-    [{n ?? id}]
+    {displayN}
   </a>
-</sup>
+)}

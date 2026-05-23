@@ -1,5 +1,5 @@
 ---
-import FactTierTooltip from './FactTierTooltip.tsx';
+import ClaimEvidenceToggle from './ClaimEvidenceToggle.tsx';
 import Cite from './Cite.astro';
 
 type Tier = 'green' | 'yellow' | 'red' | 'rational';
@@ -7,13 +7,26 @@ type Tier = 'green' | 'yellow' | 'red' | 'rational';
 interface Props {
   tier: Tier;
   sources?: string[];
+  /**
+   * Optional inline evidence summary. When provided, the tier badge becomes
+   * clickable and expands a stone-50 block beneath the claim with this text.
+   * Pass the FIRST source's summary (or the claim's `evidence_summary`) if
+   * multiple are relevant — keep this single-string for predictable UX.
+   */
+  evidence_summary?: string;
 }
 
-const { tier, sources = [] } = Astro.props;
+const { tier, sources = [], evidence_summary } = Astro.props;
 ---
 
 <span class="claim">
   <slot />
   {sources.map((id, i) => <Cite id={id} n={i + 1} />)}
-  <span class="ml-1"><FactTierTooltip tier={tier} client:visible /></span>
+  <span class="ml-1 inline-block align-middle">
+    <ClaimEvidenceToggle
+      tier={tier}
+      evidenceSummary={evidence_summary}
+      client:visible
+    />
+  </span>
 </span>
