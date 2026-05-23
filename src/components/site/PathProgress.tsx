@@ -215,23 +215,53 @@ export default function PathProgress() {
     <div
       role="region"
       aria-label={`Active path: ${path.name}`}
-      className="border-b border-amber-200 bg-amber-50/90 text-amber-900"
+      className="border-b border-amber-200 bg-amber-50/95 text-amber-900 shadow-sm"
     >
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2 text-sm sm:px-6">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2.5 sm:px-6">
+        {/* Step dots */}
+        <div
+          className="hidden shrink-0 items-center gap-1 sm:flex"
+          aria-label={`Stop ${stopNumber} of ${progress.total}`}
+        >
+          {Array.from({ length: progress.total }, (_, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              className={`h-1.5 rounded-full transition-all ${
+                i < progress.stop
+                  ? 'w-3 bg-amber-500'
+                  : i === progress.stop - 1
+                    ? 'w-3 bg-amber-700'
+                    : 'w-1.5 bg-amber-300'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Path label + stop title */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold uppercase tracking-wider text-amber-700">
+            {path.name} path · {stopNumber} of {progress.total}
+          </p>
+          <p className="truncate text-sm font-medium text-amber-950">
+            {isStarting ? 'Up next:' : 'Next:'} {nextStop.title}
+          </p>
+        </div>
+
+        {/* CTA */}
         <a
           href={nextStop.href}
-          className="flex flex-1 items-center gap-2 truncate rounded font-medium hover:text-amber-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50"
+          className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50"
         >
-          <span aria-hidden="true">↳</span>
-          <span className="truncate">
-            {isStarting ? 'Starting' : 'Continuing'} the {path.name} path — stop {stopNumber} of {progress.total}: {nextStop.title} →
-          </span>
+          {isStarting ? 'Start' : 'Next'} →
         </a>
+
+        {/* Dismiss */}
         <button
           type="button"
           onClick={dismiss}
           aria-label="Dismiss active path"
-          className="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-amber-700 hover:bg-amber-100 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-amber-700 hover:bg-amber-200 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
         >
           <span aria-hidden="true" className="text-base leading-none">×</span>
         </button>

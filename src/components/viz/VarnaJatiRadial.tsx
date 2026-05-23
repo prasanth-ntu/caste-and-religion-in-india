@@ -9,17 +9,16 @@ function prefersReducedMotion(): boolean {
 }
 
 // ---------- Palette ----------
-// Tailwind-aligned stops. Each level gets a fill / stroke / text trio.
 const LEVEL_COLOR: Record<
   CasteLevel,
   { fill: string; stroke: string; text: string; label: string }
 > = {
-  root: { fill: '#78716c', stroke: '#44403c', text: '#1c1917', label: 'Society' }, // stone
-  varna: { fill: '#3b82f6', stroke: '#1d4ed8', text: '#1e3a8a', label: 'Varna' }, // blue
-  'caste-cluster': { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Caste cluster' }, // amber
-  jati: { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Jati' }, // amber
-  'sub-jati': { fill: '#10b981', stroke: '#047857', text: '#064e3b', label: 'Sub-jati' }, // emerald
-  kootam: { fill: '#f43f5e', stroke: '#be123c', text: '#881337', label: 'Kootam' }, // rose
+  root: { fill: '#78716c', stroke: '#44403c', text: '#1c1917', label: 'Society' },
+  varna: { fill: '#3b82f6', stroke: '#1d4ed8', text: '#1e3a8a', label: 'Varna' },
+  'caste-cluster': { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Caste cluster' },
+  jati: { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Jati' },
+  'sub-jati': { fill: '#10b981', stroke: '#047857', text: '#064e3b', label: 'Sub-jati' },
+  kootam: { fill: '#f43f5e', stroke: '#be123c', text: '#881337', label: 'Kootam' },
 };
 
 const TIER_BADGE: Record<string, { emoji: string; label: string; bg: string; fg: string }> = {
@@ -29,22 +28,20 @@ const TIER_BADGE: Record<string, { emoji: string; label: string; bg: string; fg:
   rational: { emoji: '⚖️', label: 'rational basis', bg: 'bg-sky-50', fg: 'text-sky-800' },
 };
 
-// Counts every node in subtree.
-function countNodes(node: TreeNode): number {
-  if (!node.children?.length) return 1;
-  return 1 + node.children.reduce((acc, c) => acc + countNodes(c), 0);
-}
-
 // Find ancestor chain to highlighted node.
-function findPath(node: d3.HierarchyNode<TreeNode>, predicate: (n: TreeNode) => boolean): d3.HierarchyNode<TreeNode>[] {
+function findPath(
+  node: d3.HierarchyNode<TreeNode>,
+  predicate: (n: TreeNode) => boolean,
+): d3.HierarchyNode<TreeNode>[] {
   const target = node.descendants().find((d) => predicate(d.data));
   if (!target) return [];
   return target.ancestors().reverse();
 }
 
+// Fixed mobile SVG height: 4 depth levels × 90 px + 80 px padding.
+const MOBILE_HEIGHT = 4 * 90 + 80;
+
 interface VarnaJatiRadialProps {
-  /** Optional id applied to the chart root. Used by `ChartSkeleton` to detect
-   *  hydration via `data-hydrated="true"` and auto-hide its placeholder. */
   id?: string;
 }
 
@@ -52,10 +49,7 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Defer SVG rendering until ResizeObserver has fired with a real container
-  // width. This prevents the 800×800 flash on the first paint.
   const [measured, setMeasured] = useState(false);
-
   const [size, setSize] = useState({ width: 800, height: 800 });
   const [isMobile, setIsMobile] = useState(false);
   const [selected, setSelected] = useState<TreeNode | null>(null);
@@ -63,22 +57,15 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
   const [inView, setInView] = useState(false);
 
-  // IntersectionObserver: trigger one-shot entry animation when the chart appears.
+  // IntersectionObserver: one-shot entry animation trigger.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setInView(true);
-      return;
-    }
+    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            setInView(true);
-            io.disconnect();
-            break;
-          }
+          if (e.isIntersecting) { setInView(true); io.disconnect(); break; }
         }
       },
       { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
@@ -87,7 +74,7 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     return () => io.disconnect();
   }, []);
 
-  // -------- Responsive observer --------
+  // ResizeObserver: responsive sizing.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -96,16 +83,13 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
         const w = entry.contentRect.width;
         const mobile = w < 768;
         setIsMobile(mobile);
-        // For mobile vertical, height grows with leaves; for desktop, square.
         if (mobile) {
-          const leaves = countNodes(varnaJatiTree);
-          setSize({ width: Math.max(360, w), height: Math.max(720, leaves * 22) });
+          // Top-down tree: fixed height, full container width.
+          setSize({ width: Math.max(w, 320), height: MOBILE_HEIGHT });
         } else {
           const dim = Math.min(1000, Math.max(560, w));
           setSize({ width: dim, height: dim });
         }
-        // Mark as measured on the first real ResizeObserver callback so the SVG
-        // enters the DOM at actual container width rather than the 800px fallback.
         setMeasured(true);
       }
     });
@@ -113,17 +97,15 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     return () => ro.disconnect();
   }, []);
 
-  // Hydration sentinel — fires once the chart has been measured and painted at
-  // real size, so ChartSkeleton hides at the right moment. Mirrors ZoomMap.tsx.
+  // Hydration sentinel for ChartSkeleton.
   useEffect(() => {
     if (!measured) return;
     containerRef.current?.setAttribute('data-hydrated', 'true');
   }, [measured]);
 
-  // -------- Build hierarchy (memoised) --------
+  // Build hierarchy (memoised).
   const root = useMemo(() => {
     const h = d3.hierarchy<TreeNode>(varnaJatiTree);
-    // Stable sort: highlighted first within siblings so Kadai branch is visible.
     h.sort((a, b) => {
       const ah = a.data.highlight ? -1 : 0;
       const bh = b.data.highlight ? -1 : 0;
@@ -132,25 +114,31 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     return h;
   }, []);
 
-  // Path from root to highlighted node — used for default focus + idle glow.
+  // Path from root to highlighted node.
   const highlightPathIds = useMemo(() => {
     const path = findPath(root, (n) => !!n.highlight);
     return new Set(path.map((d) => d.data.id));
   }, [root]);
 
-  // Compute layout whenever size changes.
+  // Compute layout whenever size / mode changes.
   const laidOut = useMemo(() => {
     const r = root.copy();
     if (isMobile) {
-      // Vertical tidy tree (horizontal layout flipped to vertical-flowing): x = depth*step, y = node order.
-      // d3.tree() gives x (along the breadth) and y (depth). We swap to make tree flow top-to-bottom.
-      const layout = d3.tree<TreeNode>().nodeSize([22, 160]);
-      layout(r);
+      // Top-down tree layout: d.x = horizontal breadth, d.y = vertical depth.
+      const padL = 16, padR = 16, padT = 36, padB = 36;
+      const maxDepth = r.height || 4;
+      const depthSpan = MOBILE_HEIGHT - padT - padB;
+      const depthStep = Math.floor(depthSpan / Math.max(1, maxDepth));
+      d3.tree<TreeNode>()
+        .size([size.width - padL - padR, maxDepth * depthStep])
+        .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
       return r;
     }
-    const radius = Math.min(size.width, size.height) / 2 - 130;
-    const layout = d3.tree<TreeNode>().size([2 * Math.PI, radius]).separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1));
-    layout(r);
+    // Desktop: radial layout.
+    const radius = Math.min(size.width, size.height) / 2 - 100;
+    d3.tree<TreeNode>()
+      .size([2 * Math.PI, radius])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1))(r);
     return r;
   }, [root, size, isMobile]);
 
@@ -163,40 +151,27 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     return highlightPathIds;
   }, [hoveredId, laidOut, highlightPathIds]);
 
-  // -------- Render via D3 imperative pass --------
+  // D3 imperative render pass.
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     if (!svg.node()) return;
     svg.selectAll('*').remove();
 
-    // Re-inject the glow filter after clearing.
+    // Glow filter for Kadai highlight.
     const defs = svg.append('defs');
-    const filter = defs
-      .append('filter')
+    const filter = defs.append('filter')
       .attr('id', 'kadai-glow')
-      .attr('x', '-50%')
-      .attr('y', '-50%')
-      .attr('width', '200%')
-      .attr('height', '200%');
+      .attr('x', '-50%').attr('y', '-50%')
+      .attr('width', '200%').attr('height', '200%');
     filter.append('feGaussianBlur').attr('stdDeviation', 3.5).attr('result', 'blur');
     const merge = filter.append('feMerge');
     merge.append('feMergeNode').attr('in', 'blur');
     merge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     if (isMobile) {
-      renderVertical(svg, laidOut, size, activePathIds, {
-        setSelected,
-        setHoveredId,
-        setTip,
-        inView,
-      });
+      renderVertical(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
     } else {
-      renderRadial(svg, laidOut, size, activePathIds, {
-        setSelected,
-        setHoveredId,
-        setTip,
-        inView,
-      });
+      renderRadial(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
     }
   }, [laidOut, size, activePathIds, isMobile, inView]);
 
@@ -206,11 +181,7 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-600">
         {(['root', 'varna', 'caste-cluster', 'sub-jati', 'kootam'] as CasteLevel[]).map((lv) => (
           <span key={lv} className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="inline-block h-3 w-3 rounded-full"
-              style={{ background: LEVEL_COLOR[lv].fill }}
-            />
+            <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full" style={{ background: LEVEL_COLOR[lv].fill }} />
             {LEVEL_COLOR[lv].label}
           </span>
         ))}
@@ -219,6 +190,12 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
           You are here (Kadai)
         </span>
       </div>
+
+      {isMobile && measured && (
+        <p className="mb-2 text-center text-xs text-stone-400">
+          Tap any node to explore · only labelled nodes shown on mobile
+        </p>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-4">
         {measured && (
@@ -233,45 +210,197 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
             }
             className="block max-w-full"
             role="img"
-            aria-label="Radial dendrogram from Indian society to varna to jati to the Kadai kootam"
+            aria-label="Dendrogram from Indian society through varna and jati to the Kadai kootam"
           />
         )}
       </div>
 
-      {/* Drawer */}
       {selected && <Drawer node={selected} onClose={() => setSelected(null)} isMobile={isMobile} />}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
 }
 
-// ---------------- Radial renderer ----------------
+// ─────────────────────────── Shared helpers ───────────────────────────
+
+type Handlers = {
+  setSelected: (n: TreeNode) => void;
+  setHoveredId: (id: string | null) => void;
+  setTip: (s: TooltipState) => void;
+  inView: boolean;
+};
+
+function tipContent(d: d3.HierarchyNode<TreeNode>) {
+  return (
+    <>
+      <strong>{d.data.name.en}</strong>
+      <br />
+      <span style={{ opacity: 0.8 }}>{LEVEL_COLOR[d.data.level].label}</span>
+    </>
+  );
+}
+
+function truncate(s: string, max: number) {
+  return s.length <= max ? s : s.slice(0, max - 1) + '…';
+}
+
+// ─────────────────────────── Vertical (mobile) renderer ───────────────────────────
+
+function renderVertical(
+  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
+  root: d3.HierarchyNode<TreeNode>,
+  size: { width: number; height: number },
+  activePathIds: Set<string>,
+  handlers: Handlers,
+) {
+  const reduced = prefersReducedMotion();
+  const padL = 16, padT = 36;
+
+  // d.x = horizontal, d.y = vertical (from d3.tree top-down layout).
+  const nx = (d: d3.HierarchyNode<TreeNode>) => padL + (d as any).x as number;
+  const ny = (d: d3.HierarchyNode<TreeNode>) => padT + (d as any).y as number;
+
+  // Only label: root, varna level, and nodes on the active highlight path.
+  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
+    d.data.level === 'root' || d.data.level === 'varna' || activePathIds.has(d.data.id);
+
+  const g = svg.append('g');
+
+  // Links: cubic Bezier, top-down.
+  g.append('g')
+    .attr('fill', 'none')
+    .selectAll('path')
+    .data(root.links())
+    .join('path')
+    .attr('d', (d: any) => {
+      const sx = nx(d.source), sy = ny(d.source);
+      const tx = nx(d.target), ty = ny(d.target);
+      const my = (sy + ty) / 2;
+      return `M${sx},${sy}C${sx},${my} ${tx},${my} ${tx},${ty}`;
+    })
+    .attr('stroke', (d: any) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return onPath ? '#0f172a' : '#d6d3d1';
+    })
+    .attr('stroke-width', (d: any) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return onPath ? 2.2 : 1;
+    });
+
+  // Nodes.
+  const node = g
+    .append('g')
+    .selectAll('g')
+    .data(root.descendants())
+    .join('g')
+    .attr('transform', (d) => `translate(${nx(d)},${ny(d)})`)
+    .attr('tabindex', 0)
+    .attr('role', 'button')
+    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
+    .style('cursor', 'pointer')
+    .style('outline', 'none')
+    .on('click', (_, d) => handlers.setSelected(d.data))
+    .on('mouseenter', (event: MouseEvent, d) => {
+      handlers.setHoveredId(d.data.id);
+      handlers.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
+    })
+    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('focus', function (_: FocusEvent, d) {
+      handlers.setHoveredId(d.data.id);
+      const r = (this as SVGGElement).getBoundingClientRect();
+      handlers.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
+    })
+    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('keydown', function (event: KeyboardEvent, d) {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handlers.setSelected(d.data); }
+    });
+
+  node
+    .append('circle')
+    .attr('r', (d) => d.data.highlight ? 8 : d.children ? 5 : 4)
+    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
+    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
+    .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
+    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : null)
+    .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
+
+  // Highlight ring around Kadai.
+  node.filter((d) => !!d.data.highlight)
+    .append('circle')
+    .attr('r', 13)
+    .attr('fill', 'none')
+    .attr('stroke', '#f43f5e')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-opacity', 0.7)
+    .attr('class', 'animate-pulse');
+
+  // Labels: root/varna = below (dy 18), active internal = above (dy -10), active leaf = below (dy 18).
+  node.filter((d) => showLabel(d))
+    .append('text')
+    .attr('dy', (d) => {
+      if (d.data.level === 'root' || d.data.level === 'varna') return 18;
+      return d.children ? -10 : 18;
+    })
+    .attr('text-anchor', 'middle')
+    .attr('font-size', (d) => {
+      if (d.data.level === 'root') return 12;
+      if (d.data.level === 'varna') return 9;
+      if (d.data.highlight) return 11;
+      return 9;
+    })
+    .attr('font-weight', (d) =>
+      d.data.highlight || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500
+    )
+    .attr('fill', (d) => activePathIds.has(d.data.id) ? '#0f172a' : LEVEL_COLOR[d.data.level].text)
+    .attr('paint-order', 'stroke')
+    .attr('stroke', '#ffffff')
+    .attr('stroke-width', 3)
+    .text((d) => {
+      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en;
+      if (d.data.level === 'root') return truncate(raw, 18);
+      if (d.data.level === 'varna') return truncate(raw, 12);
+      return truncate(raw, 20);
+    });
+
+  // Entry animation.
+  if (!reduced && handlers.inView) {
+    node.each(function (d, i) {
+      const sel = d3.select(this);
+      const delay = Math.min(d.depth * 60 + i * 5, 600);
+      sel.style('opacity', 0).style('transition', `opacity 360ms ease ${delay}ms`);
+      requestAnimationFrame(() => sel.style('opacity', null));
+    });
+  } else if (!handlers.inView && !reduced) {
+    node.style('opacity', 0);
+  }
+}
+
+// ─────────────────────────── Radial (desktop) renderer ───────────────────────────
+
 function renderRadial(
   svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
   root: d3.HierarchyNode<TreeNode>,
   size: { width: number; height: number },
   activePathIds: Set<string>,
-  handlers: {
-    setSelected: (n: TreeNode) => void;
-    setHoveredId: (id: string | null) => void;
-    setTip: (s: TooltipState) => void;
-    inView: boolean;
-  },
+  handlers: Handlers,
 ) {
   const reduced = prefersReducedMotion();
-  // Initial transform: gently rotate so the highlighted leaf sits roughly at the top-right.
+
+  // Rotate so the highlighted leaf sits at roughly upper-right.
   const highlightLeaf = root.descendants().find((d) => d.data.highlight);
   let rotation = 0;
   if (highlightLeaf) {
-    // d3.tree polar: x is the angle in radians. Rotate so highlight x maps to -45deg (upper right).
-    const angle = (highlightLeaf as any).x as number; // radians
-    const targetDeg = -30; // pleasant upper-right
-    rotation = targetDeg - (angle * 180) / Math.PI + 90;
+    const angle = (highlightLeaf as any).x as number;
+    rotation = -30 - (angle * 180) / Math.PI + 90;
   }
 
   const g = svg.append('g').attr('transform', `rotate(${rotation})`);
 
-  // Links
+  // Only show labels for: root, varna, and nodes on the active/highlight path.
+  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
+    d.depth <= 1 || activePathIds.has(d.data.id) || d.data.highlight;
+
+  // Links.
   const linkGen = d3
     .linkRadial<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
     .angle((d) => (d as any).x)
@@ -293,7 +422,7 @@ function renderRadial(
     })
     .attr('stroke-opacity', 0.9);
 
-  // Nodes
+  // Nodes.
   const node = g
     .append('g')
     .selectAll('g')
@@ -306,244 +435,45 @@ function renderRadial(
     })
     .attr('tabindex', 0)
     .attr('role', 'button')
-    .attr('aria-label', (d) => `${d.data.name.en} (${d.data.level})`)
+    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
     .style('cursor', 'pointer')
     .style('outline', 'none')
     .on('mouseenter', (event: MouseEvent, d) => {
       handlers.setHoveredId(d.data.id);
-      handlers.setTip({
-        x: event.clientX,
-        y: event.clientY,
-        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
-      });
+      handlers.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
     })
     .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('focus', function (event: FocusEvent, d) {
+    .on('focus', function (_: FocusEvent, d) {
       handlers.setHoveredId(d.data.id);
       const r = (this as SVGGElement).getBoundingClientRect();
-      handlers.setTip({
-        x: r.left + r.width / 2,
-        y: r.top,
-        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
-      });
-      void event;
+      handlers.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
     })
     .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
     .on('click', (_, d) => handlers.setSelected(d.data))
     .on('keydown', function (event: KeyboardEvent, d) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handlers.setSelected(d.data);
-        return;
-      }
-      // Arrow-key sibling navigation: cycle siblings (same parent).
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handlers.setSelected(d.data); }
+      if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) {
         const siblings = d.parent?.children;
         if (!siblings || siblings.length < 2) return;
         const allG = node.nodes() as SVGGElement[];
-        const sibIdxs = siblings.map((s) => allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id));
+        const sibIdxs = siblings.map((s) =>
+          allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id)
+        );
         const myIdx = siblings.indexOf(d as any);
         const fwd = event.key === 'ArrowRight' || event.key === 'ArrowDown';
         const nextIdx = sibIdxs[(myIdx + (fwd ? 1 : -1) + siblings.length) % siblings.length];
-        if (nextIdx >= 0) {
-          event.preventDefault();
-          (allG[nextIdx] as unknown as HTMLElement).focus?.();
-        }
+        if (nextIdx >= 0) { event.preventDefault(); (allG[nextIdx] as unknown as HTMLElement).focus?.(); }
       }
     });
 
   node
     .append('circle')
-    .attr('r', (d) => (d.data.highlight ? 9 : d.children ? 5 : 4))
+    .attr('r', (d) => d.data.highlight ? 9 : d.children ? 5 : 4)
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
-    .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
-    .attr('filter', (d) => (d.data.highlight ? 'url(#kadai-glow)' : null))
-    .attr('class', (d) => (d.data.highlight ? 'animate-pulse' : null));
-
-  // Entry animation — stagger node opacity by depth + index (capped 600ms).
-  if (!reduced && handlers.inView) {
-    node.each(function (d, i) {
-      const sel = d3.select(this);
-      const delay = Math.min((d.depth * 60) + (i * 6), 600);
-      sel
-        .style('opacity', 0)
-        .style('transition', `opacity 360ms ease ${delay}ms`);
-      requestAnimationFrame(() => sel.style('opacity', null));
-    });
-  } else if (!handlers.inView && !reduced) {
-    node.style('opacity', 0);
-  }
-
-  // Highlight ring around Kadai
-  node
-    .filter((d) => !!d.data.highlight)
-    .append('circle')
-    .attr('r', 14)
-    .attr('fill', 'none')
-    .attr('stroke', '#f43f5e')
-    .attr('stroke-width', 1.5)
-    .attr('stroke-opacity', 0.7)
-    .attr('class', 'animate-pulse');
-
-  // Labels — counter-rotate so every label reads horizontally on screen,
-  // regardless of its position around the circle. Anchor on the side of the
-  // node that faces "outward" relative to the global rotation.
-  node
-    .append('text')
-    .attr('dy', '0.32em')
-    .attr('x', (d) => {
-      // Effective on-screen angle of this node, in degrees from the +x axis.
-      // The group transform is rotate((x*180/π) - 90), then a global rotate(rotation)
-      // is applied to the parent <g>. Together the node sits at screen angle
-      // = (x*180/π) - 90 + rotation.
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      // Normalise to (-180, 180]
-      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
-      // If node is on the right half of the screen (-90..90), label goes right.
-      const onRight = norm > -90 && norm < 90;
-      return onRight ? 10 : -10;
-    })
-    .attr('text-anchor', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
-      const onRight = norm > -90 && norm < 90;
-      return onRight ? 'start' : 'end';
-    })
-    .attr('transform', (d) => {
-      // Counter-rotate by the parent group's rotation so the text is horizontal
-      // in screen space. The parent group rotates by (x*180/π) - 90, and the
-      // outer <g> rotates by `rotation`, so the net rotation we must undo (in
-      // this node's local frame, which already includes the global rotate) is
-      // (x*180/π) - 90 + rotation.
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      return `rotate(${-screenDeg})`;
-    })
-    .attr('font-size', (d) => (d.data.level === 'root' ? 13 : d.data.highlight ? 12 : 10))
-    .attr('font-weight', (d) => (d.data.highlight || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 400))
-    .attr('fill', (d) => (activePathIds.has(d.data.id) ? '#0f172a' : '#44403c'))
-    .attr('paint-order', 'stroke')
-    .attr('stroke', '#ffffff')
-    .attr('stroke-width', 3)
-    .text((d) => (d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en));
-}
-
-// ---------------- Vertical (mobile) renderer ----------------
-function renderVertical(
-  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
-  root: d3.HierarchyNode<TreeNode>,
-  size: { width: number; height: number },
-  activePathIds: Set<string>,
-  handlers: {
-    setSelected: (n: TreeNode) => void;
-    setHoveredId: (id: string | null) => void;
-    setTip: (s: TooltipState) => void;
-    inView: boolean;
-  },
-) {
-  const reduced = prefersReducedMotion();
-  // Normalise layout to fit width/height. d3.tree() with nodeSize([22, 160]) sets x as horizontal-leaf-coord, y as depth-coord.
-  // We render tree top-down: convert to (y vertical = node-x, x horizontal = depth*step).
-  const nodes = root.descendants();
-  const xs = nodes.map((d: any) => d.x as number);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const padTop = 30;
-  const padLeft = 40;
-  const usableHeight = size.height - padTop * 2;
-  const xScale = (v: number) => padTop + ((v - minX) / (maxX - minX || 1)) * usableHeight;
-
-  const maxDepth = (root.height || 1);
-  const depthStep = (size.width - padLeft - 220) / maxDepth; // leave room for labels on the right
-
-  const g = svg.append('g');
-
-  // Links — quadratic horizontal-flow curves.
-  g.append('g')
-    .attr('fill', 'none')
-    .selectAll('path')
-    .data(root.links())
-    .join('path')
-    .attr('d', (d: any) => {
-      const sx = padLeft + d.source.depth * depthStep;
-      const sy = xScale(d.source.x);
-      const tx = padLeft + d.target.depth * depthStep;
-      const ty = xScale(d.target.x);
-      const mx = (sx + tx) / 2;
-      return `M${sx},${sy}C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
-    })
-    .attr('stroke', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? '#0f172a' : '#d6d3d1';
-    })
-    .attr('stroke-width', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? 2.2 : 1;
-    });
-
-  const node = g
-    .append('g')
-    .selectAll('g')
-    .data(nodes)
-    .join('g')
-    .attr('transform', (d: any) => `translate(${padLeft + d.depth * depthStep},${xScale(d.x)})`)
-    .attr('tabindex', 0)
-    .attr('role', 'button')
-    .attr('aria-label', (d) => `${d.data.name.en} (${d.data.level})`)
-    .style('cursor', 'pointer')
-    .style('outline', 'none')
-    .on('click', (_, d) => handlers.setSelected(d.data))
-    .on('mouseenter', (event: MouseEvent, d) => {
-      handlers.setHoveredId(d.data.id);
-      handlers.setTip({
-        x: event.clientX,
-        y: event.clientY,
-        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
-      });
-    })
-    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('focus', function (_, d) {
-      handlers.setHoveredId(d.data.id);
-      const r = (this as SVGGElement).getBoundingClientRect();
-      handlers.setTip({
-        x: r.left + r.width / 2,
-        y: r.top,
-        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
-      });
-    })
-    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('keydown', function (event: KeyboardEvent, d) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handlers.setSelected(d.data);
-        return;
-      }
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        const siblings = d.parent?.children;
-        if (!siblings || siblings.length < 2) return;
-        const allG = node.nodes() as SVGGElement[];
-        const sibIdxs = siblings.map((s) => allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id));
-        const myIdx = siblings.indexOf(d as any);
-        const fwd = event.key === 'ArrowDown' || event.key === 'ArrowRight';
-        const nextIdx = sibIdxs[(myIdx + (fwd ? 1 : -1) + siblings.length) % siblings.length];
-        if (nextIdx >= 0) {
-          event.preventDefault();
-          (allG[nextIdx] as unknown as HTMLElement).focus?.();
-        }
-      }
-    });
-
-  node
-    .append('circle')
-    .attr('r', (d) => (d.data.highlight ? 8 : d.children ? 5 : 4))
-    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
-    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
-    .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
-    .attr('filter', (d) => (d.data.highlight ? 'url(#kadai-glow)' : null))
-    .attr('class', (d) => (d.data.highlight ? 'animate-pulse' : null));
+    .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
+    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : null)
+    .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
 
   if (!reduced && handlers.inView) {
     node.each(function (d, i) {
@@ -556,46 +486,74 @@ function renderVertical(
     node.style('opacity', 0);
   }
 
-  node
-    .filter((d) => !!d.data.highlight)
+  node.filter((d) => !!d.data.highlight)
     .append('circle')
-    .attr('r', 13)
+    .attr('r', 14)
     .attr('fill', 'none')
     .attr('stroke', '#f43f5e')
     .attr('stroke-width', 1.5)
     .attr('stroke-opacity', 0.7)
     .attr('class', 'animate-pulse');
 
-  node
+  // Labels: only for root, varna, and active path. All others rely on tooltip.
+  node.filter((d) => showLabel(d))
     .append('text')
-    .attr('x', 10)
     .attr('dy', '0.32em')
-    .attr('font-size', (d) => (d.data.level === 'root' ? 13 : d.data.highlight ? 12 : 11))
-    .attr('font-weight', (d) =>
-      d.data.highlight || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 400,
-    )
-    .attr('fill', (d) => (activePathIds.has(d.data.id) ? '#0f172a' : '#44403c'))
+    .attr('x', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
+      const onRight = norm > -90 && norm < 90;
+      // Wider offset for root/varna to clear the larger dots.
+      const offset = d.depth <= 1 ? 12 : 10;
+      return onRight ? offset : -offset;
+    })
+    .attr('text-anchor', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
+      const onRight = norm > -90 && norm < 90;
+      return onRight ? 'start' : 'end';
+    })
+    .attr('transform', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      return `rotate(${-screenDeg})`;
+    })
+    .attr('font-size', (d) => d.data.level === 'root' ? 13 : d.data.highlight ? 12 : d.depth <= 1 ? 11 : 10)
+    .attr('font-weight', (d) => d.data.highlight || d.depth <= 1 ? 600 : 500)
+    .attr('fill', (d) => activePathIds.has(d.data.id) ? '#0f172a' : '#44403c')
     .attr('paint-order', 'stroke')
     .attr('stroke', '#ffffff')
     .attr('stroke-width', 3)
-    .text((d) => (d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en));
+    .text((d) => {
+      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en;
+      // Truncate deep path labels to avoid overlap with outer nodes.
+      if (d.depth >= 3) return truncate(raw, 18);
+      return raw;
+    });
+
+  // Connector line from active dot to the left (toward prose / tooltip).
+  if (root.descendants().find((d) => activePathIds.has(d.data.id) && d.data.highlight)) {
+    const ev = root.descendants().find((d) => d.data.highlight);
+    if (ev) {
+      const yR = (ev as any).y as number;
+      g.append('line')
+        .attr('x1', 0).attr('x2', yR - 14)
+        .attr('y1', 0).attr('y2', 0)
+        .attr('stroke', LEVEL_COLOR[ev.data.level].stroke)
+        .attr('stroke-width', 1.5)
+        .attr('stroke-dasharray', '3 3')
+        .attr('opacity', 0.5);
+    }
+  }
 }
 
-// ---------------- Drawer ----------------
-function Drawer({
-  node,
-  onClose,
-  isMobile,
-}: {
-  node: TreeNode;
-  onClose: () => void;
-  isMobile: boolean;
-}) {
-  // Close on Escape.
+// ─────────────────────────── Drawer ───────────────────────────
+
+function Drawer({ node, onClose, isMobile }: { node: TreeNode; onClose: () => void; isMobile: boolean }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -625,9 +583,7 @@ function Drawer({
               {color.label}
             </span>
             <h3 className="mt-2 text-2xl font-bold text-stone-900">{node.name.en}</h3>
-            {node.name.ta && (
-              <p className="mt-1 font-tamil text-lg text-stone-600">{node.name.ta}</p>
-            )}
+            {node.name.ta && <p className="mt-1 font-tamil text-lg text-stone-600">{node.name.ta}</p>}
           </div>
           <button
             type="button"
@@ -636,12 +592,10 @@ function Drawer({
             aria-label="Close"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
-
         <div className="space-y-4 p-5 text-sm leading-relaxed text-stone-700">
           {tier && (
             <div className={`flex items-center gap-2 rounded-lg px-3 py-2 ${tier.bg} ${tier.fg}`}>
@@ -649,7 +603,6 @@ function Drawer({
               <span className="text-xs font-medium uppercase tracking-wide">{tier.label}</span>
             </div>
           )}
-
           {node.highlight && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-900">
               <p className="text-xs font-semibold uppercase tracking-wide">You are here</p>
@@ -658,16 +611,13 @@ function Drawer({
               </p>
             </div>
           )}
-
           {node.summary && <p>{node.summary}</p>}
-
           {node.note && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
               <p className="text-xs font-semibold uppercase tracking-wide">Framing note</p>
               <p className="mt-1 text-sm">{node.note}</p>
             </div>
           )}
-
           <dl className="grid grid-cols-3 gap-2 border-t border-stone-200 pt-4 text-xs">
             <dt className="text-stone-500">Level</dt>
             <dd className="col-span-2 text-stone-800">{color.label}</dd>

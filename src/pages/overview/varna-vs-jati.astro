@@ -58,7 +58,7 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
 
     {/* Visualization */}
     <section class="mb-6">
-      <div class="relative aspect-square">
+      <div class="relative">
         <ChartSkeleton target="varna-jati-radial" class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati radial…" />
         <div class="relative z-10">
           <VarnaJatiRadial id="varna-jati-radial" client:load />

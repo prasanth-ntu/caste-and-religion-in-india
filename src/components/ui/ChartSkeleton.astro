@@ -78,7 +78,8 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
       const wireUp = () => {
         const tgt = document.getElementById(target);
         if (!tgt) {
-          if (performance.now() - start > 8000) return; // give up
+          // Element not in DOM yet; retry up to 8s then give up.
+          if (performance.now() - start > 8000) return;
           setTimeout(wireUp, 100);
           return;
         }
@@ -86,6 +87,9 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
           hide();
           return;
         }
+        // Keep observing indefinitely — client:visible can hydrate long after
+        // page load (e.g. user slowly scrolls to the chart). The observer is
+        // cheap to keep alive; we disconnect only once hydration is confirmed.
         const obs = new MutationObserver(() => {
           if (tgt.getAttribute('data-hydrated') === 'true') {
             hide();
@@ -93,16 +97,11 @@ const skelId = `cs-${crypto.randomUUID().slice(0, 8)}`;
           }
         });
         obs.observe(tgt, { attributes: true, attributeFilter: ['data-hydrated'] });
-        // Also poll once more in case React's useEffect ran between getElementById
-        // and observe() (rare race).
+        // Handle race: data-hydrated set between getElementById and observe().
         if (tgt.getAttribute('data-hydrated') === 'true') {
           hide();
           obs.disconnect();
-          return;
         }
-        // Graceful fallback: stop observing after the remaining budget;
-        // leave skeleton visible if the island never hydrated.
-        setTimeout(() => obs.disconnect(), 8000);
       };
       wireUp();
     })();

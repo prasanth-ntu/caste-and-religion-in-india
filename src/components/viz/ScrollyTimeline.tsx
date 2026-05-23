@@ -122,7 +122,10 @@ export default function ScrollyTimeline({ events, id }: Props) {
   const desktopSvgRef = useRef<SVGSVGElement | null>(null);
   const mobileSvgRef = useRef<SVGSVGElement | null>(null);
   const desktopContainerRef = useRef<HTMLDivElement | null>(null);
+  // mobileContainerRef = inner wrapper div (measured by D3)
+  // mobileScrollRef = outer overflow-x-auto div (used for scrollBy)
   const mobileContainerRef = useRef<HTMLDivElement | null>(null);
+  const mobileScrollRef = useRef<HTMLDivElement | null>(null);
 
   // mobile detection (also handles tablet narrow strip via CSS; JS only flips to bottom strip <640)
   useEffect(() => {
@@ -387,7 +390,8 @@ export default function ScrollyTimeline({ events, id }: Props) {
     return () => ro.disconnect();
   }, [sorted, activeIndex, isMobile, minYear, maxYear, reducedMotion]);
 
-  // ---------- Mobile bottom strip (D3, horizontal) ----------
+  // ---------- Mobile bottom strip (D3, horizontal — era bands + axis only) ----------
+  // Dots/circles are rendered by React buttons below, so D3 only draws the background.
   useEffect(() => {
     if (!isMobile) return;
     const svg = mobileSvgRef.current;
@@ -395,43 +399,36 @@ export default function ScrollyTimeline({ events, id }: Props) {
     if (!svg || !container) return;
 
     const draw = () => {
-      const width = Math.max(container.scrollWidth, container.clientWidth);
+      const width = container.clientWidth;
       const height = container.clientHeight;
-      if (height === 0) return;
+      if (width === 0 || height === 0) return;
 
-      // expanded virtual width so dots have breathing room when there are many events
-      const virtualWidth = Math.max(container.clientWidth, sorted.length * 72 + 48);
-
-      const margin = { top: 8, right: 24, bottom: 18, left: 24 };
-      const innerW = virtualWidth - margin.left - margin.right;
+      const margin = { top: 4, right: 24, bottom: 18, left: 24 };
+      const innerW = width - margin.left - margin.right;
       const axisY = height - margin.bottom;
 
       const x = d3.scaleLinear().domain([minYear, maxYear]).range([margin.left, margin.left + innerW]);
 
       const sel = d3.select(svg);
-      sel
-        .attr('width', virtualWidth)
-        .attr('height', height)
-        .attr('viewBox', `0 0 ${virtualWidth} ${height}`);
+      sel.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       sel.selectAll('*').remove();
 
       // era bands as a horizontal strip
-      const bands = sel.append('g');
       ERA_ORDER.forEach((era) => {
         const r = ERA_RANGES[era];
         const x0 = x(Math.max(r.start, minYear));
         const x1 = x(Math.min(r.end, maxYear));
-        bands
+        sel
           .append('rect')
-          .attr('y', 4)
+          .attr('y', margin.top)
           .attr('x', x0)
-          .attr('height', height - 22)
+          .attr('height', height - margin.top - margin.bottom)
           .attr('width', Math.max(0, x1 - x0))
           .attr('fill', ERA_COLORS[era].band)
-          .attr('opacity', 0.5);
+          .attr('opacity', 0.55);
       });
 
-      // axis
+      // axis line
       sel
         .append('line')
         .attr('y1', axisY)
@@ -440,7 +437,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
         .attr('x2', margin.left + innerW)
         .attr('stroke', '#a8a29e');
 
-      // tick labels (sparse)
+      // sparse tick labels
       x.ticks(5).forEach((t) => {
         sel
           .append('text')
@@ -448,35 +445,8 @@ export default function ScrollyTimeline({ events, id }: Props) {
           .attr('y', axisY + 12)
           .attr('text-anchor', 'middle')
           .attr('font-size', 9)
-          .attr('fill', '#57534e')
+          .attr('fill', '#78716c')
           .text(formatYear(t));
-      });
-
-      // event markers
-      sorted.forEach((ev, i) => {
-        const cMeta = categoryFor(ev.category);
-        const isActive = i === activeIndex;
-        const xStart = x(ev.year_start);
-        if (ev.year_end != null) {
-          const xEnd = x(ev.year_end);
-          sel
-            .append('rect')
-            .attr('x', Math.min(xStart, xEnd))
-            .attr('y', axisY - 8)
-            .attr('width', Math.max(2, Math.abs(xEnd - xStart)))
-            .attr('height', 4)
-            .attr('rx', 2)
-            .attr('fill', cMeta.color)
-            .attr('opacity', isActive ? 1 : 0.65);
-        }
-        sel
-          .append('circle')
-          .attr('cx', xStart)
-          .attr('cy', axisY - 6)
-          .attr('r', isActive ? 7 : 4)
-          .attr('fill', cMeta.color)
-          .attr('stroke', '#ffffff')
-          .attr('stroke-width', 1.5);
       });
     };
 
@@ -484,22 +454,22 @@ export default function ScrollyTimeline({ events, id }: Props) {
     const ro = new ResizeObserver(draw);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [sorted, activeIndex, isMobile, minYear, maxYear]);
+  }, [sorted, isMobile, minYear, maxYear]);
 
   // auto-scroll mobile strip to keep the active event in view
   useEffect(() => {
     if (!isMobile) return;
-    const container = mobileContainerRef.current;
-    if (!container) return;
-    const targetBtn = container.querySelector<HTMLButtonElement>(
+    const scrollEl = mobileScrollRef.current;
+    if (!scrollEl) return;
+    const targetBtn = scrollEl.querySelector<HTMLButtonElement>(
       `button[data-strip-idx="${activeIndex}"]`,
     );
     if (targetBtn) {
-      const containerRect = container.getBoundingClientRect();
+      const containerRect = scrollEl.getBoundingClientRect();
       const btnRect = targetBtn.getBoundingClientRect();
       const offset =
         btnRect.left - containerRect.left - containerRect.width / 2 + btnRect.width / 2;
-      container.scrollBy({ left: offset, behavior: reducedMotion ? 'auto' : 'smooth' });
+      scrollEl.scrollBy({ left: offset, behavior: reducedMotion ? 'auto' : 'smooth' });
     }
   }, [activeIndex, isMobile, reducedMotion]);
 
@@ -674,70 +644,72 @@ export default function ScrollyTimeline({ events, id }: Props) {
 
         {/* Bottom-pinned swipeable strip */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-white/95 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] backdrop-blur">
+          {/* outer: clipping/scrolling viewport */}
           <div
-            ref={mobileContainerRef}
-            className="relative h-16 w-full overflow-x-auto overflow-y-hidden"
-            style={{ scrollbarWidth: 'none' }}
+            ref={mobileScrollRef}
+            className="h-16 w-full overflow-x-auto overflow-y-hidden"
+            style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
           >
-            {/* d3 background (era bands + axis) */}
-            <svg
-              ref={mobileSvgRef}
-              className="pointer-events-none absolute inset-0 h-full"
-              aria-hidden="true"
-            />
-            {/* overlay role=list buttons positioned by year */}
-            <ul
-              role="list"
+            {/* inner: measured by D3; sets the virtual scroll width */}
+            <div
+              ref={mobileContainerRef}
               className="relative h-full"
-              style={{
-                width: Math.max(sorted.length * 72 + 48, 320),
-              }}
+              style={{ width: Math.max(sorted.length * 72 + 48, 320) }}
             >
-              {sorted.map((ev, i) => {
-                const range = maxYear - minYear;
-                const pct = ((ev.year_start - minYear) / range) * 100;
-                const isActive = i === activeIndex;
-                const cMeta = categoryFor(ev.category);
-                return (
-                  <li
-                    key={ev.slug}
-                    className="absolute inset-y-0"
-                    style={{ left: `calc(${pct}% - 18px)` }}
-                  >
-                    <button
-                      type="button"
-                      data-strip-idx={i}
-                      onClick={() => scrollToEvent(i)}
-                      onKeyDown={(e) => handleStripKey(e, i)}
-                      aria-label={`${ev.title}, ${formatYear(ev.year_start)}`}
-                      aria-current={isActive ? 'true' : 'false'}
-                      className={`flex h-full w-9 flex-col items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 ${
-                        isActive ? 'bg-stone-100' : ''
-                      }`}
+              {/* D3 draws era bands + axis into this SVG; it fills the inner wrapper */}
+              <svg
+                ref={mobileSvgRef}
+                className="pointer-events-none absolute inset-0 h-full w-full"
+                aria-hidden="true"
+              />
+              {/* interactive buttons, positioned by year percentage */}
+              <ul role="list" className="relative h-full w-full">
+                {sorted.map((ev, i) => {
+                  const range = maxYear - minYear || 1;
+                  const pct = ((ev.year_start - minYear) / range) * 100;
+                  const isActive = i === activeIndex;
+                  const cMeta = categoryFor(ev.category);
+                  return (
+                    <li
+                      key={ev.slug}
+                      className="absolute inset-y-0"
+                      style={{ left: `calc(${pct}% - 18px)` }}
                     >
-                      <span
-                        aria-hidden="true"
-                        className="block rounded-full ring-2 ring-white"
-                        style={{
-                          backgroundColor: cMeta.color,
-                          width: isActive ? 14 : 8,
-                          height: isActive ? 14 : 8,
-                          transition: reducedMotion ? 'none' : 'all 200ms ease',
-                        }}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className="mt-1 text-[9px] font-medium text-stone-600"
+                      <button
+                        type="button"
+                        data-strip-idx={i}
+                        onClick={() => scrollToEvent(i)}
+                        onKeyDown={(e) => handleStripKey(e, i)}
+                        aria-label={`${ev.title}, ${formatYear(ev.year_start)}`}
+                        aria-current={isActive ? 'true' : 'false'}
+                        className={`flex h-full w-9 flex-col items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 ${
+                          isActive ? 'bg-stone-100/80' : ''
+                        }`}
                       >
-                        {ev.year_start < 0
-                          ? `${Math.abs(ev.year_start)}B`
-                          : ev.year_start}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                        <span
+                          aria-hidden="true"
+                          className="block rounded-full shadow-sm ring-2 ring-white"
+                          style={{
+                            backgroundColor: cMeta.color,
+                            width: isActive ? 14 : 8,
+                            height: isActive ? 14 : 8,
+                            transition: reducedMotion ? 'none' : 'all 200ms ease',
+                          }}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="mt-1 text-[9px] font-medium text-stone-600"
+                        >
+                          {ev.year_start < 0
+                            ? `${Math.abs(ev.year_start)}B`
+                            : ev.year_start}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
         </div>
       </div>

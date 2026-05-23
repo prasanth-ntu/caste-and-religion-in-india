@@ -225,13 +225,12 @@ export default function Explorer() {
           aria-label="Open site explorer"
           aria-expanded={false}
           className={
-            // Mobile: icon-only round
-            'fixed bottom-4 right-4 z-40 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-lg ' +
+            // Mobile: icon-only round FAB bottom-right
+            'fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-xl ' +
             'flex items-center justify-center text-2xl ' +
             'hover:bg-indigo-700 active:scale-95 transition ' +
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ring-offset-2 ' +
-            // Desktop: side rail, auto-width pill
-            'lg:bottom-auto lg:right-auto lg:left-4 lg:top-1/2 lg:-translate-y-1/2 ' +
+            // Desktop: pill FAB stays bottom-right
             'lg:h-auto lg:w-auto lg:px-4 lg:py-3 lg:rounded-full lg:gap-2 lg:text-sm lg:font-medium'
           }
         >
@@ -260,10 +259,10 @@ export default function Explorer() {
           aria-label="Site explorer"
           className={
             // Mobile: bottom sheet
-            'fixed inset-x-2 bottom-2 z-40 max-h-[70vh] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl ' +
+            'fixed inset-x-3 bottom-3 z-40 max-h-[70vh] overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl ' +
             'border border-slate-200 ' +
-            // Desktop: side rail card
-            'lg:inset-auto lg:bottom-auto lg:right-auto lg:left-4 lg:top-1/2 lg:-translate-y-1/2 ' +
+            // Desktop: bottom-right card (above FAB position)
+            'lg:inset-auto lg:bottom-6 lg:right-6 lg:left-auto lg:top-auto ' +
             'lg:w-[340px] lg:max-h-[520px] ' +
             (reduced ? '' : 'transition duration-200 ease-out')
           }

@@ -169,10 +169,38 @@ export default function LineageCompare({
 function CompareGrid({ a, b, compact }: { a: ManifestEntry; b: ManifestEntry; compact: boolean }) {
   const rows = useMemo(() => buildRows(a, b), [a, b]);
   return (
-    <div className="space-y-3">
-      {rows.map((row) => (
-        <Row key={row.key} row={row} compact={compact} />
-      ))}
+    <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-stone-200 bg-stone-50">
+            <th
+              scope="col"
+              className="w-[30%] py-3 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500"
+            >
+              Field
+            </th>
+            <th
+              scope="col"
+              className="w-[35%] py-3 px-3 text-left text-sm font-semibold text-stone-900"
+            >
+              <span aria-hidden="true" className="mr-1.5">{a.totemEmoji}</span>
+              {a.name}
+            </th>
+            <th
+              scope="col"
+              className="w-[35%] py-3 pl-3 pr-4 text-left text-sm font-semibold text-stone-900"
+            >
+              <span aria-hidden="true" className="mr-1.5">{b.totemEmoji}</span>
+              {b.name}
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-stone-100">
+          {rows.map((row) => (
+            <TableRow key={row.key} row={row} compact={compact} />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -260,79 +288,67 @@ function setsEqual(x: string[], y: string[]) {
   return y.every((v) => sx.has(v));
 }
 
-function Row({ row, compact }: { row: Row; compact: boolean }) {
-  const diffCls = row.diff
-    ? 'border-l-4 border-l-emerald-400 bg-white'
-    : 'border-l-4 border-l-stone-200 bg-stone-50';
+function TableRow({ row, compact }: { row: Row; compact: boolean }) {
+  const diffHighlight = row.diff ? 'bg-emerald-50/40' : '';
   return (
-    <div className={`grid gap-2 rounded-lg ${diffCls} p-3 md:grid-cols-[1fr_auto_1fr] md:items-center`}>
-      <Cell value={row} side="A" compact={compact} />
-      <div className="flex items-center justify-center text-xs">
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-600">
-          {row.label}
-        </span>
+    <tr className={diffHighlight}>
+      <td className="py-2.5 pl-4 pr-3 text-xs font-medium text-stone-500">
+        <span>{row.label}</span>
         {row.diff && (
-          <span aria-label="differs" className="ml-1 font-mono text-emerald-700">
+          <span aria-label="differs" className="ml-1.5 font-mono text-[10px] text-emerald-600">
             ≠
           </span>
         )}
-      </div>
-      <Cell value={row} side="B" compact={compact} />
-    </div>
+      </td>
+      <td className="py-2.5 px-3 align-top">
+        <CellContent row={row} side="A" />
+      </td>
+      <td className="py-2.5 pl-3 pr-4 align-top">
+        <CellContent row={row} side="B" />
+      </td>
+    </tr>
   );
 }
 
-function Cell({ value, side, compact }: { value: Row; side: 'A' | 'B'; compact: boolean }) {
+function CellContent({ row, side }: { row: Row; side: 'A' | 'B' }) {
   const isA = side === 'A';
-  if (value.kind === 'set') {
-    const set = isA ? value.aSet ?? [] : value.bSet ?? [];
-    const other = isA ? value.bSet ?? [] : value.aSet ?? [];
+  if (row.kind === 'set') {
+    const set = isA ? row.aSet ?? [] : row.bSet ?? [];
+    const other = isA ? row.bSet ?? [] : row.aSet ?? [];
     const otherSet = new Set(other);
+    if (set.length === 0) return <span className="text-sm italic text-stone-400">—</span>;
     return (
-      <div className={`${isA ? 'order-1 md:order-none' : 'order-3 md:order-none'}`}>
-        {!compact && (
-          <p className="mb-1 text-[10px] uppercase tracking-wider text-stone-500 md:hidden">({side})</p>
-        )}
-        {set.length === 0 ? (
-          <span className="text-sm italic text-stone-400">—</span>
-        ) : (
-          <ul className="flex flex-wrap gap-1.5">
-            {set.map((v) => {
-              const shared = otherSet.has(v);
-              return (
-                <li
-                  key={v}
-                  className={`rounded-full border px-2 py-0.5 text-xs ${
-                    shared
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                      : 'border-amber-300 bg-amber-50 text-amber-900'
-                  }`}
-                >
-                  {v}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      <ul className="flex flex-wrap gap-1.5">
+        {set.map((v) => {
+          const shared = otherSet.has(v);
+          return (
+            <li
+              key={v}
+              className={`rounded-full border px-2 py-0.5 text-xs ${
+                shared
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                  : 'border-amber-300 bg-amber-50 text-amber-900'
+              }`}
+            >
+              {v}
+            </li>
+          );
+        })}
+      </ul>
     );
   }
-  const v = isA ? value.aValue : value.bValue;
-  const isTier = value.key === 'attestation' && v && TIER_BADGE[v];
+  const v = isA ? row.aValue : row.bValue;
+  const isTier = row.key === 'attestation' && v && TIER_BADGE[v];
+  if (isTier) {
+    return (
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TIER_BADGE[v!].cls}`}>
+        {TIER_BADGE[v!].label}
+      </span>
+    );
+  }
   return (
-    <div className={`${isA ? 'order-1 md:order-none' : 'order-3 md:order-none'}`}>
-      {!compact && (
-        <p className="mb-1 text-[10px] uppercase tracking-wider text-stone-500 md:hidden">({side})</p>
-      )}
-      {isTier ? (
-        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TIER_BADGE[v!].cls}`}>
-          {TIER_BADGE[v!].label}
-        </span>
-      ) : (
-        <p className={`text-sm ${value.diff ? 'font-medium text-stone-900' : 'text-stone-700'}`}>
-          {v || '—'}
-        </p>
-      )}
-    </div>
+    <span className={`text-sm leading-snug ${row.diff ? 'font-medium text-stone-900' : 'text-stone-600'}`}>
+      {v || '—'}
+    </span>
   );
 }
