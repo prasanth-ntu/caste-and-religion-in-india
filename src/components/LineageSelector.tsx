@@ -115,7 +115,20 @@ export default function LineageSelector({
   useEffect(() => {
     setMounted(true);
     if (value === undefined) {
-      setSelected(readSelected());
+      const next = readSelected();
+      setSelected(next);
+      // If the URL provided a kootam param, repopulate localStorage so the
+      // selection persists across reloads even when entering via a shared link.
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('kootam')) {
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          } catch {
+            /* ignore quota errors */
+          }
+        }
+      }
     }
   }, [value]);
 

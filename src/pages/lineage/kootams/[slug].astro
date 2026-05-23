@@ -3,6 +3,7 @@ import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Claim from '../../../components/Claim.astro';
 import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
+import LineageYoursBanner from '../../../components/LineageYoursBanner.tsx';
 
 export async function getStaticPaths() {
   const all = await getCollection('kootams');
@@ -87,6 +88,8 @@ for (const r of d.claims ?? []) {
         </p>
       </div>
     )}
+
+    {!isKadai && <LineageYoursBanner client:load pageSlug={d.slug} pageName={d.name} />}
 
     {isStub && (
       <div class="mb-6 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5">

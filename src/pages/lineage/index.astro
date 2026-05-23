@@ -4,6 +4,7 @@ import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
 import LineageSelector from '../../components/LineageSelector.tsx';
+import LineagePersonalSentence from '../../components/LineagePersonalSentence.tsx';
 
 const cards = [
   {
@@ -98,9 +99,7 @@ const cards = [
         <Claim tier="yellow" sources={["wikipedia-kongu-vellalar", "kongu-mandala-satakam"]}>
           a system of 145 exogamous kootams, each with its own totem — bird, tree, fish, or flower — that members traditionally avoid harming.
         </Claim>
-        Mine is Kadai (காடை, quail). The kuladeivam — clan deity — sits at the bottom of the
-        tree: Konur Kaliamman, a village goddess in present-day Namakkal district. The map below
-        is that path, made literal.
+        <LineagePersonalSentence client:load /> The map below is that path, made literal.
       </p>
       <p class="text-sm text-stone-500">
         <CrossLink section="A" href="/overview/varna-vs-jati" label="Where you are in the bigger tree →" />
