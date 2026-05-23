@@ -7,6 +7,8 @@ import FactTier from '../../components/FactTier.astro';
 import FestivalCalendar from '../../components/viz/FestivalCalendar.tsx';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 import RelatedNav from '../../components/site/RelatedNav.astro';
+import KonurIconography from '../../components/viz/KonurIconography.tsx';
+
 
 // Pilgrimage / lifecycle rituals tied to the Kuladeivam.
 const pilgrimage = [
@@ -62,49 +64,7 @@ const diaspora = [
   { village: 'Overseas (US / SG / GCC)', district: '—', note: 'Twenty-first-century diaspora; Konur visit often timed to home visits, not always annual.' },
 ];
 
-// SVG iconography hotspots — illustrative placeholder of a stylised Amman figure.
-const iconHotspots = [
-  {
-    id: 'crown',
-    x: 50,
-    y: 12,
-    label: { en: 'Karagam / crown', ta: 'கரகம்' },
-    body:
-      'A decorated pot or crown (கரகம்) sits atop the goddess in many Amman processions. In village-Amman traditions, the karagam is sometimes the goddess herself, carried in procession.',
-  },
-  {
-    id: 'trident',
-    x: 78,
-    y: 38,
-    label: { en: 'Trishul / trident', ta: 'திரிசூலம்' },
-    body:
-      'The trident (திரிசூலம்) is associated with the Shakta tradition and the destruction of evil. In village Kaliamman shrines it is often planted in the ground beside the deity, sometimes as the primary aniconic form.',
-  },
-  {
-    id: 'tongue',
-    x: 50,
-    y: 30,
-    label: { en: 'Protruding tongue', ta: 'நீட்டிய நாக்கு' },
-    body:
-      'The Kali iconography includes a protruding tongue, conventionally interpreted as a sign of momentary restraint after a fierce act. Kaliamman shrines often soften this — Kaliamman is the village mother form, not the Mahakali warrior form.',
-  },
-  {
-    id: 'neem',
-    x: 18,
-    y: 55,
-    label: { en: 'Neem branch', ta: 'வேப்பிலை' },
-    body:
-      'Neem (வேப்பிலை) is offered at Amman shrines; the leaves are anti-microbial and traditionally hung at the doorway during pox outbreaks. The rational basis here is genuine — neem has documented anti-pathogenic properties.',
-  },
-  {
-    id: 'turmeric',
-    x: 82,
-    y: 60,
-    label: { en: 'Turmeric / kumkum', ta: 'மஞ்சள் / குங்குமம்' },
-    body:
-      'Turmeric (மஞ்சள்) and kumkum are central offerings. Turmeric has documented antiseptic properties; in village-shrine logic the offering also doubles as healing material for devotees.',
-  },
-];
+
 ---
 
 <BaseLayout
@@ -235,79 +195,8 @@ const iconHotspots = [
         </p>
       </div>
 
-      <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-        {/* Stylised SVG */}
-        <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white p-4">
-          <p class="mb-2 text-xs uppercase tracking-wide text-stone-500">Illustrative figure</p>
-          <div class="relative aspect-[3/4] w-full">
-            <svg
-              viewBox="0 0 100 130"
-              class="h-full w-full"
-              role="img"
-              aria-label="Stylised Amman figure with annotated iconographic hotspots"
-            >
-              {/* Background panel */}
-              <rect x="0" y="0" width="100" height="130" fill="#fef3c7" opacity="0.25" />
-              {/* Shrine arch */}
-              <path d="M20 110 L20 40 Q50 5 80 40 L80 110 Z" fill="#fef9c3" stroke="#a16207" stroke-width="0.5" />
-              {/* Crown */}
-              <path d="M40 18 L50 6 L60 18 Z" fill="#f59e0b" stroke="#92400e" stroke-width="0.5" />
-              {/* Face */}
-              <circle cx="50" cy="30" r="9" fill="#fde68a" stroke="#92400e" stroke-width="0.5" />
-              {/* Eyes */}
-              <circle cx="46" cy="29" r="0.9" fill="#1c1917" />
-              <circle cx="54" cy="29" r="0.9" fill="#1c1917" />
-              {/* Tongue */}
-              <path d="M48 33 Q50 38 52 33" fill="#dc2626" stroke="#7f1d1d" stroke-width="0.3" />
-              {/* Body */}
-              <path d="M38 40 Q50 48 62 40 L66 90 Q50 100 34 90 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
-              {/* Arms */}
-              <path d="M38 45 L20 65 L24 70 L40 55 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
-              <path d="M62 45 L82 60 L78 66 L60 55 Z" fill="#fca5a5" stroke="#7f1d1d" stroke-width="0.5" />
-              {/* Trident in right hand */}
-              <line x1="80" y1="60" x2="84" y2="20" stroke="#78350f" stroke-width="0.8" />
-              <path d="M81 22 L84 14 L87 22 Z" fill="none" stroke="#78350f" stroke-width="0.6" />
-              <line x1="84" y1="22" x2="84" y2="14" stroke="#78350f" stroke-width="0.6" />
-              {/* Neem branch in left hand */}
-              <path d="M18 70 Q14 78 16 86" fill="none" stroke="#15803d" stroke-width="0.8" />
-              <ellipse cx="14" cy="74" rx="1.5" ry="0.7" fill="#16a34a" />
-              <ellipse cx="13" cy="78" rx="1.5" ry="0.7" fill="#16a34a" />
-              <ellipse cx="14" cy="82" rx="1.5" ry="0.7" fill="#16a34a" />
-              {/* Turmeric bowl */}
-              <ellipse cx="82" cy="78" rx="4" ry="1.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.4" />
-              <path d="M78 78 Q82 76 86 78 L86 81 Q82 83 78 81 Z" fill="#d97706" stroke="#78350f" stroke-width="0.4" />
-              {/* Hotspots */}
-              {iconHotspots.map((h) => (
-                <g class="icon-hotspot" data-id={h.id}>
-                  <circle cx={h.x} cy={h.y} r="3" fill="#ffffff" stroke="#0f172a" stroke-width="0.6" />
-                  <circle cx={h.x} cy={h.y} r="1.2" fill="#0f172a" />
-                  <title>{h.label.en} — {h.label.ta}</title>
-                </g>
-              ))}
-            </svg>
-          </div>
-          <p class="mt-3 text-xs text-stone-500">
-            Stylised; not based on a photograph of the Konur shrine. Hotspots map to common Kaliamman iconographic elements.
-          </p>
-        </div>
-
-        {/* Hotspot list */}
-        <ul class="space-y-3">
-          {iconHotspots.map((h, i) => (
-            <li class="rounded-xl border border-stone-200 bg-white p-4">
-              <div class="flex items-baseline gap-3">
-                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-900 text-xs font-semibold text-white">
-                  {i + 1}
-                </span>
-                <div>
-                  <p class="font-medium text-stone-900">{h.label.en}</p>
-                  <p class="font-tamil text-sm text-stone-600">{h.label.ta}</p>
-                </div>
-              </div>
-              <p class="mt-2 text-sm text-stone-700">{h.body}</p>
-            </li>
-          ))}
-        </ul>
+      <div class="mt-6">
+        <KonurIconography client:load />
       </div>
     </section>
 
