@@ -34,7 +34,33 @@ A highly stylized, premium digital art illustration of the goddess Kaliamman (Am
 
 ---
 
-## 3. Maintenance & Replication Guide
+## 3. Site Logo Variants
+
+* **Location**: `public/images/logos/`
+* **Visual Role**: Primary site identity for Open Graph images, thumbnails, and site headers.
+* **Aspect Ratio**: 1:1 (Square)
+* **Date Generated**: May 24, 2026
+
+### Reference Prompts
+
+**Concept 1: The Deep Roots** (`concept_1_roots.png`)
+```text
+A highly stylized, minimalist flat vector logo design featuring a deep-rooted Banyan tree intertwining with a traditional carved Hero Stone (Naadukal). The aesthetic is clean vector line-art and solid shapes, utilizing deep stone greys and rich amber on a pure white background. Scholarly, historical, and premium feel. No text.
+```
+
+**Concept 2: The Agrarian Sun** (`concept_2_agrarian.png`)
+```text
+A modern, elegant flat vector logo design featuring a geometric abstraction of a Kamalai (traditional Indian water-lift wheel) and a sun rising over stylized terraced agricultural fields. The aesthetic is clean, flat vector illustration, utilizing vibrant emerald greens and golden yellows on a pure white background. Represents material agricultural history, premium and crisp. No text.
+```
+
+**Concept 3: The Copper Plate** (`concept_3_evidence.png`)
+```text
+A sleek, stylized flat vector logo design featuring a traditional historical copper-plate grant (sasanam) or palm-leaf manuscript (olai-chuvadi) adorned with a subtle, abstract trident (trishul) motif. The aesthetic is clean flat vector art, utilizing warm copper, bronze, and dark slate tones on a pure white background. Scholarly, academic, and historical. No text.
+```
+
+---
+
+## 4. Maintenance & Replication Guide
 
 If you wish to modify these images in the future while retaining a similar aesthetic:
 1. **Model**: Use a modern high-fidelity image generation model (e.g., Imagen 3).

@@ -1,0 +1,38 @@
+---
+import FactTier from './FactTier.astro';
+
+type Tier = 'green' | 'yellow' | 'red' | 'rational';
+
+interface Props {
+  eyebrow?: string;
+  eyebrowTa?: string;
+  title: string;
+  body: string;
+  tier?: Tier;
+  class?: string;
+}
+
+const { eyebrow, eyebrowTa, title, body, tier, class: className } = Astro.props;
+---
+
+<div class:list={['rounded-2xl border border-stone-200 bg-cream p-6', className]}>
+  {eyebrow && (
+    <p class="mb-1.5 text-[11px] font-semibold tracking-widest uppercase text-emerald-700">
+      {eyebrow}
+      {eyebrowTa && (
+        <span lang="ta" class="ml-1 font-tamil normal-case tracking-normal font-medium">
+          · {eyebrowTa}
+        </span>
+      )}
+    </p>
+  )}
+  <h4 class="mb-2 font-display text-[22px] font-semibold tracking-tight text-stone-900 leading-snug">
+    {title}
+  </h4>
+  <p class="text-[15px] leading-snug text-stone-700">{body}</p>
+  {tier && (
+    <div class="mt-3">
+      <FactTier tier={tier} />
+    </div>
+  )}
+</div>

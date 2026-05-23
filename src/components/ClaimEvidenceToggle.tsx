@@ -9,6 +9,13 @@ const TIER_RULE_CLASS: Record<Tier, string> = {
   rational: 'border-l-violet-700',
 };
 
+const TIER_BG_CLASS: Record<Tier, string> = {
+  green: 'bg-emerald-50',
+  yellow: 'bg-amber-50',
+  red: 'bg-rose-50',
+  rational: 'bg-violet-50',
+};
+
 const TOGGLE_EVENT = 'claim:toggle';
 
 interface ClaimToggleDetail {
@@ -118,7 +125,7 @@ export function ClaimEvidencePanel({
       }`}
     >
       <span
-        className={`block rounded-r bg-stone-50 border-l-[1.5px] ${TIER_RULE_CLASS[tier]} px-3 py-2 text-[12px] italic leading-snug text-stone-700`}
+        className={`block rounded-r border-l-[1.5px] ${TIER_RULE_CLASS[tier]} ${TIER_BG_CLASS[tier]} px-3 py-2 text-[12px] italic leading-snug text-stone-700`}
       >
         {evidenceSummary}
       </span>

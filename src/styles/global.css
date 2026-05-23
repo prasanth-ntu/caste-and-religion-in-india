@@ -19,11 +19,52 @@
   --color-tier-red: #be123c;
   --color-tier-rational: #6d28d9;
 
+  /* Shadows — warm stone-toned, editorial restraint */
+  --shadow-sm: 0 1px 2px 0 rgb(28 25 23 / 0.05);
+  --shadow-md: 0 4px 12px -2px rgb(28 25 23 / 0.06), 0 2px 4px -2px rgb(28 25 23 / 0.04);
+  --shadow-lg: 0 12px 24px -6px rgb(28 25 23 / 0.08), 0 4px 8px -2px rgb(28 25 23 / 0.05);
+
+  /* Card border radius — 1.25rem is the site-wide canonical card shape */
+  --radius-2xl: 1.25rem;
+
   /* Motion */
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-fast: 160ms;
   --dur-base: 260ms;
   --dur-slow: 420ms;
+}
+
+/* Semantic design tokens — used directly as var(--fg-1) etc. across components */
+:root {
+  /* Foreground cascade: ink → body → secondary → meta */
+  --fg-1: #1c1917;   /* stone-900 — headlines */
+  --fg-2: #44403c;   /* stone-700 — body prose */
+  --fg-3: #57534e;   /* stone-600 — descriptions */
+  --fg-4: #78716c;   /* stone-500 — meta, captions */
+  --fg-muted: #a8a29e; /* stone-400 — placeholder, decorative */
+
+  /* Background surfaces */
+  --bg-1: #fafaf9;   /* paper — default page bg */
+  --bg-2: #fdfcf9;   /* cream — hero, header, footer, editorial sections */
+  --bg-3: #ffffff;   /* white — card / table surfaces */
+
+  /* Tier soft surface fills (chip backgrounds, evidence panels) */
+  --color-tier-green-50:    #ecfdf5;
+  --color-tier-yellow-50:   #fffbeb;
+  --color-tier-red-50:      #fef2f2;
+  --color-tier-rational-50: #f5f3ff;  /* violet-50 */
+
+  /* Pillar accent colors */
+  --pillar-overview: #4338ca;   /* indigo-700 */
+  --pillar-lineage:  #047857;   /* emerald-700 */
+  --pillar-rituals:  #be123c;   /* rose-700 */
+  --pillar-sources:  #0369a1;   /* sky-700 */
+
+  /* Pillar 50-tinted card surfaces */
+  --pillar-overview-50: #eef2ff;
+  --pillar-lineage-50:  #ecfdf5;
+  --pillar-rituals-50:  #fff1f2;
+  --pillar-sources-50:  #f0f9ff;
 }
 
 /* Global reduced-motion override */
@@ -64,6 +105,16 @@
   font-size: 1.1rem;
   color: rgb(68 64 60); /* stone-700 */
   line-height: 1.5;
+}
+
+/* Eyebrow — uppercase meta label above a heading (e.g. "Section A", "Material practice").
+   Apply as <p class="eyebrow"> or any inline element. */
+.eyebrow {
+  font-size: 0.75rem;       /* 12px */
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-4);
 }
 
 /* Universal focus-visible ring (interactive elements opt in via the .focus-ring class
