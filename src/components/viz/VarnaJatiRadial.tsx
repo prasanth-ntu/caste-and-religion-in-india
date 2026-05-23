@@ -52,11 +52,9 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Hydration sentinel — flips on first client render so the SSR ChartSkeleton
-  // sibling can detect we are alive and hide itself.
-  useEffect(() => {
-    containerRef.current?.setAttribute('data-hydrated', 'true');
-  }, []);
+  // Defer SVG rendering until ResizeObserver has fired with a real container
+  // width. This prevents the 800×800 flash on the first paint.
+  const [measured, setMeasured] = useState(false);
 
   const [size, setSize] = useState({ width: 800, height: 800 });
   const [isMobile, setIsMobile] = useState(false);
@@ -106,11 +104,21 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
           const dim = Math.min(1000, Math.max(560, w));
           setSize({ width: dim, height: dim });
         }
+        // Mark as measured on the first real ResizeObserver callback so the SVG
+        // enters the DOM at actual container width rather than the 800px fallback.
+        setMeasured(true);
       }
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Hydration sentinel — fires once the chart has been measured and painted at
+  // real size, so ChartSkeleton hides at the right moment. Mirrors ZoomMap.tsx.
+  useEffect(() => {
+    if (!measured) return;
+    containerRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured]);
 
   // -------- Build hierarchy (memoised) --------
   const root = useMemo(() => {
@@ -213,20 +221,21 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-4">
-        <svg
-          ref={svgRef}
-          width={size.width}
-          height={size.height}
-          viewBox={
-            isMobile
-              ? `0 0 ${size.width} ${size.height}`
-              : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
-          }
-          className="block max-w-full"
-          role="img"
-          aria-label="Radial dendrogram from Indian society to varna to jati to the Kadai kootam"
-        />
-
+        {measured && (
+          <svg
+            ref={svgRef}
+            width={size.width}
+            height={size.height}
+            viewBox={
+              isMobile
+                ? `0 0 ${size.width} ${size.height}`
+                : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
+            }
+            className="block max-w-full"
+            role="img"
+            aria-label="Radial dendrogram from Indian society to varna to jati to the Kadai kootam"
+          />
+        )}
       </div>
 
       {/* Drawer */}
