@@ -1,0 +1,11 @@
+slug: tolkappiyam
+year_start: -200
+year_end: 200
+era: Sangam
+title: Tolkāppiyam and the tinai framework
+summary: The Tolkāppiyam, the earliest extant Tamil grammar, codifies the tinai (திணை) eco-zone framework — kurinji (mountain), mullai (forest), marudam (cropland), neidal (coast), palai (arid) — and the social categories that go with each landscape. This is a Tamil social schema that predates and partially diverges from the four-varna model.
+tier: yellow
+sources:
+  - tolkappiyam
+  - sangam-corpus
+category: religious

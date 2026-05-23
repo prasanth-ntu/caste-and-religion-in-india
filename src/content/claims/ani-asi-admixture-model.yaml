@@ -1,0 +1,7 @@
+id: ani-asi-admixture-model
+statement: Most present-day Indian populations descend from admixture between two ancestral components — Ancestral North Indian (ANI) and Ancestral South Indian (ASI) — with the principal mixing episodes dated to roughly 4200–1900 years before present.
+tier: green
+sources:
+  - reich-2009-nature
+  - moorjani-2013-ajhg
+evidence_summary: Reich et al. (2009) proposed the two-source model from genome-wide data, and Moorjani et al. (2013) dated major admixture events using linkage-disequilibrium decay. Subsequent ancient-DNA work has refined but not overturned the framework.

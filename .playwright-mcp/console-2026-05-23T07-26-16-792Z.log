@@ -1,0 +1,4 @@
+[     162ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4322/node_modules/.vite/deps/chunk-MONWTLAF.js?v=a64b56a9:20102
+[   34375ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4322/node_modules/.vite/deps/chunk-MONWTLAF.js?v=a64b56a9:20102
+[   56881ms] [LOG] === firing scroll @ :2
+[   67773ms] [LOG] [ScrollyTimeline] compute, refs: 16 16 @ http://localhost:4322/src/components/viz/ScrollyTimeline.tsx?t=1779521244446:131

@@ -1,0 +1,23 @@
+id: karnavedha-acupressure-meridian
+statement: Karnavedha (கர்ணவேதம், ear-piercing in infancy) stimulates specific acupressure or meridian points that improve eyesight, prevent hernia, and aid neurological development.
+tier: rational
+sources:
+  - sushruta-samhita
+  - wikipedia-karnavedha
+rational_basis: >-
+  The Ayurvedic and Sushruta-Samhita tradition does cite ear-lobe points
+  connected to specific organs, and the procedure was historically performed
+  in a sterile (relative to context) ritual setting by trained practitioners —
+  reducing infection risk versus ad-hoc later piercing. The
+  "acupressure-meridian" framing is a post-hoc systematisation; modern
+  clinical evidence for the specific health claims (eyesight, hernia,
+  neuro-development) is weak to absent. Treat the ritual as a
+  culturally-embedded rite-of-passage and infant-identification marker with a
+  plausible-but-unproven physiological theory layered on top.
+evidence_summary: >-
+  Sushruta Samhita does describe the karnavedha procedure and its rationale;
+  that the rationale matches modern evidence is a separate claim and is not
+  supported. Categorising as rational-basis — the practice has plausible
+  non-supernatural justifications (rite of passage, gender/clan signalling,
+  controlled sterile piercing) even if the specific physiological claim is
+  unverified.

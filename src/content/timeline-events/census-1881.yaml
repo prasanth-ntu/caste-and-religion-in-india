@@ -1,0 +1,11 @@
+slug: census-1881
+year_start: 1881
+era: Colonial
+title: 1881 Census of India records caste at scale
+summary: The British colonial 1881 Census (following the earlier 1871 operation) records caste affiliation across the subcontinent on a unified administrative grid for the first time. The exercise pressures fluid, regionally-variable jati identities into fixed pan-Indian categories.
+tier: green
+sources:
+  - wikipedia-1881-census
+  - dirks-2001-castes-of-mind
+  - bayly-1999-caste
+category: colonial

@@ -1,0 +1,23 @@
+id: kootam-exogamy-genetic-rationale
+statement: Kootam exogamy and the specific cross-cousin maaman–machan (மாமன்–மச்சான்) preference among Kongu Vellala Gounders functions as a population-level mating-network protocol that reduces inbreeding while preserving caste endogamy.
+tier: rational
+sources:
+  - wikipedia-kongu-vellalar
+  - nakatsuka-2017-natgen
+  - moorjani-2013-ajhg
+rational_basis: >-
+  Within a closed endogamous caste already exhibiting strong founder-event
+  signatures, a strict rule against same-clan marriage materially expands the
+  effective mating network. Cross-cousin marriage with a non-shared clan
+  introduces some genetic diversity while keeping property and ritual within a
+  defined social universe. The system is a rational compromise given the
+  constraints — caste endogamy is the constant, clan exogamy is the
+  optimisation — not a divine instruction.
+evidence_summary: >-
+  The mathematical effect of exogamy rules on effective population size is
+  standard in population genetics. The interpretation that Kongu Vellala
+  kootam rules specifically achieve this is consistent with Nakatsuka-style
+  findings but has not been quantitatively modelled for this community per
+  se. Tiered rational-basis as a defensible non-supernatural explanation for
+  why the rule exists and persists, separate from the folk
+  "ancestors decreed it" framing.

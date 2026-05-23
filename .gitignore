@@ -22,3 +22,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# local review notes (not for public repo)
+REVIEW.md
+CONTENT_REVIEW.md
+

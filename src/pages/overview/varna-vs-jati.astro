@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import VarnaJatiRadial from '../../components/viz/VarnaJatiRadial.tsx';
+---
+
+<BaseLayout
+  title="Varna vs Jati — Decoded"
+  description="The four-varna textual category versus the thousands of jatis lived on the ground. A radial dendrogram from Indian society to the Kadai kootam."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/overview" class="hover:text-stone-900">Overview</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Varna vs Jati</span>
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-10">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Varna vs Jati</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          வர்ணமும் ஜாதியும்
+        </span>
+      </h1>
+      <p class="mt-3 text-base text-stone-600">
+        Four boxes in a Sanskrit hymn, four thousand boxes on the ground. The same word in English — “caste” — for both.
+      </p>
+    </header>
+
+    {/* Intro */}
+    <section class="prose prose-stone mb-12 max-w-none text-stone-800 sm:text-lg">
+      <p>
+        <Claim tier="green" sources={["wikipedia-varna-hinduism"]}>
+          The four-varna schema — Brahmin, Kshatriya, Vaishya, Shudra — is a textual category that appears in late-Vedic literature, most famously in the Purusha-Sukta hymn of the Rig Veda (RV 10.90).
+        </Claim>
+        It is an idealised classification: priests, warriors, merchants, labourers. It enumerates four — and only four — categories. Dalit and Adivasi communities are placed
+        <em>outside</em> this schema by the classical texts themselves; that exclusion is the historical fact this site documents, not an endorsement.
+      </p>
+      <p>
+        Jati is a different thing.
+        <Claim tier="green" sources={["wikipedia-jati", "bayly-1999-caste"]}>
+          Jatis are the thousands of regional, endogamous, hereditary birth-groups that actually structure marriage, occupation, and ritual obligation across the subcontinent — often loosely mapped onto varna, often not mappable at all.
+        </Claim>
+        Two Tamil Vellalas and two Punjabi Jatts are nominally “Shudra” in varna terms, but the lived realities — language, deity, marriage circle, food taboos — share almost nothing. Conflating varna with jati is the single most common source of confusion about Indian caste.
+      </p>
+      <p>
+        <Claim tier="green" sources={["dirks-2001-castes-of-mind", "wikipedia-indian-caste-system"]}>
+          The current fixed, enumerated form of jati owes a great deal to the colonial census apparatus, particularly the 1881–1931 British Indian censuses, which forced fluid, overlapping group identities into single tick-box rows.
+        </Claim>
+        The diagram below shows the explosion: one society, five rings out, ending at one leaf — the Kadai kootam of the Kongu Vellala.
+      </p>
+    </section>
+
+    {/* Visualization */}
+    <section class="mb-6">
+      <VarnaJatiRadial client:visible />
+      <p class="mt-4 text-sm text-stone-600">
+        Click any node to learn more. The pulsing <span class="font-medium text-rose-700">★ leaf</span> marks your position at <span class="font-medium text-rose-700">Kongu Vellala → Kadai Kootam</span>.
+      </p>
+    </section>
+
+    {/* How to read */}
+    <section class="mb-12 rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-xl font-semibold">
+        How to read this
+        <span class="ml-2 font-tamil text-base font-medium text-stone-600">விளக்கம்</span>
+      </h2>
+      <ul class="mt-4 space-y-2 text-sm text-stone-700">
+        <li class="flex gap-3">
+          <span class="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style="background:#3b82f6" aria-hidden="true"></span>
+          <span><strong class="text-stone-900">Blue ring</strong> — the five varna-level buckets, including the “Outside varna” bucket that flags the historical exclusion of Dalit and Adivasi groups from the classical four-varna schema.</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style="background:#f59e0b" aria-hidden="true"></span>
+          <span><strong class="text-stone-900">Amber ring</strong> — representative jatis or regional clusters under each varna. These are illustrative, not exhaustive; a real enumeration runs into the thousands.</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style="background:#10b981" aria-hidden="true"></span>
+          <span><strong class="text-stone-900">Emerald ring</strong> — sub-jatis within a single jati cluster (e.g. Saiva / Karkatha / Kongu Vellala under Vellala). The pulsing <span class="text-rose-700 font-medium">rose</span> leaf is the Kadai kootam — your kootam — at the deepest ring.</span>
+        </li>
+      </ul>
+    </section>
+
+    {/* Disclaimer */}
+    <section class="rounded-2xl border border-dashed border-stone-300 bg-stone-100 p-5 text-sm text-stone-700">
+      <p class="font-medium text-stone-800">A note on selection bias</p>
+      <p class="mt-2">
+        This tree is representative, not authoritative. It over-samples South Indian groups (specifically the Tamil Vellala lineage) because the project anchors at one personal leaf. A complete jati census of the subcontinent would not be a tree at all — many jatis fit awkwardly under any single varna bucket, and the colonial census-takers spent fifty years arguing about exactly that.
+      </p>
+    </section>
+  </main>
+</BaseLayout>

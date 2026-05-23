@@ -1,0 +1,7 @@
+id: endogamy-post-admixture
+statement: After the major ANI–ASI admixture episodes ended roughly 1900 years ago, most Indian jati groups transitioned to strict endogamy, producing the genetic structure visible in modern population samples.
+tier: green
+sources:
+  - moorjani-2013-ajhg
+  - nakatsuka-2017-natgen
+evidence_summary: Moorjani et al. (2013) show admixture dates clustering before c. 1900 BP and decaying sharply afterward; Nakatsuka et al. (2017) document founder-event signatures consistent with the same transition. Convergent population-genetics evidence.
