@@ -120,6 +120,8 @@ const manifest = kootams
       region: k.region ?? '',
       status: k.status ?? 'documented',
       attestation: k.attestation ?? null,
+      exogamyPartners: k.exogamy_partners ?? [],
+      exogamyPangaliExcluded: k.exogamy_pangali_excluded ?? [],
       deity: deity
         ? {
             slug: deity.slug,
@@ -130,6 +132,9 @@ const manifest = kootams
             tradition: deity.tradition ?? '',
             festivals: deity.festivals ?? [],
             attestation: deity.attestation ?? null,
+            ...(deity.geo && typeof deity.geo === 'object' && deity.geo.lat
+              ? { lat: parseFloat(deity.geo.lat), lng: parseFloat(deity.geo.lng) }
+              : {}),
           }
         : null,
     };

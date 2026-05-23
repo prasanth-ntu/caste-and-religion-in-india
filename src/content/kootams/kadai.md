@@ -21,6 +21,15 @@ claims:
   - kootam-exogamy-genetic-rationale
 status: documented
 attestation: community
+exogamy_partners:
+  - sellan
+  - maniyan
+  - porulthantha
+  - kannandhai
+  - adhirai
+exogamy_pangali_excluded:
+  - kavarai
+  - andhai
 ---
 
 # Kadai Kootam

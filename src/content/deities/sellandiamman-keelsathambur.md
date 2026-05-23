@@ -4,6 +4,11 @@ name: Sellandiamman Kovil (Keelsathambur)
 tamil_name: செல்லாண்டியம்மன் கோவில்
 tradition: Folk Shaktism (Kuladeivam)
 village: Keelsathambur
+district: Namakkal
+geo:
+  lat: 11.081222
+  lng: 78.039472
+  zoom: 14
 iconography: 'Amman (mother-goddess) form. Vilayan kulam tradition associates the deity with the Vilva (Bael) tree, sacred to Shiva. Full murti iconography pending field documentation.'
 festivals: []
 claims: []

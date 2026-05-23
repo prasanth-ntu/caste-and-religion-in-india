@@ -5,6 +5,10 @@ tamil_name: நாவலடியான் கோவில்
 tradition: Folk / Village deity (Kuladeivam)
 village: Mohanur
 district: Namakkal
+geo:
+  lat: 11.053111
+  lng: 78.145417
+  zoom: 14
 iconography: 'Deity name literally means "He who sits beneath the Naval (Jamun) tree" — iconographically associated with the Naval Maram (Syzygium cumini), the totem tree of the Maniyan kulam. Full murti iconography pending field documentation.'
 festivals: []
 claims: []

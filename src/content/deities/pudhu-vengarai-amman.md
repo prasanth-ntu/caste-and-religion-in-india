@@ -5,6 +5,10 @@ tamil_name: புது வெங்கரை அம்மன்
 tradition: Folk Shaktism (Kuladeivam)
 village: Vengarai
 district: Namakkal
+geo:
+  lat: 11.047564
+  lng: 78.009514
+  zoom: 14
 iconography: 'Amman (mother-goddess) form. The temple village name — Vengarai — derives from Vengai Maram (Pterocarpus marsupium), the totem tree of the Senganni kootam. Full murti iconography pending field documentation.'
 festivals: []
 claims: []
