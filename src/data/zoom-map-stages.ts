@@ -6,6 +6,8 @@
 // which pins are shown based on the active stage. Free pan/zoom is still
 // available — these are *snap targets*, not hard locks.
 
+import type { ManifestEntry } from '../components/LineageSelector';
+
 export type StageId = 'india' | 'tamil-nadu' | 'kongu' | 'konur';
 
 export type PinType = 'capital' | 'district' | 'village' | 'temple';
@@ -130,3 +132,100 @@ export const allPins: MapPin[] = [
   ...konguDistrictPins,
   konurTemplePin,
 ];
+
+// ---------------- Lineage-aware stage factory ----------------
+
+export interface KootamStageBundle {
+  stages: ZoomStage[];
+  templePin: typeof konurTemplePin | null;
+  isAuthorExample: boolean;
+  /** Optional "village pin pending" caption when documented but coords missing. */
+  pendingVillage?: { name: string; deityName: string };
+  /** Display name of the kootam (for TemplePopover). */
+  kootamName?: string;
+  /** Totem label for TemplePopover. */
+  totemLabel?: string;
+}
+
+/**
+ * Returns the appropriate stage set and temple pin for a given manifest entry.
+ *
+ * - Kadai (or null/missing): existing Konur stages + pin, isAuthorExample: false.
+ * - Documented kootam with lng/lat on deity: custom final stage + pin (inert until coords land).
+ * - Documented kootam without coords (Maniyan/Senganni/Vilayan today): 3 stages, no pin, pendingVillage.
+ * - Stub / undocumented: Konur pin + stages, isAuthorExample: true.
+ */
+export function buildStagesForKootam(entry: ManifestEntry | null): KootamStageBundle {
+  // Default: Kadai (no selection, missing slug, or explicit Kadai)
+  if (!entry || entry.slug === 'kadai') {
+    return {
+      stages,
+      templePin: konurTemplePin,
+      isAuthorExample: false,
+      kootamName: 'Kadai',
+      totemLabel: 'Quail (காடை)',
+    };
+  }
+
+  // Documented kootam with deity coords — NOT applicable this round (no entries have coords yet).
+  // Pattern: check entry.deity?.lng && entry.deity?.lat, swap final stage center + templePin.
+  // This branch will activate automatically once Part D research returns coords.
+  const lng = (entry.deity as any)?.lng;
+  const lat = (entry.deity as any)?.lat;
+  if (entry.status === 'documented' && entry.deity && typeof lng === 'number' && typeof lat === 'number') {
+    const village = entry.deity.village ?? 'village';
+    const deityName = entry.deity.name;
+    const newFinal: ZoomStage = {
+      id: 'konur', // reuse the id slot; semantically it's the kuladeivam village
+      label: { en: village, ta: '' },
+      center: [lng, lat],
+      zoom: 110,
+      lineageSlug: entry.slug,
+      description: `${deityName} — the ${entry.name} kuladeivam temple.`,
+      narrativeCaption: `And finally ${village} — the ${entry.name} kuladeivam village, with ${deityName} as the emotional core of this lineage.`,
+    };
+    const customPin = {
+      ...konurTemplePin,
+      lng,
+      lat,
+      label: deityName,
+      labelTa: entry.deity.tamilName ?? '',
+      deity: deityName,
+      deityTa: entry.deity.tamilName ?? '',
+      village,
+      villageTa: '',
+      href: `/lineage/k/${entry.slug}/`,
+    } as typeof konurTemplePin;
+    return {
+      stages: [stages[0], stages[1], stages[2], newFinal],
+      templePin: customPin,
+      isAuthorExample: false,
+      kootamName: entry.name,
+      totemLabel: entry.tamilName,
+    };
+  }
+
+  // Documented but no coords (e.g. Maniyan/Senganni/Vilayan today): final stage = Kongu, no village pin.
+  if (entry.status === 'documented' && entry.deity) {
+    return {
+      stages: [stages[0], stages[1], stages[2]], // 3 stages, no village snap
+      templePin: null,
+      isAuthorExample: false,
+      pendingVillage: {
+        name: entry.deity.village ?? 'their kuladeivam village',
+        deityName: entry.deity.name,
+      },
+      kootamName: entry.name,
+      totemLabel: entry.tamilName,
+    };
+  }
+
+  // Stub / undocumented — keep Konur as the author's worked example.
+  return {
+    stages,
+    templePin: konurTemplePin,
+    isAuthorExample: true,
+    kootamName: 'Kadai',
+    totemLabel: 'Quail (காடை)',
+  };
+}

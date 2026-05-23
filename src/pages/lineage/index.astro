@@ -161,9 +161,9 @@ const konurMeta = formatMeta('everyone', 4);
     >
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="text-sm uppercase tracking-wide text-indigo-700/80">Your kootam</p>
+          <p class="text-sm uppercase tracking-wide text-indigo-700/80" data-bridge-kicker>Your kootam</p>
           <p class="mt-1 font-display text-2xl text-stone-900" data-bridge-name>Kadai</p>
-          <p class="mt-0.5 text-sm text-stone-600" data-bridge-deity>Kuladeivam: Konur Kaliamman · Totem: <span aria-hidden="true">🦅</span> Eagle</p>
+          <p class="mt-0.5 text-sm text-stone-600" data-bridge-deity>Kuladeivam: Konur Kaliamman · Totem: <span aria-hidden="true">🐦</span> Quail (Coturnix coturnix)</p>
         </div>
         <a
           href="/lineage/k/kadai/"
@@ -261,6 +261,14 @@ const konurMeta = formatMeta('everyone', 4);
         </a>
       </section>
     </div>
+
+    {/* SSR "Currently viewing" line — visible by default; hidden by LineageHubAdapter
+        once hydrated if the visitor has an explicit non-default selection. */}
+    <p id="lineage-hub-currently-viewing-ssr" class="mb-6 text-xs text-stone-500" data-default-lineage="kadai">
+      <span aria-hidden="true">★</span> Currently viewing:
+      <strong class="font-medium text-stone-700">Kadai Kootam</strong>
+      {' · '}Konur Kaliamman (author's lineage)
+    </p>
 
     {/* Client-side adapter — renders alt/stub grid when selection ≠ Kadai */}
     <LineageHubAdapter client:load />

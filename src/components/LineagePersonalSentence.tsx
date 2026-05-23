@@ -1,40 +1,50 @@
 import { useEffect, useState } from 'react';
-import manifestRaw from '../data/lineage-manifest.json';
-import type { ManifestEntry } from './LineageSelector';
-
-const manifest = manifestRaw as ManifestEntry[];
-const STORAGE_KEY = 'decoded.lineage';
-const DEFAULT_SLUG = 'kadai';
-
-function readCurrentSlug(): string {
-  if (typeof window === 'undefined') return DEFAULT_SLUG;
-  const url = new URL(window.location.href);
-  const fromUrl = url.searchParams.get('kootam');
-  if (fromUrl && manifest.some((m) => m.slug === fromUrl)) return fromUrl;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.kootam && manifest.some((m) => m.slug === parsed.kootam)) return parsed.kootam;
-    }
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_SLUG;
-}
+import {
+  manifest,
+  DEFAULT_SLUG,
+  AUTHOR_SLUG,
+  readCurrentSlug,
+  hasExplicitSelection,
+  subscribeLineageChange,
+} from '../lib/lineage-selection';
 
 /**
  * Renders the personal "Mine is Kadai" sentence on /lineage/index.
  * On non-Kadai selection, swaps to "Yours is {name} (…). The kuladeivam is {deity}…".
+ * When the reader explicitly selects Kadai (same as author), renders a "same as the author's" branch.
  * SSR + first-paint = canonical Kadai copy, so search engines see the author's narrative.
  */
 export default function LineagePersonalSentence() {
   const [slug, setSlug] = useState<string>(DEFAULT_SLUG);
+  const [explicit, setExplicit] = useState<boolean>(false);
 
   useEffect(() => {
-    setSlug(readCurrentSlug());
+    const update = () => {
+      setSlug(readCurrentSlug());
+      setExplicit(hasExplicitSelection());
+    };
+    update();
+    return subscribeLineageChange(update);
   }, []);
 
+  // Reader explicitly selected the author's kootam (Kadai)
+  if (explicit && slug === AUTHOR_SLUG) {
+    return (
+      <>
+        Yours is <strong>Kadai</strong> (<span className="font-tamil">காடை</span>, quail) — same as
+        the author&apos;s. The kuladeivam is <strong>Konur Kaliamman</strong>, a village goddess in
+        present-day Namakkal district.{' '}
+        <a
+          href="/lineage/k/kadai/"
+          className="underline hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+        >
+          Open Kadai Kootam&apos;s page →
+        </a>
+      </>
+    );
+  }
+
+  // Default: no explicit selection, or slug falls back to Kadai
   if (slug === DEFAULT_SLUG) {
     return (
       <>
@@ -56,6 +66,7 @@ export default function LineagePersonalSentence() {
     );
   }
 
+  // Reader selected a non-Kadai documented kootam
   return (
     <>
       Yours is <strong>{current.name}</strong>
@@ -83,7 +94,7 @@ export default function LineagePersonalSentence() {
         href={`/lineage/k/${current.slug}/`}
         className="underline hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
       >
-        Open {current.name}'s page →
+        Open {current.name}&apos;s page →
       </a>
     </>
   );

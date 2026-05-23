@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import manifestRaw from '../data/lineage-manifest.json';
+import {
+  manifest,
+  DEFAULT_SLUG,
+  AUTHOR_SLUG,
+  readCurrentSlug,
+  hasExplicitSelection,
+  subscribeLineageChange,
+} from '../lib/lineage-selection';
 import type { ManifestEntry } from './LineageSelector';
-
-const manifest = manifestRaw as ManifestEntry[];
-const STORAGE_KEY = 'decoded.lineage';
-const DEFAULT_SLUG = 'kadai';
 
 /**
  * Swap strategy (Option B, kept minimal):
@@ -25,28 +28,17 @@ const DEFAULT_SLUG = 'kadai';
  * reload.
  */
 
-function readCurrentSlug(): string {
-  if (typeof window === 'undefined') return DEFAULT_SLUG;
-  const url = new URL(window.location.href);
-  const fromUrl = url.searchParams.get('kootam');
-  if (fromUrl && manifest.some((m) => m.slug === fromUrl)) return fromUrl;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.kootam && manifest.some((m) => m.slug === parsed.kootam)) {
-        return parsed.kootam;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_SLUG;
-}
-
 function setSsrCardsHidden(hidden: boolean) {
   if (typeof document === 'undefined') return;
   const el = document.getElementById('lineage-hub-cards');
+  if (!el) return;
+  if (hidden) el.classList.add('hidden');
+  else el.classList.remove('hidden');
+}
+
+function setSsrCurrentlyViewingHidden(hidden: boolean) {
+  if (typeof document === 'undefined') return;
+  const el = document.getElementById('lineage-hub-currently-viewing-ssr');
   if (!el) return;
   if (hidden) el.classList.add('hidden');
   else el.classList.remove('hidden');
@@ -58,7 +50,7 @@ function setSsrCardsHidden(hidden: boolean) {
  * in, so we only need to mutate when slug !== DEFAULT_SLUG. We also restore
  * the Kadai default when the visitor switches back.
  */
-function updateBridge(currentSlug: string) {
+function updateBridge(currentSlug: string, explicit: boolean) {
   if (typeof document === 'undefined') return;
   const bridgeSection = document.getElementById('lineage-hub-bridge');
   if (!bridgeSection) return;
@@ -66,6 +58,7 @@ function updateBridge(currentSlug: string) {
   const nameEl = bridgeSection.querySelector('[data-bridge-name]');
   const deityEl = bridgeSection.querySelector('[data-bridge-deity]');
   const linkEl = bridgeSection.querySelector('[data-bridge-link]') as HTMLAnchorElement | null;
+  const kickerEl = bridgeSection.querySelector('[data-bridge-kicker]');
 
   const m = manifest.find((x) => x.slug === currentSlug);
   if (!m) return;
@@ -78,32 +71,46 @@ function updateBridge(currentSlug: string) {
     deityEl.innerHTML = `Kuladeivam: ${deityName} · Totem: <span aria-hidden="true">${totemEmoji}</span> ${totemLabel}`;
   }
   if (linkEl) linkEl.href = `/lineage/k/${m.slug}/`;
+
+  // Kicker: show "same as the author's" marker when reader is explicitly on author's kootam
+  if (kickerEl) {
+    if (explicit && currentSlug === AUTHOR_SLUG) {
+      kickerEl.textContent = 'Your kootam · same as the author\'s ★';
+    } else {
+      kickerEl.textContent = 'Your kootam';
+    }
+  }
 }
 
 export default function LineageHubAdapter() {
   const [slug, setSlug] = useState<string>(DEFAULT_SLUG);
+  const [explicit, setExplicit] = useState<boolean>(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
-    const next = readCurrentSlug();
-    setSlug(next);
-    setSsrCardsHidden(next !== DEFAULT_SLUG);
-    updateBridge(next);
-    const onChange = () => {
-      const n = readCurrentSlug();
-      setSlug(n);
-      setSsrCardsHidden(n !== DEFAULT_SLUG);
-      updateBridge(n);
+    const update = () => {
+      const next = readCurrentSlug();
+      const isExplicit = hasExplicitSelection();
+      setSlug(next);
+      setExplicit(isExplicit);
+      setSsrCardsHidden(next !== DEFAULT_SLUG);
+      updateBridge(next, isExplicit);
+
+      // SSR "Currently viewing" line: keep it visible only when showing the
+      // author's default AND there is no explicit selection. Otherwise hide it
+      // so the adapter's own line takes over.
+      const showSsrLine = next === DEFAULT_SLUG && !isExplicit;
+      setSsrCurrentlyViewingHidden(!showSsrLine);
     };
-    window.addEventListener('decoded:lineage-changed', onChange);
-    window.addEventListener('storage', onChange);
+    update();
+    const unsub = subscribeLineageChange(update);
     // Cleanup: restore the SSR cards if the adapter unmounts (e.g., view transition)
     return () => {
-      window.removeEventListener('decoded:lineage-changed', onChange);
-      window.removeEventListener('storage', onChange);
+      unsub();
       setSsrCardsHidden(false);
-      updateBridge(DEFAULT_SLUG);
+      setSsrCurrentlyViewingHidden(false);
+      updateBridge(DEFAULT_SLUG, false);
     };
   }, []);
 
@@ -112,21 +119,22 @@ export default function LineageHubAdapter() {
     [slug]
   );
 
-  // Before hydration OR when Kadai is selected, render nothing — let the SSR
-  // canonical card grid speak for itself.
-  if (!hydrated || slug === DEFAULT_SLUG) {
-    // Still render the "Currently viewing" line so the user sees confirmation
-    // of the default lineage when hydrated.
-    if (hydrated && slug === DEFAULT_SLUG) {
-      return (
-        <p className="mb-6 text-xs text-stone-500">
-          <span aria-hidden="true">★</span> Currently viewing:{' '}
-          <strong className="font-medium text-stone-700">Kadai Kootam</strong>
-          {' · '}Konur Kaliamman (author&apos;s lineage)
-        </p>
-      );
-    }
-    return null;
+  // Before hydration: render nothing — SSR elements handle display.
+  if (!hydrated) return null;
+
+  // Kadai default, no explicit selection → SSR "Currently viewing" line is
+  // already visible; render nothing from the adapter.
+  if (slug === DEFAULT_SLUG && !explicit) return null;
+
+  // Reader explicitly selected Kadai (same as author)
+  if (slug === DEFAULT_SLUG && explicit) {
+    return (
+      <p className="mb-6 text-xs text-stone-500">
+        <span aria-hidden="true">★</span> Currently viewing:{' '}
+        <strong className="font-medium text-stone-700">Kadai Kootam</strong>
+        {' · '}Konur Kaliamman — same as the author&apos;s lineage
+      </p>
+    );
   }
 
   const isStub = current.status === 'stub';

@@ -7,23 +7,22 @@ import {
   konguDistricts,
 } from '../../data/geo/india';
 import {
-  stages,
-  stagesById,
   stateCapitals,
   konguDistrictPins,
   konurTemplePin,
+  buildStagesForKootam,
+  type KootamStageBundle,
   type StageId,
   type ZoomStage,
 } from '../../data/zoom-map-stages';
+import {
+  readCurrentSlug,
+  subscribeLineageChange,
+  manifest,
+} from '../../lib/lineage-selection';
 
 // ---------------- Constants ----------------
 const SCALE_EXTENT: [number, number] = [0.8, 200];
-// Round to fixed precision so SSR and client render byte-identical transform
-// strings (avoids React hydration mismatches from JS float drift).
-function fxy(xy: [number, number]): [number, number] {
-  return [Math.round(xy[0] * 1000) / 1000, Math.round(xy[1] * 1000) / 1000];
-}
-
 const KONGU_NAMES = new Set([
   'Coimbatore',
   'Erode',
@@ -47,13 +46,12 @@ function visibleLayers(k: number) {
   };
 }
 
-// Choose nearest stage given current k.
-function nearestStage(k: number): StageId {
-  // Snap thresholds: arrange ascending zoom.
+// Choose nearest stage given current k, aware of whether the konur stage exists.
+function nearestStageId(k: number, hasVillageStage: boolean): StageId {
   if (k < 3) return 'india';
   if (k < 8) return 'tamil-nadu';
   if (k < 40) return 'kongu';
-  return 'konur';
+  return hasVillageStage ? 'konur' : 'kongu';
 }
 
 interface ZoomMapProps {
@@ -79,6 +77,62 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
   const [activeStage, setActiveStage] = useState<StageId>('india');
   const [currentK, setCurrentK] = useState(1);
   const [showTemplePopover, setShowTemplePopover] = useState(false);
+
+  // ---------------- Lineage bundle (reactive) ----------------
+  const [bundle, setBundle] = useState<KootamStageBundle>(() => buildStagesForKootam(null));
+
+  // Subscribe to lineage changes (dropdown on /lineage/ page).
+  useEffect(() => {
+    const update = () => {
+      const slug = readCurrentSlug();
+      const entry = manifest.find((m) => m.slug === slug) ?? null;
+      const newBundle = buildStagesForKootam(entry);
+      setBundle((prev) => {
+        // If current activeStage is no longer present in new bundle, snap to final.
+        setActiveStage((currentActive) => {
+          const stillValid = newBundle.stages.some((s) => s.id === currentActive);
+          if (!stillValid) {
+            const fallback = newBundle.stages[newBundle.stages.length - 1];
+            // We'll snap to the fallback stage below via a side-effect triggered by bundle change.
+            return fallback.id;
+          }
+          return currentActive;
+        });
+        return newBundle;
+      });
+    };
+    update(); // initial
+    return subscribeLineageChange(update);
+  }, []);
+
+  // When bundle changes, snap to the last stage if the current active stage is no longer valid.
+  const prevBundleRef = useRef<KootamStageBundle | null>(null);
+  useEffect(() => {
+    if (!prevBundleRef.current) {
+      prevBundleRef.current = bundle;
+      return;
+    }
+    const prevStages = prevBundleRef.current.stages;
+    prevBundleRef.current = bundle;
+
+    // Check if the active stage still exists in the new bundle.
+    const stillValid = bundle.stages.some((s) => s.id === activeStage);
+    if (!stillValid) {
+      const fallback = bundle.stages[bundle.stages.length - 1];
+      setActiveStage(fallback.id);
+      snapToStageRef.current?.(fallback, true);
+    } else if (activeStage === 'konur') {
+      // User was parked at village stage; if the new bundle has a village stage, snap to it.
+      const newFinal = bundle.stages[bundle.stages.length - 1];
+      snapToStageRef.current?.(newFinal, true);
+    }
+
+    // Close temple popover if there's no temple pin now.
+    if (!bundle.templePin) {
+      setShowTemplePopover(false);
+    }
+  }, [bundle]);
+
   // ---------------- Story mode (auto-advance) ----------------
   const [playing, setPlaying] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
@@ -134,6 +188,9 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
 
   const pathGen = useMemo(() => d3.geoPath(projection), [projection]);
 
+  // Stable ref to snapToStage for use in effects where snapToStage isn't yet defined.
+  const snapToStageRef = useRef<((stage: ZoomStage, animate?: boolean) => void) | null>(null);
+
   // ---------------- d3.zoom setup ----------------
   useEffect(() => {
     if (!mounted) return;
@@ -148,7 +205,12 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         g.attr('transform', event.transform.toString());
         const k = event.transform.k;
         setCurrentK(k);
-        setActiveStage(nearestStage(k));
+        // Access bundle via ref to get latest value without recreating the zoom behavior.
+        setBundle((currentBundle) => {
+          const hasVillage = currentBundle.stages.some((s) => s.id === 'konur');
+          setActiveStage(nearestStageId(k, hasVillage));
+          return currentBundle;
+        });
       });
     zoomBehaviorRef.current = zoom;
 
@@ -187,24 +249,34 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
     [projection, size.width, size.height],
   );
 
+  // Keep the ref in sync so bundle-change effects can call it.
+  useEffect(() => {
+    snapToStageRef.current = snapToStage;
+  }, [snapToStage]);
+
   // Initial position once projection/size ready.
   useEffect(() => {
     if (!mounted || !zoomBehaviorRef.current) return;
-    snapToStage(stagesById[activeStage], false);
+    const currentStage =
+      bundle.stages.find((s) => s.id === activeStage) ?? bundle.stages[0];
+    snapToStage(currentStage, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projection, mounted]);
 
   // Reset to currently active stage.
   const resetToStage = useCallback(() => {
-    snapToStage(stagesById[activeStage], true);
-  }, [activeStage, snapToStage]);
+    const currentStage =
+      bundle.stages.find((s) => s.id === activeStage) ?? bundle.stages[0];
+    snapToStage(currentStage, true);
+  }, [activeStage, bundle, snapToStage]);
 
   // ---------------- Story-mode controls ----------------
   const toggleStory = useCallback(() => {
+    const currentStages = bundle.stages;
     // Reduced motion: don't auto-advance. Jump straight to the last stage.
     if (reducedMotionRef.current) {
-      const last = stages[stages.length - 1];
-      setStoryIndex(stages.length - 1);
+      const last = currentStages[currentStages.length - 1];
+      setStoryIndex(currentStages.length - 1);
       setCompleted(true);
       setPlaying(false);
       snapToStage(last, false);
@@ -218,28 +290,29 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
     if (completed) {
       setStoryIndex(0);
       setCompleted(false);
-      snapToStage(stages[0], true);
+      snapToStage(currentStages[0], true);
     } else {
       // Begin from current storyIndex; snap to that stage to align.
-      snapToStage(stages[storyIndex], true);
+      snapToStage(currentStages[storyIndex] ?? currentStages[0], true);
     }
     setPlaying(true);
-  }, [playing, completed, storyIndex, snapToStage]);
+  }, [playing, completed, storyIndex, snapToStage, bundle]);
 
   // Advance through stages while playing (and not hover-paused).
   useEffect(() => {
     if (!playing || hoverPaused) return;
+    const currentStages = bundle.stages;
     if (storyTimerRef.current) clearTimeout(storyTimerRef.current);
     storyTimerRef.current = setTimeout(() => {
       const next = storyIndex + 1;
-      if (next >= stages.length) {
+      if (next >= currentStages.length) {
         // Reached the end.
         setPlaying(false);
         setCompleted(true);
         return;
       }
       setStoryIndex(next);
-      snapToStage(stages[next], true);
+      snapToStage(currentStages[next], true);
     }, STORY_DWELL_MS);
     return () => {
       if (storyTimerRef.current) {
@@ -247,7 +320,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         storyTimerRef.current = null;
       }
     };
-  }, [playing, hoverPaused, storyIndex, snapToStage]);
+  }, [playing, hoverPaused, storyIndex, snapToStage, bundle]);
 
   // Cleanup timer on unmount.
   useEffect(() => {
@@ -256,10 +329,15 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
     };
   }, []);
 
+  const currentStages = bundle.stages;
   const storyButtonLabel = playing ? '⏸ Pause' : completed ? '▶ Replay' : '▶ Tell me the story';
   const storyCaption =
-    stages[storyIndex]?.narrativeCaption ?? stages[storyIndex]?.description ?? '';
-  const captionVisible = playing || (completed && storyIndex === stages.length - 1);
+    currentStages[storyIndex]?.narrativeCaption ?? currentStages[storyIndex]?.description ?? '';
+  const captionVisible = playing || (completed && storyIndex === currentStages.length - 1);
+
+  // Active stage object (fall back to first stage if id not in current bundle).
+  const activeStageObj =
+    bundle.stages.find((s) => s.id === activeStage) ?? bundle.stages[0];
 
   // ---------------- Visibility per current k ----------------
   const layers = visibleLayers(currentK);
@@ -273,7 +351,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         role="tablist"
         aria-label="Zoom stages"
       >
-        {stages.map((s) => {
+        {currentStages.map((s) => {
           const active = s.id === activeStage;
           return (
             <button
@@ -412,7 +490,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
             )}
 
             {/* Kongu districts (highlighted). pointer-events: none so the
-                Konur temple pin above stays clickable through the district. */}
+                temple pin above stays clickable through the district. */}
             {layers.konguDistricts && (
               <g aria-label="Kongu Nadu districts" style={{ pointerEvents: 'none' }}>
                 {(konguDistricts.features as Feature<Geometry, any>[]).map((f, i) => (
@@ -484,16 +562,17 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
               </g>
             )}
 
-            {/* Konur Kaliamman temple — pulsing rose pin */}
-            {layers.templePin && (() => {
-              const xy = projection([konurTemplePin.lng, konurTemplePin.lat]);
+            {/* Temple pin — pulsing rose pin. Only rendered when bundle has a templePin. */}
+            {layers.templePin && bundle.templePin != null && (() => {
+              const pin = bundle.templePin;
+              const xy = projection([pin.lng, pin.lat]);
               if (!xy) return null;
               return (
                 <g
                   transform={`translate(${xy[0]},${xy[1]})`}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${konurTemplePin.label} temple — open details`}
+                  aria-label={`${pin.label} temple — open details`}
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowTemplePopover((v) => !v);
@@ -536,7 +615,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                     stroke="#fff"
                     strokeWidth={2 / currentK}
                   >
-                    ★ {konurTemplePin.label}
+                    ★ {pin.label}
                   </text>
                 </g>
               );
@@ -545,23 +624,44 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         </svg>
         )}
 
+        {/* Overlay chips for special bundle states */}
+        {bundle.isAuthorExample && (
+          <div className="pointer-events-none absolute left-3 top-3 z-10">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 shadow-sm">
+              <span aria-hidden="true">★</span> Author's example — Konur, Kadai-Kootam
+            </span>
+          </div>
+        )}
+        {bundle.pendingVillage && (
+          <div className="pointer-events-none absolute left-3 top-3 z-10">
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 shadow-sm">
+              Your kuladeivam — {bundle.pendingVillage.deityName} ({bundle.pendingVillage.name}) — sits in Kongu Nadu. Exact pin pending.
+            </span>
+          </div>
+        )}
+
         {/* Stage description overlay */}
         <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex flex-wrap items-end justify-between gap-2 text-xs">
           <div className="pointer-events-auto max-w-[28rem] rounded-lg bg-white/85 px-3 py-2 backdrop-blur-sm">
             <p className="font-medium text-stone-900">
-              {stagesById[activeStage].label.en}{' '}
-              <span className="font-tamil text-stone-500">{stagesById[activeStage].label.ta}</span>
+              {activeStageObj.label.en}{' '}
+              <span className="font-tamil text-stone-500">{activeStageObj.label.ta}</span>
             </p>
-            <p className="mt-0.5 text-stone-600">{stagesById[activeStage].description}</p>
+            <p className="mt-0.5 text-stone-600">{activeStageObj.description}</p>
           </div>
           <div className="pointer-events-auto rounded-md bg-white/85 px-2 py-1 font-mono text-[10px] text-stone-500 backdrop-blur-sm">
             zoom {currentK.toFixed(1)}×
           </div>
         </div>
 
-        {/* Konur temple popover */}
-        {showTemplePopover && layers.templePin && (
-          <KonurPopover onClose={() => setShowTemplePopover(false)} />
+        {/* Temple popover — only when bundle has a pin */}
+        {showTemplePopover && layers.templePin && bundle.templePin != null && (
+          <TemplePopover
+            templePin={bundle.templePin}
+            kootamName={bundle.kootamName}
+            totemLabel={bundle.totemLabel}
+            onClose={() => setShowTemplePopover(false)}
+          />
         )}
 
         {/* Story-mode caption + progress dots */}
@@ -580,7 +680,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
           </div>
           {(playing || completed) && (
             <div className="flex gap-1" aria-label="Story progress">
-              {stages.map((_s, i) => (
+              {currentStages.map((_s, i) => (
                 <span
                   key={`dot-${i}`}
                   className={[
@@ -599,7 +699,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         aria-label="Lineage breadcrumb"
         className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-stone-600"
       >
-        {stages.map((s, i) => (
+        {currentStages.map((s, i) => (
           <span key={s.id} className="flex items-center gap-2">
             <button
               type="button"
@@ -613,12 +713,12 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
             >
               {s.label.en}
             </button>
-            {i < stages.length - 1 && <span aria-hidden="true" className="text-stone-400">›</span>}
+            {i < currentStages.length - 1 && <span aria-hidden="true" className="text-stone-400">›</span>}
           </span>
         ))}
-        {activeStage === 'konur' && (
+        {activeStage === 'konur' && bundle.templePin != null && (
           <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-900">
-            <span aria-hidden="true">★</span> Kuladeivam: Konur Kaliamman
+            <span aria-hidden="true">★</span> Kuladeivam: {bundle.templePin.label}
           </span>
         )}
       </nav>
@@ -627,7 +727,14 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
 }
 
 // ---------------- Popover ----------------
-function KonurPopover({ onClose }: { onClose: () => void }) {
+interface TemplePopoverProps {
+  templePin: typeof konurTemplePin;
+  kootamName?: string;
+  totemLabel?: string;
+  onClose: () => void;
+}
+
+function TemplePopover({ templePin, kootamName, totemLabel, onClose }: TemplePopoverProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -636,6 +743,16 @@ function KonurPopover({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const villageDisplay = templePin.villageTa
+    ? `${templePin.village} (${templePin.villageTa})`
+    : templePin.village;
+  const deityDisplay = templePin.deityTa
+    ? `${templePin.deity} (${templePin.deityTa})`
+    : templePin.deity;
+  const kootamDisplay = kootamName && totemLabel
+    ? `${kootamName} — ${totemLabel}`
+    : kootamName ?? '';
+
   return (
     <div className="absolute right-3 top-3 z-10 w-64 rounded-xl border border-rose-200 bg-white p-4 text-sm shadow-2xl">
       <div className="flex items-start justify-between gap-2">
@@ -643,8 +760,8 @@ function KonurPopover({ onClose }: { onClose: () => void }) {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-700">
             Kuladeivam
           </p>
-          <h3 className="mt-0.5 text-base font-bold text-stone-900">{konurTemplePin.label}</h3>
-          <p className="font-tamil text-sm text-stone-600">{konurTemplePin.labelTa}</p>
+          <h3 className="mt-0.5 text-base font-bold text-stone-900">{templePin.label}</h3>
+          <p className="font-tamil text-sm text-stone-600">{templePin.labelTa}</p>
         </div>
         <button
           type="button"
@@ -657,14 +774,18 @@ function KonurPopover({ onClose }: { onClose: () => void }) {
       </div>
       <dl className="mt-3 grid grid-cols-3 gap-y-1 text-xs">
         <dt className="text-stone-500">Village</dt>
-        <dd className="col-span-2 text-stone-800">Konur, Namakkal dist.</dd>
+        <dd className="col-span-2 text-stone-800">{villageDisplay}</dd>
         <dt className="text-stone-500">Deity</dt>
-        <dd className="col-span-2 text-stone-800">Kaliamman (காளியம்மன்)</dd>
-        <dt className="text-stone-500">Kootam</dt>
-        <dd className="col-span-2 text-stone-800">Kadai (quail / காடை)</dd>
+        <dd className="col-span-2 text-stone-800">{deityDisplay}</dd>
+        {kootamDisplay && (
+          <>
+            <dt className="text-stone-500">Kootam</dt>
+            <dd className="col-span-2 text-stone-800">{kootamDisplay}</dd>
+          </>
+        )}
       </dl>
       <a
-        href={konurTemplePin.href}
+        href={templePin.href}
         className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
       >
         Read the temple page
