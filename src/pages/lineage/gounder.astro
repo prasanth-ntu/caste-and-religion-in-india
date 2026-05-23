@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
+import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 
 const communities = [
   {
@@ -52,6 +53,8 @@ const communities = [
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Gounder</span>
     </nav>
+
+    <VarnaJatiLocator highlightSlug="kongu-vellala" class="mb-6" />
 
     <header class="mb-10">
       <p class="text-xs font-semibold uppercase tracking-widest text-amber-700">Title · பட்டம்</p>

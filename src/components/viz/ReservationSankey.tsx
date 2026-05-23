@@ -1,6 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { sankey, sankeyLinkHorizontal, sankeyJustify } from 'd3-sankey';
+import Tooltip, { type TooltipState } from '../ui/Tooltip';
+
+// --------- Animation helpers (shared with other charts via copy — small enough not to extract) ---------
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function useInView<T extends Element>(): readonly [React.RefObject<T | null>, boolean] {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, inView] as const;
+}
 
 // =============================================================================
 // Reservation Sankey — V9
@@ -173,7 +208,9 @@ function useContainerWidth() {
 // =============================================================================
 function SankeyChart({ era }: { era: Era }) {
   const [containerRef, width] = useContainerWidth();
+  const [viewRef, inView] = useInView<HTMLDivElement>();
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
   const isMobile = width < 640;
   // On mobile let the chart use a wider virtual canvas and scroll horizontally
   // if labels would otherwise crowd.
@@ -252,8 +289,10 @@ function SankeyChart({ era }: { era: Era }) {
       links: links.map((l) => ({ ...l })),
     });
 
+    const reduced = prefersReducedMotion();
+
     // ---- Links ----
-    g.append('g')
+    const linkSel = g.append('g')
       .attr('fill', 'none')
       .attr('stroke-opacity', 0.45)
       .selectAll('path')
@@ -265,13 +304,7 @@ function SankeyChart({ era }: { era: Era }) {
         const cat = src.category ?? 'open';
         return COLOR[cat];
       })
-      .attr('stroke-width', (d) => Math.max(1, d.width ?? 1))
-      .append('title')
-      .text((d) => {
-        const s = d.source as SNode;
-        const t = d.target as SNode;
-        return `${s.label ?? s.name} → ${t.label ?? t.name}: ${d.value}`;
-      });
+      .attr('stroke-width', (d) => Math.max(1, d.width ?? 1));
 
     // ---- Nodes ----
     const nodeG = g
@@ -279,9 +312,14 @@ function SankeyChart({ era }: { era: Era }) {
       .selectAll('g.node')
       .data(layout.nodes)
       .join('g')
-      .attr('class', 'node');
+      .attr('class', 'node')
+      .attr('tabindex', 0)
+      .attr('role', 'button')
+      .attr('aria-label', (d) => `${d.label ?? d.name}${d.sublabel ? ' — ' + d.sublabel : ''}`)
+      .style('cursor', 'default')
+      .style('outline', 'none');
 
-    nodeG
+    const rectSel = nodeG
       .append('rect')
       .attr('x', (d) => d.x0 ?? 0)
       .attr('y', (d) => d.y0 ?? 0)
@@ -289,9 +327,122 @@ function SankeyChart({ era }: { era: Era }) {
       .attr('height', (d) => Math.max(2, (d.y1 ?? 0) - (d.y0 ?? 0)))
       .attr('fill', (d) => COLOR[(d.category ?? 'open') as keyof typeof COLOR])
       .attr('stroke', '#1c1917')
-      .attr('stroke-width', 0.6)
-      .append('title')
-      .text((d) => `${d.label ?? d.name}${d.sublabel ? ' — ' + d.sublabel : ''} (${d.value})`);
+      .attr('stroke-width', 0.6);
+
+    // Entry animation — staggered fade + lift across nodes + links.
+    if (!reduced && inView) {
+      rectSel.each(function (_, i) {
+        const sel = d3.select(this);
+        const delay = Math.min(i * 30, 600);
+        sel
+          .style('opacity', 0)
+          .style('transform', 'translateY(4px)')
+          .style('transition', `opacity 340ms ease ${delay}ms, transform 340ms ease ${delay}ms`);
+        requestAnimationFrame(() => sel.style('opacity', null).style('transform', 'translateY(0px)'));
+      });
+      linkSel.each(function (_, i) {
+        const sel = d3.select(this);
+        const delay = Math.min(i * 30, 600);
+        sel
+          .style('opacity', 0)
+          .style('transition', `opacity 360ms ease ${delay}ms`);
+        requestAnimationFrame(() => sel.style('opacity', null));
+      });
+    } else if (!inView && !reduced) {
+      rectSel.style('opacity', 0);
+      linkSel.style('opacity', 0);
+    }
+
+    // Hover / focus polish — target node bold, sibling nodes + non-incident links dim to 0.5.
+    const onActivate = (d: SNode, ev?: MouseEvent | FocusEvent) => {
+      rectSel.style('transition', reduced ? 'none' : 'opacity 160ms ease, filter 160ms ease, stroke-width 160ms ease');
+      linkSel.style('transition', reduced ? 'none' : 'opacity 160ms ease');
+      rectSel.each(function (rd) {
+        const sel = d3.select(this);
+        if (rd === d) {
+          sel.style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,.15))').attr('stroke-width', 2);
+        } else {
+          sel.style('opacity', 0.5).style('filter', null).attr('stroke-width', 0.6);
+        }
+      });
+      linkSel.each(function (ld) {
+        const incident = (ld.source as SNode) === d || (ld.target as SNode) === d;
+        d3.select(this).style('opacity', incident ? null : 0.15);
+      });
+      if (ev && 'clientX' in ev) {
+        setTip({
+          x: (ev as MouseEvent).clientX,
+          y: (ev as MouseEvent).clientY,
+          content: (
+            <>
+              <strong>{d.label ?? d.name}</strong>
+              {d.sublabel ? <><br /><span style={{ opacity: 0.85 }}>{d.sublabel}</span></> : null}
+              <br />
+              Flow: {(d.value ?? 0).toFixed(1)}
+            </>
+          ),
+        });
+      } else {
+        setTip({
+          x: null,
+          y: null,
+          content: (
+            <>
+              <strong>{d.label ?? d.name}</strong>
+              {d.sublabel ? <><br />{d.sublabel}</> : null}
+            </>
+          ),
+        });
+      }
+    };
+    const onClear = () => {
+      rectSel.style('opacity', null).style('filter', null).attr('stroke-width', 0.6);
+      linkSel.style('opacity', null);
+      setTip({ x: null, y: null, content: null });
+    };
+
+    nodeG
+      .on('mouseenter', function (event: MouseEvent, d) { onActivate(d, event); })
+      .on('mousemove', (event: MouseEvent) => setTip((t) => (t.content && t.x !== null ? { ...t, x: event.clientX, y: event.clientY } : t)))
+      .on('mouseleave', onClear)
+      .on('focus', function (event: FocusEvent, d) {
+        const node = this as SVGGElement;
+        const r = node.getBoundingClientRect();
+        onActivate(d, { clientX: r.left + r.width / 2, clientY: r.top } as any);
+        void event;
+      })
+      .on('blur', onClear)
+      .on('keydown', function (event: KeyboardEvent, d) {
+        const allNodes = nodeG.nodes();
+        const sameCol = allNodes.filter((n) => (d3.select(n).datum() as SNode).col === d.col);
+        const idx = sameCol.indexOf(this as SVGGElement);
+        if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          const next = sameCol[(idx + 1) % sameCol.length] as HTMLElement;
+          next?.focus?.();
+        } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+          event.preventDefault();
+          const next = sameCol[(idx - 1 + sameCol.length) % sameCol.length] as HTMLElement;
+          next?.focus?.();
+        } else if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onActivate(d);
+        }
+      });
+
+    linkSel
+      .on('mouseenter', function (event: MouseEvent, d) {
+        d3.select(this).style('opacity', null);
+        const s = d.source as SNode;
+        const t = d.target as SNode;
+        setTip({
+          x: event.clientX,
+          y: event.clientY,
+          content: <><strong>{s.label ?? s.name}</strong> → <strong>{t.label ?? t.name}</strong><br />Flow: {d.value}</>,
+        });
+      })
+      .on('mousemove', (event: MouseEvent) => setTip((tp) => (tp.content ? { ...tp, x: event.clientX, y: event.clientY } : tp)))
+      .on('mouseleave', () => setTip({ x: null, y: null, content: null }));
 
     // ---- Labels ----
     // Place column-A on the right of node, column-C on the left of node,
@@ -376,11 +527,11 @@ function SankeyChart({ era }: { era: Era }) {
       .attr('font-size', isMobile ? 10 : 11)
       .attr('fill', '#57534e')
       .text(`Reserved: ${dataset.reservedPct}% · Open: ${(100 - dataset.reservedPct).toFixed(1)}%`);
-  }, [chartWidth, height, isMobile, dataset, ariaDesc]);
+  }, [chartWidth, height, isMobile, dataset, ariaDesc, inView]);
 
   return (
     <div ref={containerRef} className="w-full">
-      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
+      <div ref={viewRef} className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg
           ref={svgRef}
           className="block"
@@ -391,6 +542,7 @@ function SankeyChart({ era }: { era: Era }) {
       <p className="mt-3 text-sm leading-relaxed text-stone-700">
         <span className="font-semibold">Reading the flow:</span> {dataset.caption}
       </p>
+      <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
 }

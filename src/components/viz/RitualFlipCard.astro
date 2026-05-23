@@ -86,7 +86,8 @@ const catClasses = categoryStyles[d.category];
           class="mt-4 text-right text-sm font-medium text-stone-500 group-hover:text-stone-700"
           aria-hidden="true"
         >
-          Tap to flip ↻
+          <span class="flip-hint-touch">Tap to reveal evidence <span class="flip-icon">↻</span></span>
+          <span class="flip-hint-hover">Press Space or click to reveal evidence <span class="flip-icon">↻</span></span>
         </p>
       </div>
 
@@ -146,8 +147,45 @@ const catClasses = categoryStyles[d.category];
     transform: rotateY(180deg);
   }
 
+  /* Subtle border-glow on hover (front face). */
+  .ritual-flip-card .ritual-face-front {
+    transition:
+      box-shadow 200ms ease,
+      opacity 0.2s ease;
+  }
+  .ritual-flip-btn:hover .ritual-face-front,
+  .ritual-flip-btn:focus-visible .ritual-face-front {
+    box-shadow: 0 0 0 1px var(--color-primary, #6366f1);
+  }
+
+  /* Flip-hint icon rotates with the card flip duration. */
+  .flip-icon {
+    display: inline-block;
+    transition: transform 600ms ease;
+  }
+  .ritual-flip-card.is-flipped .flip-icon {
+    transform: rotate(360deg);
+  }
+
+  /* Hover/touch parity hint switch. */
+  .flip-hint-touch {
+    display: none;
+  }
+  .flip-hint-hover {
+    display: inline;
+  }
+  @media (hover: none) {
+    .flip-hint-touch {
+      display: inline;
+    }
+    .flip-hint-hover {
+      display: none;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .ritual-flip-inner {
+    .ritual-flip-inner,
+    .flip-icon {
       transition: none !important;
       transform: none !important;
     }

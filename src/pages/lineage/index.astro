@@ -3,9 +3,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
+import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 import LineageSelector from '../../components/LineageSelector.tsx';
 import LineagePersonalSentence from '../../components/LineagePersonalSentence.tsx';
 import LineageHubAdapter from '../../components/LineageHubAdapter.tsx';
+import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 
 const cards = [
   {
@@ -68,6 +70,9 @@ const cards = [
       </p>
     </section>
 
+    {/* "You are here" mini-tree (SSR default = Kadai; Phase 3 may upgrade to swap client-side) */}
+    <VarnaJatiLocator highlightSlug="kadai" class="mb-6" />
+
     {/* Hero */}
     <section class="mb-10">
       <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Section B</p>
@@ -109,7 +114,12 @@ const cards = [
 
     {/* The map — centerpiece */}
     <section class="mb-12">
-      <ZoomMap client:visible />
+      <div class="relative">
+        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading zoom map…" />
+        <div class="relative z-10">
+          <ZoomMap client:visible />
+        </div>
+      </div>
       <p class="mt-3 text-xs text-stone-500">
         Boundaries are simplified for legibility, not survey-accurate. Snap to a stage with the
         buttons; pinch / scroll to free-zoom; click the rose pin at Konur for the temple page.

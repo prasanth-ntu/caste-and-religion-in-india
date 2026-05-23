@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import VarnaJatiRadial from '../../components/viz/VarnaJatiRadial.tsx';
+import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 ---
 
 <BaseLayout
@@ -56,7 +57,12 @@ import VarnaJatiRadial from '../../components/viz/VarnaJatiRadial.tsx';
 
     {/* Visualization */}
     <section class="mb-6">
-      <VarnaJatiRadial client:visible />
+      <div class="relative">
+        <ChartSkeleton class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati radial…" />
+        <div class="relative z-10">
+          <VarnaJatiRadial client:visible />
+        </div>
+      </div>
       <p class="mt-4 text-sm text-stone-600">
         Click any node to learn more. The pulsing <span class="font-medium text-rose-700">★ leaf</span> marks your position at <span class="font-medium text-rose-700">Kongu Vellala → Kadai Kootam</span>.
       </p>

@@ -4,6 +4,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Claim from '../../../components/Claim.astro';
 import LineageSelector from '../../../components/LineageSelector.tsx';
 import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
+import VarnaJatiLocator from '../../../components/viz/VarnaJatiLocator.astro';
 
 export async function getStaticPaths() {
   const all = await getCollection('kootams');
@@ -125,6 +126,9 @@ const tierBadge: Record<string, string> = {
         </>
       )}
     </nav>
+
+    {/* "You are here" mini-tree */}
+    <VarnaJatiLocator highlightSlug={d.slug} class="mb-6" />
 
     {/* Hero */}
     <header class="mb-6">

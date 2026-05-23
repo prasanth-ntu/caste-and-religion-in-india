@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import GeneticsChart from '../../components/viz/GeneticsChart.tsx';
+import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 ---
 
 <BaseLayout
@@ -70,7 +71,12 @@ import GeneticsChart from '../../components/viz/GeneticsChart.tsx';
 
     {/* Visualisations */}
     <section class="mb-10">
-      <GeneticsChart client:visible />
+      <div class="relative">
+        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading genetics charts…" />
+        <div class="relative z-10">
+          <GeneticsChart client:visible />
+        </div>
+      </div>
     </section>
 
     {/* Caveat on synthesised data */}

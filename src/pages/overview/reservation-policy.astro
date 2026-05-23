@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import ReservationSankey from '../../components/viz/ReservationSankey.tsx';
+import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 ---
 
 <BaseLayout
@@ -59,7 +60,12 @@ import ReservationSankey from '../../components/viz/ReservationSankey.tsx';
 
     {/* Visualisation */}
     <section class="mb-12">
-      <ReservationSankey client:visible />
+      <div class="relative">
+        <ChartSkeleton class="absolute inset-0 -z-0" aspect="16/10" ariaLabel="Loading reservation sankey…" />
+        <div class="relative z-10">
+          <ReservationSankey client:visible />
+        </div>
+      </div>
     </section>
 
     {/* Substantive claims block */}

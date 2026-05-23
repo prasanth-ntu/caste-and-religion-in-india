@@ -1,0 +1,467 @@
+---
+// VarnaJatiLocator — SSR static inline-SVG "you are here" mini-tree.
+//
+// Renders the full Varna→Jati tree as a compact SVG at BUILD time, with the
+// highlighted node (or two, in compare mode) emphasised and the ancestor path
+// from root traced in indigo. No React, no D3 runtime. A tiny inline <script>
+// adds hover-to-show-label and click-to-jump.
+//
+// Props:
+//   highlightSlug?: string                 — single-node mode.
+//   highlightSlugs?: [string, string]      — compare mode (A indigo, B amber).
+//   class?: string                         — passthrough to the wrapper.
+//   aspect?: 'radial' | 'sideways'         — defaults to 'radial' (desktop);
+//                                            a 'sideways' SVG is also rendered
+//                                            for narrow mobile via Tailwind.
+//
+// Build-time layout strategy: precompute node x/y positions in JS within the
+// frontmatter — radial (theta = leafIdx * 2π / totalLeaves, r = depth * step)
+// for desktop, sideways (x = depth * step, y = leafIdx * row) for mobile.
+
+import { varnaJatiTree, type TreeNode } from '../../data/varna-jati-tree';
+
+export interface Props {
+  highlightSlug?: string;
+  highlightSlugs?: [string, string];
+  class?: string;
+  aspect?: 'radial' | 'sideways';
+}
+
+const {
+  highlightSlug,
+  highlightSlugs,
+  class: classAttr = '',
+  aspect: _aspect = 'radial',
+} = Astro.props as Props;
+
+// -------------------- Layout precompute --------------------
+
+interface LayoutNode {
+  id: string;
+  name: string;
+  level: string;
+  parentId: string | null;
+  depth: number;
+  leafIndex: number; // mid-index over descendant leaves (used for both layouts)
+  rx: number; // radial x
+  ry: number; // radial y
+  sx: number; // sideways x
+  sy: number; // sideways y
+  isLeaf: boolean;
+  children: string[];
+}
+
+const nodes = new Map<string, LayoutNode>();
+let nextLeafIndex = 0;
+
+function walk(n: TreeNode, parentId: string | null, depth: number): { leafStart: number; leafEnd: number } {
+  const isLeaf = !n.children || n.children.length === 0;
+  let leafStart: number;
+  let leafEnd: number;
+  if (isLeaf) {
+    leafStart = nextLeafIndex;
+    leafEnd = nextLeafIndex;
+    nextLeafIndex += 1;
+  } else {
+    leafStart = nextLeafIndex;
+    const childIds: string[] = [];
+    for (const c of n.children!) {
+      walk(c, n.id, depth + 1);
+      childIds.push(c.id);
+    }
+    leafEnd = nextLeafIndex - 1;
+  }
+  const mid = (leafStart + leafEnd) / 2;
+  nodes.set(n.id, {
+    id: n.id,
+    name: n.name.en,
+    level: n.level,
+    parentId,
+    depth,
+    leafIndex: mid,
+    rx: 0,
+    ry: 0,
+    sx: 0,
+    sy: 0,
+    isLeaf,
+    children: (n.children ?? []).map((c) => c.id),
+  });
+  return { leafStart, leafEnd };
+}
+walk(varnaJatiTree, null, 0);
+const totalLeaves = nextLeafIndex;
+
+// Radial: theta from leaf midpoint, radius from depth.
+const RADIAL_STEP = 42;
+const RADIAL_CX = 220;
+const RADIAL_CY = 200;
+for (const node of nodes.values()) {
+  const theta = (node.leafIndex / Math.max(totalLeaves, 1)) * Math.PI * 2 - Math.PI / 2;
+  const r = node.depth * RADIAL_STEP;
+  node.rx = RADIAL_CX + Math.cos(theta) * r;
+  node.ry = RADIAL_CY + Math.sin(theta) * r;
+}
+
+// Sideways: x by depth, y by leaf midpoint. For internal nodes, y is the
+// average of child y positions (already from leafIndex mid).
+const SIDE_X_STEP = 84;
+const SIDE_Y_STEP = 13;
+const SIDE_X_PAD = 12;
+const SIDE_Y_PAD = 14;
+for (const node of nodes.values()) {
+  node.sx = SIDE_X_PAD + node.depth * SIDE_X_STEP;
+  node.sy = SIDE_Y_PAD + node.leafIndex * SIDE_Y_STEP;
+}
+
+// -------------------- Highlight resolution --------------------
+
+function findClosestSlug(slug: string | undefined): string | null {
+  if (!slug) return null;
+  if (nodes.has(slug)) return slug;
+  // Narrative page slugs that don't have their own tree node.
+  if (slug === 'kongu' || slug === 'gounder') return 'kongu-vellala';
+  if (slug === 'konur') return 'kadai';
+  if (slug === 'ancestors') return 'vellala';
+  // Any other slug coming in is almost certainly a Kongu Vellala kootam
+  // (144 of 145 kootams aren't in the illustrative tree). Highlight the
+  // nearest known ancestor so the locator still answers "where am I".
+  return 'kongu-vellala';
+}
+
+const slugA = findClosestSlug(highlightSlug ?? highlightSlugs?.[0]);
+const slugB = highlightSlugs ? findClosestSlug(highlightSlugs[1]) : null;
+const compareMode = Boolean(highlightSlugs);
+
+function ancestorChain(id: string | null): string[] {
+  const chain: string[] = [];
+  let cur = id ? nodes.get(id) ?? null : null;
+  while (cur) {
+    chain.unshift(cur.id);
+    cur = cur.parentId ? nodes.get(cur.parentId) ?? null : null;
+  }
+  return chain;
+}
+
+const chainA = ancestorChain(slugA);
+const chainB = compareMode ? ancestorChain(slugB) : [];
+
+// LCA = deepest shared prefix
+let lcaId: string | null = null;
+let lcaLevelsUp = 0;
+if (compareMode && slugA && slugB) {
+  const limit = Math.min(chainA.length, chainB.length);
+  for (let i = 0; i < limit; i += 1) {
+    if (chainA[i] === chainB[i]) lcaId = chainA[i];
+    else break;
+  }
+  if (lcaId) {
+    const lcaDepth = nodes.get(lcaId)!.depth;
+    const aDepth = nodes.get(slugA!)!.depth;
+    const bDepth = nodes.get(slugB!)!.depth;
+    lcaLevelsUp = Math.max(aDepth, bDepth) - lcaDepth;
+  }
+}
+
+const lcaName = lcaId ? nodes.get(lcaId)!.name : '';
+const aName = slugA ? nodes.get(slugA)!.name : '';
+const bName = slugB ? nodes.get(slugB)!.name : '';
+
+// Set of ancestor ids (including target) for path drawing.
+const ancestorSetA = new Set(chainA);
+const ancestorSetB = new Set(chainB);
+
+// Sideways viewbox bounds
+const maxDepth = Math.max(...Array.from(nodes.values()).map((n) => n.depth));
+const sideWidth = SIDE_X_PAD * 2 + maxDepth * SIDE_X_STEP + 130; // extra room for leaf labels
+const sideHeight = SIDE_Y_PAD * 2 + (totalLeaves - 1) * SIDE_Y_STEP + 12;
+
+// Build edge list (parent → child).
+const edges: { from: string; to: string }[] = [];
+for (const node of nodes.values()) {
+  if (node.parentId) edges.push({ from: node.parentId, to: node.id });
+}
+
+// Compose href for "Open full chart" link.
+let fullChartHref = '/overview/varna-vs-jati/';
+if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
+  const params = new URLSearchParams();
+  if (highlightSlugs?.[0]) params.set('a', highlightSlugs[0]);
+  if (highlightSlugs?.[1]) params.set('b', highlightSlugs[1]);
+  fullChartHref += `?${params.toString()}`;
+} else if (highlightSlug) {
+  fullChartHref += `?node=${encodeURIComponent(highlightSlug)}`;
+}
+
+// Accessibility text.
+const a11yTitle = compareMode
+  ? `Mini taxonomy locator highlighting ${aName || 'A'} and ${bName || 'B'}.`
+  : `Mini taxonomy locator highlighting ${aName || 'the current node'} in the Varna→Jati tree.`;
+const a11yDesc = compareMode
+  ? `Ancestor paths from root to both highlighted nodes shown in indigo and amber. Common ancestor: ${lcaName || 'unknown'}.`
+  : `Ancestor path: ${chainA.map((id) => nodes.get(id)!.name).join(' → ') || 'none'}.`;
+
+// Color tokens (hex literals — keep small for SSR inlining).
+const COLOR_NODE = '#d6d3d1'; // stone-300
+const COLOR_NODE_STROKE = '#a8a29e'; // stone-400
+const COLOR_EDGE = '#e7e5e4'; // stone-200
+const COLOR_A = '#4338ca'; // indigo-700
+const COLOR_B = '#b45309'; // amber-700
+const COLOR_LCA = '#6d28d9'; // violet-700
+
+// Helper: choose colour for a given node id
+function nodeFill(id: string): string {
+  if (id === slugA) return COLOR_A;
+  if (id === slugB) return COLOR_B;
+  return COLOR_NODE;
+}
+function nodeStroke(id: string): string {
+  if (id === slugA) return COLOR_A;
+  if (id === slugB) return COLOR_B;
+  return COLOR_NODE_STROKE;
+}
+function nodeR(id: string): number {
+  if (id === slugA || id === slugB) return 4.5;
+  return 3;
+}
+
+// Edge colour helper
+function edgeStroke(from: string, to: string): string {
+  const onA = ancestorSetA.has(from) && ancestorSetA.has(to);
+  const onB = ancestorSetB.has(from) && ancestorSetB.has(to);
+  if (onA && onB) return COLOR_LCA;
+  if (onA) return COLOR_A;
+  if (onB) return COLOR_B;
+  return COLOR_EDGE;
+}
+function edgeWidth(from: string, to: string): number {
+  const onA = ancestorSetA.has(from) && ancestorSetA.has(to);
+  const onB = ancestorSetB.has(from) && ancestorSetB.has(to);
+  return onA || onB ? 1.5 : 0.75;
+}
+
+// Pre-serialise edge svg & nodes for both layouts.
+const allNodes = Array.from(nodes.values());
+---
+
+<figure
+  class:list={[
+    'varna-jati-locator not-prose my-4 rounded-xl border border-stone-200 bg-stone-50/60 p-3 sm:p-4',
+    classAttr,
+  ]}
+  aria-labelledby="vjl-heading"
+>
+  <figcaption
+    id="vjl-heading"
+    class="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-xs font-medium text-stone-600"
+  >
+    <span>
+      <span aria-hidden="true">📍</span> Where this sits in the bigger tree
+    </span>
+    <a
+      href={fullChartHref}
+      class="text-indigo-700 underline decoration-stone-300 underline-offset-2 hover:decoration-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+    >
+      Open full chart →
+    </a>
+  </figcaption>
+
+  {compareMode && slugA && slugB && lcaId && (
+    <p class="mb-2 text-[11px] text-stone-600">
+      <span class="inline-block h-2 w-2 rounded-full align-middle" style={`background:${COLOR_A}`}></span>
+      <span class="font-medium text-stone-800">{aName}</span>
+      <span class="mx-1 text-stone-400">·</span>
+      <span class="inline-block h-2 w-2 rounded-full align-middle" style={`background:${COLOR_B}`}></span>
+      <span class="font-medium text-stone-800">{bName}</span>
+      <span class="mx-1 text-stone-400">·</span>
+      <span>
+        Common ancestor:&nbsp;
+        <span class="font-semibold text-violet-700">{lcaName}</span>
+        &nbsp;({lcaLevelsUp} level{lcaLevelsUp === 1 ? '' : 's'} up)
+      </span>
+    </p>
+  )}
+
+  {/* Radial — desktop / wide */}
+  <svg
+    class="vjl-svg hidden sm:block"
+    viewBox="0 0 440 400"
+    role="img"
+    width="100%"
+    height="auto"
+    preserveAspectRatio="xMidYMid meet"
+    aria-label={a11yTitle}
+    style="max-height: 360px;"
+  >
+    <title>{a11yTitle}</title>
+    <desc>{a11yDesc}</desc>
+    <g class="vjl-edges" fill="none" stroke-linecap="round">
+      {edges.map((e) => {
+        const a = nodes.get(e.from)!;
+        const b = nodes.get(e.to)!;
+        return (
+          <line
+            x1={a.rx}
+            y1={a.ry}
+            x2={b.rx}
+            y2={b.ry}
+            stroke={edgeStroke(e.from, e.to)}
+            stroke-width={edgeWidth(e.from, e.to)}
+          />
+        );
+      })}
+    </g>
+    <g class="vjl-nodes">
+      {allNodes.map((n) => {
+        const highlighted = n.id === slugA || n.id === slugB;
+        return (
+          <g
+            class="vjl-node"
+            data-slug={n.id}
+            data-highlight={highlighted ? 'true' : 'false'}
+            transform={`translate(${n.rx} ${n.ry})`}
+          >
+            <circle
+              r={nodeR(n.id)}
+              fill={nodeFill(n.id)}
+              stroke={nodeStroke(n.id)}
+              stroke-width={highlighted ? 1.2 : 0.6}
+            >
+              <title>{`${n.name} — ${n.level}`}</title>
+            </circle>
+            <text
+              class="vjl-label"
+              x={6}
+              y={3}
+              font-size={highlighted ? 10 : 9}
+              font-weight={highlighted ? 700 : 400}
+              fill={highlighted ? (n.id === slugA ? COLOR_A : COLOR_B) : '#44403c'}
+              style={highlighted ? '' : 'display:none;'}
+            >{n.name}</text>
+          </g>
+        );
+      })}
+      {compareMode && lcaId && (
+        <g transform={`translate(${nodes.get(lcaId)!.rx} ${nodes.get(lcaId)!.ry})`}>
+          <polygon
+            points="0,-6 6,0 0,6 -6,0"
+            fill="none"
+            stroke={COLOR_LCA}
+            stroke-width="1.5"
+          >
+            <title>{`Common ancestor: ${lcaName}`}</title>
+          </polygon>
+        </g>
+      )}
+    </g>
+  </svg>
+
+  {/* Sideways — narrow mobile */}
+  <svg
+    class="vjl-svg block sm:hidden"
+    viewBox={`0 0 ${sideWidth} ${sideHeight}`}
+    role="img"
+    width="100%"
+    height="auto"
+    preserveAspectRatio="xMidYMid meet"
+    aria-label={a11yTitle}
+  >
+    <title>{a11yTitle}</title>
+    <desc>{a11yDesc}</desc>
+    <g class="vjl-edges" fill="none" stroke-linecap="round">
+      {edges.map((e) => {
+        const a = nodes.get(e.from)!;
+        const b = nodes.get(e.to)!;
+        // Elbow path: horizontal then vertical then horizontal.
+        const midX = (a.sx + b.sx) / 2;
+        const d = `M ${a.sx} ${a.sy} H ${midX} V ${b.sy} H ${b.sx}`;
+        return (
+          <path
+            d={d}
+            stroke={edgeStroke(e.from, e.to)}
+            stroke-width={edgeWidth(e.from, e.to)}
+          />
+        );
+      })}
+    </g>
+    <g class="vjl-nodes">
+      {allNodes.map((n) => {
+        const highlighted = n.id === slugA || n.id === slugB;
+        return (
+          <g
+            class="vjl-node"
+            data-slug={n.id}
+            data-highlight={highlighted ? 'true' : 'false'}
+            transform={`translate(${n.sx} ${n.sy})`}
+          >
+            <circle
+              r={nodeR(n.id)}
+              fill={nodeFill(n.id)}
+              stroke={nodeStroke(n.id)}
+              stroke-width={highlighted ? 1.2 : 0.6}
+            >
+              <title>{`${n.name} — ${n.level}`}</title>
+            </circle>
+            <text
+              class="vjl-label"
+              x={6}
+              y={3}
+              font-size={highlighted ? 9 : 8}
+              font-weight={highlighted ? 700 : 400}
+              fill={highlighted ? (n.id === slugA ? COLOR_A : COLOR_B) : '#44403c'}
+              style={highlighted ? '' : 'display:none;'}
+            >{n.name}</text>
+          </g>
+        );
+      })}
+      {compareMode && lcaId && (
+        <g transform={`translate(${nodes.get(lcaId)!.sx} ${nodes.get(lcaId)!.sy})`}>
+          <polygon
+            points="0,-5 5,0 0,5 -5,0"
+            fill="none"
+            stroke={COLOR_LCA}
+            stroke-width="1.5"
+          >
+            <title>{`Common ancestor: ${lcaName}`}</title>
+          </polygon>
+        </g>
+      )}
+    </g>
+  </svg>
+</figure>
+
+<script is:inline>
+  (function () {
+    if (window.__vjlLocatorBound) return;
+    window.__vjlLocatorBound = true;
+    function findNode(el) {
+      while (el && el !== document.body) {
+        if (el.classList && el.classList.contains('vjl-node')) return el;
+        el = el.parentNode;
+      }
+      return null;
+    }
+    document.addEventListener('mouseover', function (e) {
+      var n = findNode(e.target);
+      if (!n) return;
+      var label = n.querySelector('text.vjl-label');
+      if (label && n.getAttribute('data-highlight') !== 'true') {
+        label.style.display = '';
+        n.setAttribute('data-show-label', 'true');
+      }
+    });
+    document.addEventListener('mouseout', function (e) {
+      var n = findNode(e.target);
+      if (!n) return;
+      if (n.getAttribute('data-highlight') === 'true') return;
+      var label = n.querySelector('text.vjl-label');
+      if (label) label.style.display = 'none';
+      n.removeAttribute('data-show-label');
+    });
+    document.addEventListener('click', function (e) {
+      var n = findNode(e.target);
+      if (!n) return;
+      var slug = n.getAttribute('data-slug');
+      if (slug) window.location.href = '/overview/varna-vs-jati/?node=' + encodeURIComponent(slug);
+    });
+  })();
+</script>

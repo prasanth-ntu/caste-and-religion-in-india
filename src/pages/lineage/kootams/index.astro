@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Claim from '../../../components/Claim.astro';
 import KootamForceGraph from '../../../components/viz/KootamForceGraph.tsx';
+import ChartSkeleton from '../../../components/ui/ChartSkeleton.astro';
 
 const all = await getCollection('kootams');
 
@@ -113,7 +114,12 @@ const stubCount = kootams.length - namedCount;
     </section>
 
     <section class="mb-10">
-      <KootamForceGraph kootams={kootams} client:visible />
+      <div class="relative">
+        <ChartSkeleton class="absolute inset-0 -z-0" aspect="4/3" ariaLabel="Loading kootam force graph…" />
+        <div class="relative z-10">
+          <KootamForceGraph kootams={kootams} client:visible />
+        </div>
+      </div>
     </section>
 
     {/* Legend */}

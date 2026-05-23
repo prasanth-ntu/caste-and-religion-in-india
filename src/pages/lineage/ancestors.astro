@@ -4,6 +4,7 @@ import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import AncestorPractices from '../../components/viz/AncestorPractices.tsx';
+import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 ---
 
 <BaseLayout
@@ -19,6 +20,8 @@ import AncestorPractices from '../../components/viz/AncestorPractices.tsx';
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Ancestor Practices</span>
     </nav>
+
+    <VarnaJatiLocator highlightSlug="vellala" class="mb-6" />
 
     {/* Hero */}
     <header class="mb-10">

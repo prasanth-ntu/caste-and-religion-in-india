@@ -1,5 +1,5 @@
 ---
-import FactTier from './FactTier.astro';
+import FactTierTooltip from './FactTierTooltip.tsx';
 import Cite from './Cite.astro';
 
 type Tier = 'green' | 'yellow' | 'red' | 'rational';
@@ -15,5 +15,5 @@ const { tier, sources = [] } = Astro.props;
 <span class="claim">
   <slot />
   {sources.map((id, i) => <Cite id={id} n={i + 1} />)}
-  <span class="ml-1"><FactTier tier={tier} /></span>
+  <span class="ml-1"><FactTierTooltip tier={tier} client:visible /></span>
 </span>

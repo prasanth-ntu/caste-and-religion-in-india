@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { varnaJatiTree, type TreeNode, type CasteLevel } from '../../data/varna-jati-tree';
+import Tooltip, { type TooltipState } from '../ui/Tooltip';
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 // ---------- Palette ----------
 // Tailwind-aligned stops. Each level gets a fill / stroke / text trio.
@@ -44,6 +50,32 @@ export default function VarnaJatiRadial() {
   const [isMobile, setIsMobile] = useState(false);
   const [selected, setSelected] = useState<TreeNode | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
+  const [inView, setInView] = useState(false);
+
+  // IntersectionObserver: trigger one-shot entry animation when the chart appears.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // -------- Responsive observer --------
   useEffect(() => {
@@ -135,14 +167,18 @@ export default function VarnaJatiRadial() {
       renderVertical(svg, laidOut, size, activePathIds, {
         setSelected,
         setHoveredId,
+        setTip,
+        inView,
       });
     } else {
       renderRadial(svg, laidOut, size, activePathIds, {
         setSelected,
         setHoveredId,
+        setTip,
+        inView,
       });
     }
-  }, [laidOut, size, activePathIds, isMobile]);
+  }, [laidOut, size, activePathIds, isMobile, inView]);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -183,6 +219,7 @@ export default function VarnaJatiRadial() {
 
       {/* Drawer */}
       {selected && <Drawer node={selected} onClose={() => setSelected(null)} isMobile={isMobile} />}
+      <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
 }
@@ -196,8 +233,11 @@ function renderRadial(
   handlers: {
     setSelected: (n: TreeNode) => void;
     setHoveredId: (id: string | null) => void;
+    setTip: (s: TooltipState) => void;
+    inView: boolean;
   },
 ) {
+  const reduced = prefersReducedMotion();
   // Initial transform: gently rotate so the highlighted leaf sits roughly at the top-right.
   const highlightLeaf = root.descendants().find((d) => d.data.highlight);
   let rotation = 0;
@@ -247,20 +287,49 @@ function renderRadial(
     .attr('role', 'button')
     .attr('aria-label', (d) => `${d.data.name.en} (${d.data.level})`)
     .style('cursor', 'pointer')
-    .on('mouseenter', (_, d) => handlers.setHoveredId(d.data.id))
-    .on('mouseleave', () => handlers.setHoveredId(null))
-    .on('focus', (_, d) => handlers.setHoveredId(d.data.id))
-    .on('blur', () => handlers.setHoveredId(null))
+    .style('outline', 'none')
+    .on('mouseenter', (event: MouseEvent, d) => {
+      handlers.setHoveredId(d.data.id);
+      handlers.setTip({
+        x: event.clientX,
+        y: event.clientY,
+        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
+      });
+    })
+    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('focus', function (event: FocusEvent, d) {
+      handlers.setHoveredId(d.data.id);
+      const r = (this as SVGGElement).getBoundingClientRect();
+      handlers.setTip({
+        x: r.left + r.width / 2,
+        y: r.top,
+        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
+      });
+      void event;
+    })
+    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
     .on('click', (_, d) => handlers.setSelected(d.data))
-    .on('keydown', (event, d) => {
-      const e = event as KeyboardEvent;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
+    .on('keydown', function (event: KeyboardEvent, d) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
         handlers.setSelected(d.data);
+        return;
+      }
+      // Arrow-key sibling navigation: cycle siblings (same parent).
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        const siblings = d.parent?.children;
+        if (!siblings || siblings.length < 2) return;
+        const allG = node.nodes() as SVGGElement[];
+        const sibIdxs = siblings.map((s) => allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id));
+        const myIdx = siblings.indexOf(d as any);
+        const fwd = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+        const nextIdx = sibIdxs[(myIdx + (fwd ? 1 : -1) + siblings.length) % siblings.length];
+        if (nextIdx >= 0) {
+          event.preventDefault();
+          (allG[nextIdx] as unknown as HTMLElement).focus?.();
+        }
       }
     });
-
-  node.append('title').text((d) => `${d.data.name.en} — ${d.data.level}`);
 
   node
     .append('circle')
@@ -270,6 +339,20 @@ function renderRadial(
     .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
     .attr('filter', (d) => (d.data.highlight ? 'url(#kadai-glow)' : null))
     .attr('class', (d) => (d.data.highlight ? 'animate-pulse' : null));
+
+  // Entry animation — stagger node opacity by depth + index (capped 600ms).
+  if (!reduced && handlers.inView) {
+    node.each(function (d, i) {
+      const sel = d3.select(this);
+      const delay = Math.min((d.depth * 60) + (i * 6), 600);
+      sel
+        .style('opacity', 0)
+        .style('transition', `opacity 360ms ease ${delay}ms`);
+      requestAnimationFrame(() => sel.style('opacity', null));
+    });
+  } else if (!handlers.inView && !reduced) {
+    node.style('opacity', 0);
+  }
 
   // Highlight ring around Kadai
   node
@@ -336,8 +419,11 @@ function renderVertical(
   handlers: {
     setSelected: (n: TreeNode) => void;
     setHoveredId: (id: string | null) => void;
+    setTip: (s: TooltipState) => void;
+    inView: boolean;
   },
 ) {
+  const reduced = prefersReducedMotion();
   // Normalise layout to fit width/height. d3.tree() with nodeSize([22, 160]) sets x as horizontal-leaf-coord, y as depth-coord.
   // We render tree top-down: convert to (y vertical = node-x, x horizontal = depth*step).
   const nodes = root.descendants();
@@ -387,20 +473,47 @@ function renderVertical(
     .attr('role', 'button')
     .attr('aria-label', (d) => `${d.data.name.en} (${d.data.level})`)
     .style('cursor', 'pointer')
+    .style('outline', 'none')
     .on('click', (_, d) => handlers.setSelected(d.data))
-    .on('mouseenter', (_, d) => handlers.setHoveredId(d.data.id))
-    .on('mouseleave', () => handlers.setHoveredId(null))
-    .on('focus', (_, d) => handlers.setHoveredId(d.data.id))
-    .on('blur', () => handlers.setHoveredId(null))
-    .on('keydown', (event, d) => {
-      const e = event as KeyboardEvent;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
+    .on('mouseenter', (event: MouseEvent, d) => {
+      handlers.setHoveredId(d.data.id);
+      handlers.setTip({
+        x: event.clientX,
+        y: event.clientY,
+        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
+      });
+    })
+    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('focus', function (_, d) {
+      handlers.setHoveredId(d.data.id);
+      const r = (this as SVGGElement).getBoundingClientRect();
+      handlers.setTip({
+        x: r.left + r.width / 2,
+        y: r.top,
+        content: <><strong>{d.data.name.en}</strong><br /><span style={{ opacity: 0.85 }}>{d.data.level}</span></>,
+      });
+    })
+    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('keydown', function (event: KeyboardEvent, d) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
         handlers.setSelected(d.data);
+        return;
+      }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        const siblings = d.parent?.children;
+        if (!siblings || siblings.length < 2) return;
+        const allG = node.nodes() as SVGGElement[];
+        const sibIdxs = siblings.map((s) => allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id));
+        const myIdx = siblings.indexOf(d as any);
+        const fwd = event.key === 'ArrowDown' || event.key === 'ArrowRight';
+        const nextIdx = sibIdxs[(myIdx + (fwd ? 1 : -1) + siblings.length) % siblings.length];
+        if (nextIdx >= 0) {
+          event.preventDefault();
+          (allG[nextIdx] as unknown as HTMLElement).focus?.();
+        }
       }
     });
-
-  node.append('title').text((d) => `${d.data.name.en} — ${d.data.level}`);
 
   node
     .append('circle')
@@ -410,6 +523,17 @@ function renderVertical(
     .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
     .attr('filter', (d) => (d.data.highlight ? 'url(#kadai-glow)' : null))
     .attr('class', (d) => (d.data.highlight ? 'animate-pulse' : null));
+
+  if (!reduced && handlers.inView) {
+    node.each(function (d, i) {
+      const sel = d3.select(this);
+      const delay = Math.min(d.depth * 60 + i * 6, 600);
+      sel.style('opacity', 0).style('transition', `opacity 360ms ease ${delay}ms`);
+      requestAnimationFrame(() => sel.style('opacity', null));
+    });
+  } else if (!handlers.inView && !reduced) {
+    node.style('opacity', 0);
+  }
 
   node
     .filter((d) => !!d.data.highlight)

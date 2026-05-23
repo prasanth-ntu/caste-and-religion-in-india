@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ScrollyTimeline from '../../components/viz/ScrollyTimeline.tsx';
+import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 
 type EventShape = {
   slug: string;
@@ -139,7 +140,12 @@ if (events.length < 5) {
       </p>
     </section>
 
-    <ScrollyTimeline events={events} client:visible />
+    <div class="relative">
+      <ChartSkeleton class="absolute inset-0 -z-0" aspect="3/4" ariaLabel="Loading timeline…" />
+      <div class="relative z-10">
+        <ScrollyTimeline events={events} client:visible />
+      </div>
+    </div>
 
     <section class="mt-20 mb-16 max-w-3xl rounded-xl border border-stone-200 bg-white p-6">
       <h2 class="text-lg font-bold text-stone-900">How to read this</h2>

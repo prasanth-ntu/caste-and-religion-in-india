@@ -76,8 +76,8 @@ export function Chip({
   ...rest
 }: ChipProps) {
   const base =
-    'inline-flex items-center gap-1.5 rounded-full border px-3 text-xs font-medium capitalize ' +
-    'transition-colors min-h-[44px] sm:min-h-[40px] ' +
+    'relative inline-flex items-center gap-1.5 rounded-full border px-3 text-xs font-medium capitalize ' +
+    'transition-colors min-h-[44px] sm:min-h-[40px] overflow-hidden ' +
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1';
   const pressedClasses =
     'bg-indigo-50 text-indigo-700 border-indigo-300 ring-1 ring-indigo-300';
@@ -100,6 +100,13 @@ export function Chip({
           {count}
         </span>
       )}
+      {/* Sliding aria-pressed indicator. */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 origin-center bg-indigo-500 transform-gpu transition-transform duration-200 ${
+          pressed ? 'scale-x-100' : 'scale-x-0'
+        }`}
+      />
     </button>
   );
 }

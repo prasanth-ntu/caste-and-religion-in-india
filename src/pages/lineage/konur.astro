@@ -5,6 +5,7 @@ import LineageCompareOverlay from '../../components/LineageCompareOverlay.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import FestivalCalendar from '../../components/viz/FestivalCalendar.tsx';
+import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 
 // Pilgrimage / lifecycle rituals tied to the Kuladeivam.
 const pilgrimage = [
@@ -119,6 +120,8 @@ const iconHotspots = [
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Konur Kaliamman</span>
     </nav>
+
+    <VarnaJatiLocator highlightSlug="kadai" class="mb-6" />
 
     {/* Hero */}
     <header class="mb-12">

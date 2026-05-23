@@ -62,8 +62,17 @@
   border-radius: inherit;
 }
 
-/* Astro view-transitions: smooth fade + tiny lift on <main>; header is pinned via
-   transition:name on the element. */
+/* Astro view-transitions: smooth fade + tiny lift on <main>; header is pinned
+   via transition:persist on the <SiteHeader> element.
+   --------------------------------------------------------------------------
+   Total perceived transition: ~220ms (vt-fade-out 200ms + vt-fade-in 240ms
+   crossfade with a 4px translateY lift on enter). Per-page hero / title
+   elements can opt into a shared name to ride the same transition, e.g.:
+       <h1 transition:name="hero-title">…</h1>
+   Use this for pages that share a visual anchor (e.g. the Overview hero
+   carrying into a sub-page). Do NOT apply it page-wide — only on intentional
+   continuity elements. Honour `prefers-reduced-motion` via the global rule
+   above (animation-duration is clamped to 0.01ms when reduced motion is on). */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 220ms;

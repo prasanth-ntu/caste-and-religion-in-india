@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LineageCompare from '../components/LineageCompare.tsx';
+import VarnaJatiLocator from '../components/viz/VarnaJatiLocator.astro';
 ---
 
 <BaseLayout
@@ -30,6 +31,14 @@ import LineageCompare from '../components/LineageCompare.tsx';
         Kaliamman) for A; pick anything for B.
       </p>
     </header>
+
+    {/*
+      SSR-rendered locator with the default A=kadai vs B=maniyan example.
+      LineageCompare is client-only and reads URL params; the locator can
+      stay static at this default. Phase 3 may upgrade to swap client-side
+      when the user picks different lineages.
+    */}
+    <VarnaJatiLocator highlightSlugs={["kadai", "sengunthar-kootam"]} class="mb-6" />
 
     <LineageCompare client:load />
 

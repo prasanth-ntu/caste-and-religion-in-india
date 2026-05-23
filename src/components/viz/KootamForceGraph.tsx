@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import Tooltip, { type TooltipState } from '../ui/Tooltip';
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 // ---------- Types ----------
 // We accept a denormalised shape that the Astro page builds from the kootams collection.
@@ -67,6 +73,31 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
   const [showStubs, setShowStubs] = useState(true);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SimNode | null>(null);
+  const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // -------- Responsive: pick layout mode + canvas size --------
   useEffect(() => {
@@ -210,6 +241,8 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
       .join('line')
       .attr('stroke-width', 1.2);
 
+    const reduced = prefersReducedMotion();
+
     const nodeG = g
       .append('g')
       .selectAll('g')
@@ -219,12 +252,74 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
       .attr('role', 'button')
       .attr('aria-label', (d) => `${d.name} — ${d.totemType} totem`)
       .style('cursor', 'pointer')
+      .style('outline', 'none')
       .on('click', (_, d) => setSelected(d))
-      .on('keydown', (event, d) => {
-        const e = event as KeyboardEvent;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+      .on('mouseenter', function (event: MouseEvent, d) {
+        // Dim non-target nodes; highlight target.
+        nodeG.each(function (this: SVGGElement) {
+          const sel = d3.select(this);
+          const isMe = this === (event.currentTarget as SVGGElement);
+          sel.select<SVGCircleElement>('circle:last-of-type')
+            .style('transition', reduced ? 'none' : 'opacity 160ms ease, filter 160ms ease, stroke-width 160ms ease');
+          if (isMe) {
+            sel.select<SVGCircleElement>('circle:last-of-type')
+              .style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,.15))')
+              .attr('stroke-width', (dd: any) => (dd.isHighlight ? 3 : 2));
+          } else {
+            sel.style('opacity', 0.5);
+          }
+        });
+        setTip({
+          x: event.clientX,
+          y: event.clientY,
+          content: (
+            <>
+              <strong>{d.isHighlight ? '★ ' : ''}{d.name}</strong>
+              <br />
+              <span style={{ opacity: 0.85 }}>{d.tamilName}</span>
+              <br />
+              {TOTEM_PALETTE[d.totemType].label}: {d.totemSpecies}
+              {d.isStub ? <><br /><em style={{ opacity: 0.75 }}>(stub — needs research)</em></> : null}
+            </>
+          ),
+        });
+      })
+      .on('mousemove', (event: MouseEvent) => setTip((t) => (t.content ? { ...t, x: event.clientX, y: event.clientY } : t)))
+      .on('mouseleave', function () {
+        nodeG.each(function (this: SVGGElement) {
+          const sel = d3.select(this);
+          sel.style('opacity', null);
+          sel.select<SVGCircleElement>('circle:last-of-type')
+            .style('filter', null)
+            .attr('stroke-width', (dd: any) => (dd.isHighlight ? 2.5 : 1.5));
+        });
+        setTip({ x: null, y: null, content: null });
+      })
+      .on('focus', function (_, d) {
+        const r = (this as SVGGElement).getBoundingClientRect();
+        setTip({
+          x: r.left + r.width / 2,
+          y: r.top,
+          content: <><strong>{d.isHighlight ? '★ ' : ''}{d.name}</strong><br /><span style={{ opacity: 0.85 }}>{d.tamilName}</span></>,
+        });
+      })
+      .on('blur', () => setTip({ x: null, y: null, content: null }))
+      .on('keydown', function (event: KeyboardEvent, d) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
           setSelected(d);
+          return;
+        }
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          // Cycle through siblings in the same totem class.
+          const allG = nodeG.nodes() as SVGGElement[];
+          const sameClass = allG.filter((el) => (d3.select(el).datum() as SimNode).totemType === d.totemType);
+          const idx = sameClass.indexOf(this as SVGGElement);
+          if (idx < 0 || sameClass.length < 2) return;
+          const fwd = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+          const nextEl = sameClass[(idx + (fwd ? 1 : -1) + sameClass.length) % sameClass.length] as unknown as HTMLElement;
+          event.preventDefault();
+          nextEl.focus?.();
         }
       })
       .call(
@@ -246,10 +341,20 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
           }) as any,
       );
 
-    // SVG <title> for native hover tooltips (very lightweight)
-    nodeG
-      .append('title')
-      .text((d) => `${d.name} (${d.tamilName})\n${TOTEM_PALETTE[d.totemType].label}: ${d.totemSpecies}`);
+    // Entry animation — staggered fade + lift (capped 600ms total).
+    if (!reduced && inView) {
+      nodeG.each(function (_, i) {
+        const sel = d3.select(this);
+        const delay = Math.min(i * 12, 600);
+        sel
+          .style('opacity', 0)
+          .style('transform-box', 'fill-box')
+          .style('transition', `opacity 380ms ease ${delay}ms`);
+        requestAnimationFrame(() => sel.style('opacity', null));
+      });
+    } else if (!inView && !reduced) {
+      nodeG.style('opacity', 0);
+    }
 
     // Highlight halo for Kadai
     nodeG
@@ -312,7 +417,7 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
     return () => {
       simulation.stop();
     };
-  }, [filteredNodes, filteredLinks, size, layoutMode]);
+  }, [filteredNodes, filteredLinks, size, layoutMode, inView]);
 
   // -------- Toggles --------
   const toggleFilter = (t: TotemType) => {
@@ -403,6 +508,7 @@ export default function KootamForceGraph({ kootams }: KootamForceGraphProps) {
 
       {/* Drawer */}
       {selected && <KootamDrawer node={selected} onClose={() => setSelected(null)} />}
+      <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
 }
