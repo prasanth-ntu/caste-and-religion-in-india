@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SourcesFilterClient from '../../components/viz/SourcesFilterClient';
-import PathProgress from '../../components/site/PathProgress.tsx';
 import {
   getSourceBacklinks,
   type Backlink,
@@ -78,7 +77,6 @@ const collectionEmoji: Record<BacklinkCollection, string> = {
   title="Sources — Decoded"
   description="The full bibliography behind every claim on this site — papers, books, wiki references, inscriptions, and oral sources, with backlinks to where each is cited."
 >
-  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>

@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PathProgress from '../components/site/PathProgress.tsx';
 
 type Stop = {
   title: string;
@@ -182,7 +181,6 @@ function totalMinutes(stops: Stop[]): number {
   title="Explore — three ways into this material"
   description="Three named entry-paths into decoded.prasanth.io: for the researcher, the family historian, and the curious reader. Each path is 4-6 ordered stops with a small progress indicator."
 >
-  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-8 text-sm text-stone-500">
       <a

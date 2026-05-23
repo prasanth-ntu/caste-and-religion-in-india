@@ -192,8 +192,13 @@ export default function LineageSelector({
     persist(next);
     onChange?.(next);
     if (navigateOnChange && typeof window !== 'undefined') {
-      // Navigate to the parameterised lineage route
-      window.location.href = `/lineage/k/${m.slug}/`;
+      // On the /lineage/ hub page, stay in place and let the reactive cascade
+      // (decoded:lineage-changed) update content inline. Navigate only from
+      // other pages (e.g. /compare, /explore).
+      const path = window.location.pathname.replace(/\/$/, '');
+      if (path !== '/lineage') {
+        window.location.href = `/lineage/k/${m.slug}/`;
+      }
     }
   }
 

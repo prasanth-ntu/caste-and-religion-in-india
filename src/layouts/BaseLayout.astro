@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/site/SiteHeader.astro';
 import SiteFooter from '../components/site/SiteFooter.astro';
 import Explorer from '../components/site/Explorer.tsx';
+import PathProgress from '../components/site/PathProgress.tsx';
 
 interface Props {
   title?: string;
@@ -68,6 +69,7 @@ const siteName = 'decoded.prasanth.io';
       >Skip to main content</a
     >
     <SiteHeader />
+    <PathProgress client:idle />
     <slot />
     <Explorer client:idle transition:persist />
     <SiteFooter />

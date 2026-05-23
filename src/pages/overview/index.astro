@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PathProgress from '../../components/site/PathProgress.tsx';
 import { formatMeta, type Audience } from '../../lib/reading-time';
 
 type Subpage = {
@@ -73,7 +72,6 @@ const colorMap: Record<string, { dot: string; hover: string; ring: string }> = {
   title="Overview — Decoded"
   description="Section A: India-wide caste system. Varna vs jati, timeline, genetics, reservation policy."
 >
-  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>

@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import RitualFlipCard from '../../components/viz/RitualFlipCard.astro';
 import RitualsFilterClient from '../../components/viz/RitualsFilterClient';
-import PathProgress from '../../components/site/PathProgress.tsx';
 import { estimateReadTime } from '../../lib/reading-time';
 
 const all = await getCollection('rituals');
@@ -41,7 +40,6 @@ const ritualsMeta = sorted.map((r) => ({
   title="Rituals — Decoded"
   description="Tradition vs. evidence on Tamil and Indian rituals — flip-card audit of birth, marriage, death, kuladeivam, kootam, food, and purity rites."
 >
-  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-6xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>

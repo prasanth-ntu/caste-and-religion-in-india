@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PathProgress from '../../components/site/PathProgress.tsx';
 import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
@@ -82,7 +81,6 @@ const konurMeta = formatMeta('everyone', 4);
   title="Lineage — Decoded"
   description="A semantic-zoom map of the personal lineage from India to Konur — Kongu Vellala Gounder, Kadai Kootam, Konur Kaliamman."
 >
-  <PathProgress client:idle />
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     {/* Lineage selector — at the top so visitors can switch lineage immediately */}
     <section class="mb-8">
