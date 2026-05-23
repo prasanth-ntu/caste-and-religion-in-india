@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+import AncestorPractices from '../../components/viz/AncestorPractices.tsx';
+---
+
+<BaseLayout
+  title="Ancestor Practices — What Vellala Actually Did — Decoded"
+  description="A material-practice tour of Kongu Vellala ancestry: crops, tools, governance roles, and memorial markers — each tier-tagged with tradition framing vs. evidence framing."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Ancestor Practices</span>
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+        Material practice · செயல்பாடு
+      </p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Ancestor Practices</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          முன்னோர் செய்தவை
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        What did Vellala ancestors actually <em>do</em>? Not the romantic "noble cultivator" story, not the
+        shame-only "feudal oppressor" story — the concrete material practice: which crops they grew, which
+        tools they used, which offices they held, and how they remembered their dead.
+      </p>
+      <p class="mt-3 max-w-2xl text-base text-stone-600 sm:text-lg">
+        Each hotspot below is tagged with an evidence tier. Tradition framing and evidence framing are shown
+        side by side so the gaps between them are visible.
+      </p>
+    </header>
+
+    {/* The interactive */}
+    <section class="mb-12">
+      <AncestorPractices client:visible />
+    </section>
+
+    {/* Defensible claims */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        The most defensible statements
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">உறுதியான கூற்றுகள்</span>
+      </h2>
+      <p class="mt-2 max-w-2xl text-stone-600">
+        Of everything above, these are the pieces with the strongest documentary support.
+      </p>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="green" sources={["vellala-tank-irrigation"]}>
+            Kongu Vellala communities historically specialised in tank-fed (ஏரி) and well-fed (கமலை) irrigation in the semi-arid Kongu region, supporting paddy, cotton, sugarcane, and millet cultivation.
+          </Claim>
+          The hydraulic infrastructure — earthen tank bunds, sluice gates, command-area channels, leather-bag well lifts — is the most concretely preserved part of this legacy, attested in landscape and inscription alike.
+        </p>
+        <p>
+          <Claim tier="green" sources={["kongu-region-buffer"]}>
+            The Kongu region historically functioned as a buffer zone between the Chola, Pandya, and Chera kingdoms,
+          </Claim>
+          which is why the agrarian economy here developed its own distinct profile — drier than the Cauvery delta,
+          more cotton-and-millet than rice — and produced its own clan structure and titles.
+        </p>
+        <p>
+          <Claim tier="yellow" sources={["naadu-kal-hero-stones"]}>
+            Nadukal (நடுகல், hero stones) commemorating warriors who died defending cattle, land, or kin are densely attested across Kongu Nadu and form one of the oldest continuous Tamil memorial traditions.
+          </Claim>
+          The practice itself is green-tier well-attested; attribution of specific stones to named ancestors is community-internal and rarely independently corroborated.
+        </p>
+        <p>
+          <Claim tier="yellow" sources={["vellala-kaveri-origin"]}>
+            The Vellala cluster is most commonly hypothesised to have originated as elite land-owning cultivators of the Kaveri delta and other wet-rice zones during and after the Sangam era, expanding subsequently into Kongu, Tondai, and Pandya country.
+          </Claim>
+          The hypothesis is plausible and widely cited; the Sangam-Velir-to-modern-Vellala line of descent specifically is debated and not securely demonstrated.
+        </p>
+      </div>
+    </section>
+
+    {/* Honest caveat */}
+    <section class="mb-12 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+      <h2 class="flex items-center gap-2 text-xl font-semibold text-amber-900">
+        What this page is not saying
+        <FactTier tier="yellow" />
+      </h2>
+      <div class="prose prose-stone mt-3 max-w-none text-stone-800">
+        <p>
+          Showing the tools, the crops, and the offices does not establish that the Vellala were uniquely
+          virtuous, or that the rural labour economy was egalitarian. The same tank that irrigated the
+          fields was dug and maintained by labouring castes; the same threshing floor that processed the
+          year's grain was the site at which crop shares were distributed unequally; the same Naattaanmai
+          who arbitrated kootam marriages also enforced caste-based marriage and labour rules.
+        </p>
+        <p>
+          The point is the inverse of romanticisation: <em>and</em> the inverse of pure shame. The
+          ancestors farmed, irrigated, governed, and remembered their dead. They also operated inside —
+          and helped maintain — a stratified agrarian order. Both are true; this page tries to show both.
+        </p>
+      </div>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a href="/lineage/vellala" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-emerald-300 hover:bg-emerald-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Caste cluster</p>
+            <p class="font-medium text-stone-900">Vellala (வேளாளர்)</p>
+            <p class="mt-1 text-xs text-stone-600">Etymology, sub-groups, contested historiography.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/kongu" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Region</p>
+            <p class="font-medium text-stone-900">Kongu Nadu (கொங்கு நாடு)</p>
+            <p class="mt-1 text-xs text-stone-600">The semi-arid western Tamil plateau.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/gounder" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-sky-300 hover:bg-sky-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Title</p>
+            <p class="font-medium text-stone-900">Gounder (கவுண்டர்)</p>
+            <p class="mt-1 text-xs text-stone-600">The headman title used by Kongu Vellala.</p>
+          </a>
+        </li>
+      </ul>
+
+      <p class="mt-5 text-sm">
+        <a href="/lineage" class="font-medium text-emerald-700 hover:underline">← Back to Lineage</a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>

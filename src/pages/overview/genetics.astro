@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+import GeneticsChart from '../../components/viz/GeneticsChart.tsx';
+---
+
+<BaseLayout
+  title="Genetics — Decoded"
+  description="ANI/ASI admixture over four millennia and founder-event severity across Indian jatis. Why caste endogamy shows up in the DNA."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    {/* Breadcrumb */}
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/overview/" class="hover:text-stone-900">Overview</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Genetics</span>
+    </nav>
+
+    {/* Hero */}
+    <header class="mb-10">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Genetics</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          மரபியல்
+        </span>
+      </h1>
+      <p class="mt-3 max-w-2xl text-base text-stone-600">
+        Caste endogamy isn't just folklore — it's in the DNA, with measurable founder events.
+      </p>
+    </header>
+
+    {/* Intro prose */}
+    <section class="prose prose-stone mb-12 max-w-none text-stone-800 sm:text-lg">
+      <p>
+        Three landmark papers reframed Indian population genetics in the 21st century.
+        <Claim tier="green" sources={["reich-2009-nature", "moorjani-2013-ajhg"]}>
+          Reich and colleagues (2009) proposed the two-source model: nearly every modern South Asian
+          group descends from a mixture of two long-separated ancestral populations — Ancestral
+          North Indian (ANI) and Ancestral South Indian (ASI).
+        </Claim>
+        Moorjani et al. (2013) then dated the principal admixture episodes to roughly
+        4200 – 1900 years before present, using the decay of admixture-induced linkage disequilibrium
+        as a molecular clock.
+      </p>
+      <p>
+        <Claim tier="green" sources={["moorjani-2013-ajhg", "nakatsuka-2017-natgen"]}>
+          After ~1900 BP, admixture sharply slowed: most jati groups transitioned to strict
+          endogamy, freezing the ANI/ASI ratio in place and producing the genetic structure visible
+          in population samples today.
+        </Claim>
+        Nakatsuka et al. (2017) then quantified the consequence —
+        <Claim tier="yellow" sources={["nakatsuka-2017-natgen"]}>
+          dozens of Indian jatis carry founder-event signatures comparable to, and in several cases
+          more severe than, those of Ashkenazi Jews and Finns. The popular framing
+          ("Indian endogamy is the most extreme on Earth") overgeneralises a finding that is
+          group-specific.
+        </Claim>
+      </p>
+      <p>
+        For someone tracing a personal lineage — say, a Kongu Vellala Gounder of the Kadai kootam —
+        the practical upshot is unusual. Endogamy that began two millennia ago has left a clean,
+        measurable signal: shared identical-by-descent segments, elevated rates of recessive
+        disease, and a population-genetic identity that maps almost surgically onto the social
+        category of <em>jati</em>.
+      </p>
+    </section>
+
+    {/* Visualisations */}
+    <section class="mb-10">
+      <GeneticsChart client:visible />
+    </section>
+
+    {/* Caveat on synthesised data */}
+    <section class="mb-12 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900">
+      <div class="mb-2 flex items-center gap-2">
+        <FactTier tier="yellow" />
+        <p class="font-semibold text-amber-900">A note on the numbers shown</p>
+      </div>
+      <ul class="space-y-2 leading-relaxed">
+        <li>
+          The <strong>ANI/ASI admixture timeline</strong> is a synthesised curve — directionally
+          consistent with Reich 2009 and Moorjani 2013, but not a verbatim reproduction of any
+          single figure. The dashed uncertainty band approximates the spread reported across South
+          Indian middle-caste samples; for a specific group the exact ratio varies.
+        </li>
+        <li>
+          The <strong>founder-event severity</strong> values are approximated from Nakatsuka 2017
+          (Fig. 2 and SI). They are within the published range but should be treated as
+          order-of-magnitude rather than exact.
+        </li>
+        <li>
+          <strong>Kongu Vellala</strong> specifically may not appear in the Nakatsuka sample —
+          the value shown is a <em>proxy</em> based on geographically and socially neighbouring
+          South Indian middle-caste groups. Treat the Kongu bar as illustrative, not measured.
+        </li>
+      </ul>
+    </section>
+
+    {/* Cross-links */}
+    <section class="mb-12">
+      <h2 class="mb-3 text-base font-semibold text-stone-900">Related</h2>
+      <div class="flex flex-wrap gap-2">
+        <a
+          href="/lineage/vellala/"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-amber-500" aria-hidden="true"></span>
+          Vellala lineage
+        </a>
+        <a
+          href="/lineage/kongu/"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+          Kongu region
+        </a>
+        <a
+          href="/overview/timeline"
+          class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-1.5 text-sm text-stone-700 transition-colors hover:border-stone-500 hover:text-stone-900"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-indigo-500" aria-hidden="true"></span>
+          Timeline
+        </a>
+      </div>
+    </section>
+
+    {/* Back link */}
+    <section>
+      <a
+        href="/overview/"
+        class="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900"
+      >
+        <span aria-hidden="true">←</span>
+        Back to Overview
+      </a>
+    </section>
+  </main>
+</BaseLayout>

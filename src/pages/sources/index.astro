@@ -1,0 +1,318 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  getSourceBacklinks,
+  COLLECTION_LABELS,
+  type Backlink,
+  type BacklinkCollection,
+} from '../../lib/graph.ts';
+
+type SourceType = 'paper' | 'book' | 'wiki' | 'inscription' | 'oral';
+
+const all = await getCollection('sources');
+
+// Resolve backlinks per source up-front (build time).
+type Card = {
+  id: string;
+  type: SourceType;
+  title: string;
+  authors: string[];
+  year?: number;
+  url?: string;
+  backlinks: Backlink[];
+};
+const cards: Card[] = [];
+for (const s of all) {
+  const bls = await getSourceBacklinks(s.data.id);
+  cards.push({
+    id: s.data.id,
+    type: s.data.type,
+    title: s.data.title,
+    authors: s.data.authors ?? [],
+    year: s.data.year,
+    url: s.data.url,
+    backlinks: bls,
+  });
+}
+
+// Sort: by author (first), then year, then title.
+cards.sort((a, b) => {
+  const an = a.authors[0] ?? a.title;
+  const bn = b.authors[0] ?? b.title;
+  const cmp = an.localeCompare(bn);
+  if (cmp !== 0) return cmp;
+  return (a.year ?? 0) - (b.year ?? 0);
+});
+
+const typeOrder: readonly SourceType[] = ['paper', 'book', 'wiki', 'inscription', 'oral'];
+const types = ['all', ...typeOrder] as const;
+
+const counts: Record<string, number> = { all: cards.length };
+for (const t of typeOrder) {
+  counts[t] = cards.filter((c) => c.type === t).length;
+}
+
+const typeStyles: Record<SourceType, string> = {
+  paper: 'bg-sky-50 text-sky-800 ring-sky-200',
+  book: 'bg-amber-50 text-amber-800 ring-amber-200',
+  wiki: 'bg-stone-100 text-stone-800 ring-stone-300',
+  inscription: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  oral: 'bg-rose-50 text-rose-800 ring-rose-200',
+};
+
+const collectionEmoji: Record<BacklinkCollection, string> = {
+  claims: '🧷',
+  rituals: '🪔',
+  'lineage-nodes': '🧬',
+  kootams: '🪶',
+  deities: '🛕',
+  'timeline-events': '🕰️',
+};
+---
+
+<BaseLayout
+  title="Sources — Decoded"
+  description="The full bibliography behind every claim on this site — papers, books, wiki references, inscriptions, and oral sources, with backlinks to where each is cited."
+>
+  <main class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <nav class="mb-6 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Sources</span>
+    </nav>
+
+    <header class="mb-8">
+      <p class="text-sm font-medium uppercase tracking-wider text-sky-700">Bibliography</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Sources</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          ஆதாரங்கள்
+        </span>
+      </h1>
+      <p class="mt-3 max-w-3xl text-base text-stone-600">
+        Every tier-tagged claim on this site is backed by one or more entries below.
+        Each card lists where the source is cited, so you can trace any assertion
+        back to its origin or pivot from a source into the pages that use it.
+      </p>
+    </header>
+
+    {/* Type filter chips */}
+    <section class="mb-8" aria-label="Filter sources by type">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
+        Filter by type
+      </p>
+      <div class="flex flex-wrap gap-2" role="group" data-filter-chips>
+        {types.map((t) => {
+          const count = counts[t] ?? 0;
+          if (t !== 'all' && count === 0) return null;
+          const isAll = t === 'all';
+          return (
+            <button
+              type="button"
+              class={`source-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                isAll
+                  ? 'border-stone-900 bg-stone-900 text-white'
+                  : 'border-stone-300 bg-white text-stone-700 hover:border-stone-500'
+              }`}
+              data-filter={t}
+              aria-pressed={isAll ? 'true' : 'false'}
+            >
+              <span>{t}</span>
+              <span class={`rounded-full px-1.5 text-[10px] ${isAll ? 'bg-white/20' : 'bg-stone-100 text-stone-600'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+
+    {/* Source cards */}
+    {cards.length === 0 ? (
+      <section class="rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 p-8 text-center">
+        <p class="text-sm text-stone-600">No sources are catalogued yet.</p>
+      </section>
+    ) : (
+      <section class="grid grid-cols-1 gap-4" data-sources-grid aria-label="Source list">
+        {cards.map((c) => {
+          const visible = c.backlinks.slice(0, 5);
+          const overflow = c.backlinks.slice(5);
+          return (
+            <article
+              class="source-card rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              data-type={c.type}
+            >
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm text-stone-600">
+                    {c.authors.length > 0 && <span>{c.authors.join(', ')}</span>}
+                    {c.authors.length > 0 && c.year && <span> · </span>}
+                    {c.year && <span>{c.year}</span>}
+                  </p>
+                  <h2 class="mt-1 text-lg font-semibold leading-snug">
+                    <a
+                      href={`/sources/${c.id}/`}
+                      class="text-stone-900 hover:text-sky-700"
+                    >
+                      {c.title}
+                    </a>
+                  </h2>
+                  <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ring-1 ring-inset ${typeStyles[c.type]}`}
+                    >
+                      {c.type}
+                    </span>
+                    {c.url && (
+                      <a
+                        href={c.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs text-sky-700 underline hover:text-sky-900"
+                      >
+                        external link ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <a
+                  href={`/sources/${c.id}/`}
+                  class="shrink-0 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-stone-400 hover:bg-stone-100"
+                >
+                  Cited in {c.backlinks.length}
+                </a>
+              </div>
+
+              {c.backlinks.length > 0 && (
+                <details class="mt-4 group" data-backlinks={c.backlinks.length > 5 ? 'overflow' : 'short'}>
+                  <summary class="cursor-pointer text-xs font-medium text-stone-600 hover:text-stone-900">
+                    <span class="group-open:hidden">Show backlinks</span>
+                    <span class="hidden group-open:inline">Hide backlinks</span>
+                  </summary>
+                  <ul class="mt-3 space-y-1.5 text-sm">
+                    {visible.map((b) => (
+                      <li class="flex items-start gap-2">
+                        <span aria-hidden="true" class="mt-0.5 text-xs">
+                          {collectionEmoji[b.collection]}
+                        </span>
+                        <span class="min-w-0 flex-1">
+                          {b.href ? (
+                            <a
+                              href={b.href}
+                              class="text-stone-800 underline decoration-stone-300 hover:text-sky-700 hover:decoration-sky-400"
+                            >
+                              {b.name}
+                            </a>
+                          ) : (
+                            <span class="text-stone-800">{b.name}</span>
+                          )}
+                          {b.transitive && (
+                            <span
+                              class="ml-1.5 rounded bg-stone-100 px-1 py-0.5 text-[10px] uppercase tracking-wider text-stone-500"
+                              title={`Reaches this source via claim ${b.via ?? ''}`}
+                            >
+                              via claim
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {overflow.length > 0 && (
+                    <details class="mt-2">
+                      <summary class="cursor-pointer text-xs font-medium text-stone-500 hover:text-stone-800">
+                        Show {overflow.length} more
+                      </summary>
+                      <ul class="mt-2 space-y-1.5 text-sm">
+                        {overflow.map((b) => (
+                          <li class="flex items-start gap-2">
+                            <span aria-hidden="true" class="mt-0.5 text-xs">
+                              {collectionEmoji[b.collection]}
+                            </span>
+                            <span class="min-w-0 flex-1">
+                              {b.href ? (
+                                <a
+                                  href={b.href}
+                                  class="text-stone-800 underline decoration-stone-300 hover:text-sky-700 hover:decoration-sky-400"
+                                >
+                                  {b.name}
+                                </a>
+                              ) : (
+                                <span class="text-stone-800">{b.name}</span>
+                              )}
+                              {b.transitive && (
+                                <span class="ml-1.5 rounded bg-stone-100 px-1 py-0.5 text-[10px] uppercase tracking-wider text-stone-500">
+                                  via claim
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </details>
+              )}
+            </article>
+          );
+        })}
+      </section>
+    )}
+
+    <section class="mt-12 rounded-xl border border-stone-200 bg-white p-5 text-sm text-stone-600">
+      <p class="font-medium text-stone-800">About this list</p>
+      <p class="mt-1">
+        Backlinks are resolved at build time by walking every content collection
+        (<code class="rounded bg-stone-100 px-1 text-xs">src/lib/graph.ts</code>).
+        A ritual or kootam that references a claim is also listed under the
+        sources that claim cites — those entries are tagged <em>via claim</em>.
+      </p>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  function initSourceFilters() {
+    const chipsRoot = document.querySelector('[data-filter-chips]');
+    const grid = document.querySelector('[data-sources-grid]');
+    if (!chipsRoot || !grid) return;
+    if ((chipsRoot as HTMLElement).dataset.filterWired === '1') return;
+    (chipsRoot as HTMLElement).dataset.filterWired = '1';
+
+    const chips = chipsRoot.querySelectorAll<HTMLButtonElement>('[data-filter]');
+    const cards = grid.querySelectorAll<HTMLElement>('.source-card');
+
+    const apply = (filter: string) => {
+      cards.forEach((card) => {
+        const t = card.dataset.type;
+        const show = filter === 'all' || t === filter;
+        card.classList.toggle('hidden', !show);
+      });
+      chips.forEach((c) => {
+        const active = c.dataset.filter === filter;
+        c.setAttribute('aria-pressed', active ? 'true' : 'false');
+        if (active) {
+          c.classList.remove('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
+          c.classList.add('border-stone-900', 'bg-stone-900', 'text-white');
+        } else {
+          c.classList.add('border-stone-300', 'bg-white', 'text-stone-700', 'hover:border-stone-500');
+          c.classList.remove('border-stone-900', 'bg-stone-900', 'text-white');
+        }
+        const badge = c.querySelector('span:last-child');
+        if (badge) {
+          badge.className = active
+            ? 'rounded-full px-1.5 text-[10px] bg-white/20'
+            : 'rounded-full px-1.5 text-[10px] bg-stone-100 text-stone-600';
+        }
+      });
+    };
+
+    chips.forEach((c) => {
+      c.addEventListener('click', () => apply(c.dataset.filter || 'all'));
+    });
+  }
+
+  initSourceFilters();
+  document.addEventListener('astro:page-load', initSourceFilters);
+</script>
