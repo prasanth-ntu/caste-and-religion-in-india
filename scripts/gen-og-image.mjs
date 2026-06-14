@@ -14,12 +14,21 @@
 //   embed; add font loading + tagline swap when picking this up.
 
 import { Resvg } from '@resvg/resvg-js';
-import { writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outPath = resolve(__dirname, '..', 'public', 'og-image.png');
+
+// Bundled Noto Sans Tamil, used to pre-shape the Tamil tagline (see shapeTamil
+// below). resvg's own text engine does NOT shape Tamil correctly — it silently
+// drops vowel signs (ா) and consonants (ள), turning "சாதி … தெளிவாக்கம்" into
+// "சதி … தெிவக்கம்". So we shape with HarfBuzz (hb-view) into vector outlines
+// and embed those paths instead of relying on resvg to lay out the glyphs.
+const TAMIL_FONT_MEDIUM = resolve(__dirname, 'fonts', 'NotoSansTamil-Medium.ttf');
 
 // Tailwind stone / accent palette
 const BG = '#fafaf9';        // stone-50
@@ -34,7 +43,50 @@ const EMERALD = '#059669';   // emerald-600
 
 // Tamil tagline — "Caste & religion, decoded" (literal: "clarification of caste and religion")
 // "சாதி" = caste, "மதம்" = religion, "தெளிவாக்கம்" = clarification/decoding
-const TAMIL_TAGLINE = 'சாதி &amp; மதம் — தெளிவாக்கம்';
+// Plain text (real ampersand) — handed to HarfBuzz, not embedded as XML.
+const TAMIL_TAGLINE = 'சாதி & மதம் — தெளிவாக்கம்';
+const TAMIL_FONT_SIZE = 36;
+
+// Shape `text` with HarfBuzz into an SVG <g> of glyph outlines, positioned so its
+// baseline sits at (x, baselineY) in the parent canvas. Returns the markup string.
+// Requires `hb-view` on PATH (Homebrew: `brew install harfbuzz`).
+function shapeTamil(text, { fontFile, fontSize, x, baselineY, fill }) {
+  const tmp = resolve(tmpdir(), 'og-tamil-tagline.svg');
+  execFileSync('hb-view', [
+    `--font-file=${fontFile}`,
+    '--output-format=svg',
+    `--font-size=${fontSize}`,
+    '--margin=0',
+    '-o', tmp,
+    text,
+  ]);
+  let raw = readFileSync(tmp, 'utf8');
+  rmSync(tmp, { force: true });
+
+  // Baseline offset within hb-view's own coordinate space (y of the first glyph).
+  const localBaseline = Number(/<use[^>]*\by="([\d.]+)"/.exec(raw)?.[1] ?? 0);
+
+  // Strip the XML prolog + outer <svg> wrapper, drop hb-view's white background
+  // rect, and recolor the glyph fill from black to the requested shade.
+  const inner = raw
+    .replace(/<\?xml[^>]*\?>/, '')
+    .replace(/<svg[^>]*>/, '')
+    .replace(/<\/svg>\s*$/, '')
+    .replace(/<rect[^>]*fill="rgb\(100%, 100%, 100%\)"[^>]*\/>/g, '')
+    .replace(/fill="rgb\(0%, 0%, 0%\)"/g, `fill="${fill}"`)
+    .replace(/xlink:href/g, 'href');
+
+  const ty = baselineY - localBaseline;
+  return `<g transform="translate(${x}, ${ty})">${inner}</g>`;
+}
+
+const tamilTaglineMarkup = shapeTamil(TAMIL_TAGLINE, {
+  fontFile: TAMIL_FONT_MEDIUM,
+  fontSize: TAMIL_FONT_SIZE,
+  x: 80,
+  baselineY: 270,
+  fill: STONE_700,
+});
 
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
@@ -74,12 +126,8 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
     decoded<tspan fill="${ROSE}">.</tspan>prasanth<tspan fill="${ROSE}">.</tspan>io
   </text>
 
-  <!-- Tamil accent -->
-  <text x="80" y="270"
-        font-family="'Noto Sans Tamil', 'Latha', 'Tamil MN', sans-serif"
-        font-size="36" font-weight="500" fill="${STONE_700}">
-    ${TAMIL_TAGLINE}
-  </text>
+  <!-- Tamil accent (pre-shaped to outlines via HarfBuzz; see shapeTamil) -->
+  ${tamilTaglineMarkup}
 
   <!-- English tagline (two lines) -->
   <text x="80" y="360"
