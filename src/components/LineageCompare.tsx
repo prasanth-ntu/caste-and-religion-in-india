@@ -11,7 +11,19 @@ import LineageSelector from './LineageSelector';
 type CompareEntry = ManifestEntry & {
   exogamyPartners?: string[];
   exogamyPangaliExcluded?: string[];
+  /** Explicit detail-page URL. Communities declare it (e.g. Vairavanpatti →
+   *  /lineage/vairavar/); kootams fall back to their canonical /lineage/k/<slug>/. */
+  href?: string;
 };
+
+/** Resolve a comparable lineage to its detail page. Every kootam (documented or
+ *  stub) has a canonical /lineage/k/<slug>/ route; communities carry an explicit
+ *  href. Returns null when no detail page exists (so we render plain text). */
+function detailHref(m: CompareEntry): string | null {
+  if (m.href) return m.href;
+  if (m.kind === 'community') return null;
+  return `/lineage/k/${m.slug}/`;
+}
 
 const manifest = manifestRaw as CompareEntry[];
 // Non-kootam comparable lineages (e.g. Nagarathar temple-clans). Merged into
@@ -131,10 +143,22 @@ export default function LineageCompare({
         <div className="sticky top-0 z-20 -mx-6 mb-3 flex items-center justify-between gap-2 border-b border-stone-200 bg-white/95 px-6 py-2 text-sm shadow-sm backdrop-blur md:hidden">
           <span className="min-w-0 truncate">
             <span aria-hidden="true">{a?.totemEmoji}</span>{' '}
-            <span className="font-medium text-stone-900">{a?.name ?? 'A'}</span>
+            {a && detailHref(a) ? (
+              <a href={detailHref(a)!} className="font-medium text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-900">
+                {a.name}
+              </a>
+            ) : (
+              <span className="font-medium text-stone-900">{a?.name ?? 'A'}</span>
+            )}
             <span className="mx-1 text-stone-400">vs</span>
             <span aria-hidden="true">{b.totemEmoji}</span>{' '}
-            <span className="font-medium text-stone-900">{b.name}</span>
+            {detailHref(b) ? (
+              <a href={detailHref(b)!} className="font-medium text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-900">
+                {b.name}
+              </a>
+            ) : (
+              <span className="font-medium text-stone-900">{b.name}</span>
+            )}
           </span>
           <button
             type="button"
@@ -213,6 +237,28 @@ export default function LineageCompare({
   );
 }
 
+/** Header cell for a compared lineage: totem emoji + name, linked to its detail
+ *  page when one exists (kootam canonical route or a community's declared href). */
+function LineageHeading({ m }: { m: CompareEntry }) {
+  const href = detailHref(m);
+  const inner = (
+    <>
+      <span aria-hidden="true" className="mr-1.5">{m.totemEmoji}</span>
+      {m.name}
+    </>
+  );
+  if (!href) return <span>{inner}</span>;
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center text-stone-900 underline decoration-stone-300 decoration-1 underline-offset-2 transition-colors hover:decoration-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 rounded-sm"
+    >
+      {inner}
+      <span aria-hidden="true" className="ml-1 text-xs text-stone-400">↗</span>
+    </a>
+  );
+}
+
 function CompareGrid({ a, b, compact }: { a: CompareEntry; b: CompareEntry; compact: boolean }) {
   const rows = useMemo(() => buildRows(a, b), [a, b]);
   return (
@@ -230,15 +276,13 @@ function CompareGrid({ a, b, compact }: { a: CompareEntry; b: CompareEntry; comp
               scope="col"
               className="w-[35%] py-3 px-3 text-left text-sm font-semibold text-stone-900"
             >
-              <span aria-hidden="true" className="mr-1.5">{a.totemEmoji}</span>
-              {a.name}
+              <LineageHeading m={a} />
             </th>
             <th
               scope="col"
               className="w-[35%] py-3 pl-3 pr-4 text-left text-sm font-semibold text-stone-900"
             >
-              <span aria-hidden="true" className="mr-1.5">{b.totemEmoji}</span>
-              {b.name}
+              <LineageHeading m={b} />
             </th>
           </tr>
         </thead>

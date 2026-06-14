@@ -8,6 +8,7 @@ region: Chettinad (Sivaganga)
 deity: vairavar-swamy-vairavanpatti
 attestation: academic
 status: documented
+detail_href: /lineage/vairavar/
 ---
 
 # Vairavanpatti — Nagarathar temple-clan
