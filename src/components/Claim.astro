@@ -18,12 +18,43 @@ interface Props {
 
 const { tier, sources = [], evidence_summary } = Astro.props;
 
-// Auto-derive evidence summary from the first source's notes when not provided.
-// Keeps existing call sites working without per-page backfill.
-let resolvedSummary = evidence_summary;
-if (!resolvedSummary && sources.length > 0) {
+// Each id in `sources` may be a *source* id OR a *claim* id. Source ids render
+// directly as citations. Claim ids are expanded to their underlying sources so
+// citation chips always link to a real /sources/<id> page — a claim slug has no
+// route, so an unexpanded claim id renders a dead chip (the bug this fixes).
+// Expanding a claim also yields a ready-made evidence summary for the panel.
+const resolvedSourceIds: string[] = [];
+const seen = new Set<string>();
+let claimSummary: string | undefined;
+
+for (const id of sources) {
+  const asSource = await getEntry('sources', id);
+  if (asSource) {
+    if (!seen.has(id)) { seen.add(id); resolvedSourceIds.push(id); }
+    continue;
+  }
+  const asClaim = await getEntry('claims', id);
+  if (asClaim) {
+    if (!claimSummary && asClaim.data.evidence_summary) {
+      claimSummary = asClaim.data.evidence_summary;
+    }
+    for (const ref of asClaim.data.sources ?? []) {
+      const refId = typeof ref === 'string' ? ref : ref?.id;
+      if (refId && !seen.has(refId)) { seen.add(refId); resolvedSourceIds.push(refId); }
+    }
+    continue;
+  }
+  // Neither a source nor a claim — keep the raw id so Cite still soft-fails
+  // visibly, which surfaces genuine dangling refs during authoring.
+  if (!seen.has(id)) { seen.add(id); resolvedSourceIds.push(id); }
+}
+
+// Evidence summary precedence: explicit prop > referenced claim's summary >
+// first resolved source's notes. Keeps existing call sites working.
+let resolvedSummary = evidence_summary ?? claimSummary;
+if (!resolvedSummary && resolvedSourceIds.length > 0) {
   try {
-    const first = await getEntry('sources', sources[0]);
+    const first = await getEntry('sources', resolvedSourceIds[0]);
     const notes = first?.data?.notes;
     if (notes && notes.length > 8) {
       resolvedSummary = notes.length > 220 ? notes.slice(0, 217).trimEnd() + '…' : notes;
@@ -42,7 +73,7 @@ const hasEvidence = Boolean(resolvedSummary && resolvedSummary.trim().length > 0
 
 <span class="claim">
   <slot />
-  {sources.map((id, i) => <Cite id={id} n={i + 1} />)}
+  {resolvedSourceIds.map((id, i) => <Cite id={id} n={i + 1} />)}
   <span class="ml-1 inline-block align-middle">
     <ClaimBadge
       tier={tier}
