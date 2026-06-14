@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import manifest from '../../data/lineage-manifest.json';
-import { PATHS, type PathId as SequencedPathId } from '../../data/paths';
+import { WALKTHROUGH } from '../../data/paths';
 
 type PathId = 'family' | 'evidence' | 'curious' | 'browse' | '';
 
@@ -31,7 +31,7 @@ const PATH_OPTIONS: Array<{
 }> = [
   { id: 'family', label: 'Family history', tamil: 'குடும்ப வரலாறு', hint: 'Pick a kootam → kuladeivam' },
   { id: 'evidence', label: 'The evidence', tamil: 'ஆதாரம்', hint: 'Genetics, reservation, varna vs jati' },
-  { id: 'curious', label: 'Just curious', tamil: 'சும்மா', hint: '5-minute guided tour' },
+  { id: 'curious', label: 'Just curious', tamil: 'சும்மா', hint: 'The guided walkthrough' },
   { id: 'browse', label: 'Browse sources', tamil: 'ஆதாரங்கள்', hint: 'All citations in one place' },
 ];
 
@@ -174,19 +174,17 @@ export default function Explorer() {
     safeSet(LS_PATH, id);
     if (safeGet(LS_STOP) === null) safeSet(LS_STOP, '0');
 
-    // For sequenced paths (family, curious), prime the PathProgress amber bar
-    // so it appears from stop 0 ("Starting the … path — stop 1 of N: X →") on
-    // whichever content page the user lands on next. Evidence + browse are not
-    // sequenced lanes, so they get no path-progress wiring.
-    if (id === 'family' || id === 'curious') {
+    // The "curious" intent leads into the single guided walkthrough, so prime
+    // its progress from stop 0 on whichever content page the user lands on next.
+    // family/evidence/browse are direct entry points, not the sequenced
+    // walkthrough, so they get no path-progress wiring.
+    if (id === 'curious') {
       try {
-        const sequencedId = id as SequencedPathId;
-        const total = PATHS[sequencedId].stops.length;
         localStorage.setItem(
-          `pathProgress.${sequencedId}`,
-          JSON.stringify({ stop: 0, total, updatedAt: new Date().toISOString() }),
+          `pathProgress.${WALKTHROUGH.id}`,
+          JSON.stringify({ stop: 0, total: WALKTHROUGH.stops.length, updatedAt: new Date().toISOString() }),
         );
-        localStorage.setItem('pathProgress.active', sequencedId);
+        localStorage.setItem('pathProgress.active', WALKTHROUGH.id);
         window.dispatchEvent(new CustomEvent('decoded:path-progress-changed'));
       } catch {
         /* ignore */
@@ -354,7 +352,7 @@ function screen2Title(path: PathId): string {
     case 'evidence':
       return 'Pick a topic';
     case 'curious':
-      return 'Take the 5-minute tour';
+      return 'Take the walkthrough';
     case 'browse':
       return 'Open the sources';
     default:
@@ -529,14 +527,14 @@ function CuriousCta({ onAfterAction }: { onAfterAction: () => void }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-600">
-        A short, guided walk through the strongest evidence — about 5 minutes.
+        A short, guided walk through the whole argument — six stops, about 20 minutes.
       </p>
       <a
-        href="/explore?path=curious"
+        href="/explore"
         onClick={onAfterAction}
         className="block w-full rounded-xl bg-indigo-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        Take the 5-minute tour →
+        Open the walkthrough →
       </a>
       <a
         href="/"

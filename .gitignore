@@ -26,6 +26,8 @@ pnpm-debug.log*
 # local review notes (not for public repo)
 REVIEW.md
 CONTENT_REVIEW.md
+# before/after visual comparison report (screenshots + html)
+review/
 
 # transient agent test artifacts (screenshots, Playwright logs, etc.)
 # agents must clean these up; this is a safety net so they never get committed
@@ -38,3 +40,7 @@ bug*-after-*.png
 test-*.png
 
 docs/qa-matrix.md
+
+# local agent review/planning artifacts (gitignored)
+site_audit_report.md
+implementation_plan.md

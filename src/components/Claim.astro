@@ -1,5 +1,5 @@
 ---
-import { getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { ClaimBadge, ClaimEvidencePanel } from './ClaimEvidenceToggle.tsx';
 import Cite from './Cite.astro';
 
@@ -23,17 +23,23 @@ const { tier, sources = [], evidence_summary } = Astro.props;
 // citation chips always link to a real /sources/<id> page — a claim slug has no
 // route, so an unexpanded claim id renders a dead chip (the bug this fixes).
 // Expanding a claim also yields a ready-made evidence summary for the panel.
+// Index both collections once and classify each ref by membership instead of
+// probing getEntry('sources', id) blindly: a claim id passed here would miss
+// the sources collection and spam the build log with
+// "Entry sources → <id> was not found" before falling through to claims.
+const sourceById = new Map((await getCollection('sources')).map((e) => [e.id, e]));
+const claimById = new Map((await getCollection('claims')).map((e) => [e.id, e]));
+
 const resolvedSourceIds: string[] = [];
 const seen = new Set<string>();
 let claimSummary: string | undefined;
 
 for (const id of sources) {
-  const asSource = await getEntry('sources', id);
-  if (asSource) {
+  if (sourceById.has(id)) {
     if (!seen.has(id)) { seen.add(id); resolvedSourceIds.push(id); }
     continue;
   }
-  const asClaim = await getEntry('claims', id);
+  const asClaim = claimById.get(id);
   if (asClaim) {
     if (!claimSummary && asClaim.data.evidence_summary) {
       claimSummary = asClaim.data.evidence_summary;
@@ -53,14 +59,9 @@ for (const id of sources) {
 // first resolved source's notes. Keeps existing call sites working.
 let resolvedSummary = evidence_summary ?? claimSummary;
 if (!resolvedSummary && resolvedSourceIds.length > 0) {
-  try {
-    const first = await getEntry('sources', resolvedSourceIds[0]);
-    const notes = first?.data?.notes;
-    if (notes && notes.length > 8) {
-      resolvedSummary = notes.length > 220 ? notes.slice(0, 217).trimEnd() + '…' : notes;
-    }
-  } catch {
-    /* missing source — leave summary undefined */
+  const notes = sourceById.get(resolvedSourceIds[0])?.data?.notes;
+  if (notes && notes.length > 8) {
+    resolvedSummary = notes.length > 220 ? notes.slice(0, 217).trimEnd() + '…' : notes;
   }
 }
 
