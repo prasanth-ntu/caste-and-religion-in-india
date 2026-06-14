@@ -11,6 +11,13 @@ export interface ManifestEntry {
   region: string;
   status: 'documented' | 'stub';
   attestation: 'academic' | 'community' | 'oral-family' | null;
+  /** Discriminator: kootam entries come from the 145-kootam manifest; community
+   *  entries (e.g. Nagarathar temple-clans) are merged in only for compare. */
+  kind?: 'kootam' | 'community';
+  /** Community-only: the parent caste (e.g. "Nattukottai Chettiar"). */
+  parentCaste?: string;
+  /** Community-only: exogamy basis label (e.g. "Temple-clan (Nava Kovil)"). */
+  exogamyBasis?: string;
   deity: null | {
     slug: string;
     name: string;
@@ -92,6 +99,10 @@ export interface LineageSelectorProps {
   compact?: boolean;
   /** Label override (e.g. "Lineage A"). */
   label?: string;
+  /** Extra non-kootam entries (e.g. Nagarathar temple-clans) to fold into the
+   *  picker + value resolution. Compare-only — kootam pages don't pass this, so
+   *  these never appear in the standard selector. */
+  extraEntries?: ManifestEntry[];
 }
 
 export default function LineageSelector({
@@ -100,11 +111,15 @@ export default function LineageSelector({
   onChange,
   compact = false,
   label,
+  extraEntries,
 }: LineageSelectorProps) {
+  // Merge kootams + any compare-only community entries for lookup. The picker
+  // groups them separately (see `groups`); only lookups use the merged list.
+  const allEntries = useMemo(() => [...manifest, ...(extraEntries ?? [])], [extraEntries]);
   const [mounted, setMounted] = useState(false);
   const [selected, setSelected] = useState<SelectedLineage>(() => ({
     kootam: value ?? DEFAULT_SLUG,
-    deity: manifest.find((m) => m.slug === (value ?? DEFAULT_SLUG))?.deity?.slug ?? null,
+    deity: allEntries.find((m) => m.slug === (value ?? DEFAULT_SLUG))?.deity?.slug ?? null,
     updatedAt: new Date().toISOString(),
   }));
   const [open, setOpen] = useState(false);
@@ -135,7 +150,7 @@ export default function LineageSelector({
   // Sync to controlled value
   useEffect(() => {
     if (value !== undefined) {
-      const m = manifest.find((x) => x.slug === value);
+      const m = allEntries.find((x) => x.slug === value);
       setSelected({
         kootam: value,
         deity: m?.deity?.slug ?? null,
@@ -157,8 +172,8 @@ export default function LineageSelector({
   }, [open]);
 
   const current = useMemo(
-    () => manifest.find((m) => m.slug === selected.kootam) ?? manifest[0],
-    [selected.kootam]
+    () => allEntries.find((m) => m.slug === selected.kootam) ?? manifest[0],
+    [selected.kootam, allEntries]
   );
 
   const groups = useMemo(() => {
@@ -177,8 +192,9 @@ export default function LineageSelector({
       (m) => m.status === 'documented' && !m.deity && match(m)
     );
     const stubs = manifest.filter((m) => m.status === 'stub' && match(m));
-    return { documented, namedNoDeity, stubs };
-  }, [query]);
+    const communities = (extraEntries ?? []).filter(match);
+    return { documented, namedNoDeity, stubs, communities };
+  }, [query, extraEntries]);
 
   function pick(m: ManifestEntry) {
     const next: SelectedLineage = {
@@ -191,7 +207,9 @@ export default function LineageSelector({
     setQuery('');
     persist(next);
     onChange?.(next);
-    if (navigateOnChange && typeof window !== 'undefined') {
+    // Community entries (non-kootam) have no /lineage/k/ route — they're
+    // compare-only, where navigateOnChange is false. Skip navigation for them.
+    if (navigateOnChange && m.kind !== 'community' && typeof window !== 'undefined') {
       // On the /lineage/ hub page, stay in place and let the reactive cascade
       // (decoded:lineage-changed) update content inline. Navigate only from
       // other pages (e.g. /compare, /explore).
@@ -270,6 +288,17 @@ export default function LineageSelector({
             ))}
           </Group>
 
+          {groups.communities.length > 0 && (
+            <Group
+              title={`Other communities (${groups.communities.length})`}
+              hint="Not Kongu Vellala kootams — parallel clan systems (e.g. Nagarathar temple-clans), for cross-community comparison"
+            >
+              {groups.communities.map((m) => (
+                <Option key={m.slug} m={m} active={m.slug === selected.kootam} onPick={pick} />
+              ))}
+            </Group>
+          )}
+
           {groups.namedNoDeity.length > 0 && (
             <Group
               title={`Named, deity not yet documented (${groups.namedNoDeity.length})`}
@@ -309,7 +338,8 @@ export default function LineageSelector({
 
           {groups.documented.length === 0 &&
             groups.namedNoDeity.length === 0 &&
-            groups.stubs.length === 0 && (
+            groups.stubs.length === 0 &&
+            groups.communities.length === 0 && (
               <div className="px-3 py-4 text-center text-sm text-stone-500">No matches.</div>
             )}
         </div>

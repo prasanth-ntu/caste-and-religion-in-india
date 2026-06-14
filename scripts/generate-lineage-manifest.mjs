@@ -20,7 +20,9 @@ const root = resolve(__dirname, '..');
 
 const KOOTAMS_DIR = join(root, 'src/content/kootams');
 const DEITIES_DIR = join(root, 'src/content/deities');
+const COMMUNITIES_DIR = join(root, 'src/content/communities');
 const OUT_JSON = join(root, 'src/data/lineage-manifest.json');
+const OUT_COMMUNITIES = join(root, 'src/data/communities-manifest.json');
 const README = join(root, 'README.md');
 
 const TOTEM_EMOJI = {
@@ -106,8 +108,39 @@ function loadDeities() {
   return out;
 }
 
+function loadCommunities() {
+  let files;
+  try {
+    files = readdirSync(COMMUNITIES_DIR).filter(isContentFile);
+  } catch {
+    return []; // collection is optional — dir may not exist
+  }
+  return files.map((f) => parseFrontmatter(readFileSync(join(COMMUNITIES_DIR, f), 'utf8')));
+}
+
+// Denormalise a deity frontmatter object into the flat shape the compare /
+// selector islands consume. Shared by kootam and community manifests so the two
+// stay structurally identical.
+function denormDeity(deity) {
+  if (!deity) return null;
+  return {
+    slug: deity.slug,
+    name: deity.name,
+    tamilName: deity.tamil_name ?? '',
+    village: deity.village ?? '',
+    district: deity.district ?? '',
+    tradition: deity.tradition ?? '',
+    festivals: deity.festivals ?? [],
+    attestation: deity.attestation ?? null,
+    ...(deity.geo && typeof deity.geo === 'object' && deity.geo.lat
+      ? { lat: parseFloat(deity.geo.lat), lng: parseFloat(deity.geo.lng) }
+      : {}),
+  };
+}
+
 const kootams = loadKootams();
 const deities = loadDeities();
+const communities = loadCommunities();
 
 const manifest = kootams
   .map((k) => {
@@ -124,21 +157,7 @@ const manifest = kootams
       attestation: k.attestation ?? null,
       exogamyPartners: k.exogamy_partners ?? [],
       exogamyPangaliExcluded: k.exogamy_pangali_excluded ?? [],
-      deity: deity
-        ? {
-            slug: deity.slug,
-            name: deity.name,
-            tamilName: deity.tamil_name ?? '',
-            village: deity.village ?? '',
-            district: deity.district ?? '',
-            tradition: deity.tradition ?? '',
-            festivals: deity.festivals ?? [],
-            attestation: deity.attestation ?? null,
-            ...(deity.geo && typeof deity.geo === 'object' && deity.geo.lat
-              ? { lat: parseFloat(deity.geo.lat), lng: parseFloat(deity.geo.lng) }
-              : {}),
-          }
-        : null,
+      deity: denormDeity(deity),
     };
   })
   .sort((a, b) => {
@@ -156,6 +175,30 @@ const manifest = kootams
 
 writeFileSync(OUT_JSON, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`✔ wrote ${manifest.length} entries to ${OUT_JSON}`);
+
+// --- Communities manifest (cross-community compare only) --------------------
+// Separate file so these never merge into the 145-kootam surfaces. Same flat
+// shape as the kootam manifest, plus kind/parentCaste/exogamyBasis. Temple-clans
+// have no totem, so totem fields are left empty (the compare table shows "—",
+// and the "Exogamy basis" row explains why).
+const communitiesManifest = communities.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  tamilName: c.tamil_name ?? '',
+  totemEmoji: '🛕',
+  totemType: '',
+  totemSpecies: '',
+  region: c.region ?? '',
+  status: c.status ?? 'documented',
+  attestation: c.attestation ?? null,
+  kind: 'community',
+  parentCaste: c.parent_caste ?? '',
+  exogamyBasis: c.exogamy_basis ?? '',
+  deity: denormDeity(c.deity && deities[c.deity] ? deities[c.deity] : null),
+}));
+
+writeFileSync(OUT_COMMUNITIES, JSON.stringify(communitiesManifest, null, 2) + '\n');
+console.log(`✔ wrote ${communitiesManifest.length} community entries to ${OUT_COMMUNITIES}`);
 
 // --- README table -----------------------------------------------------------
 

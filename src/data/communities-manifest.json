@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "vairavanpatti",
+    "name": "Vairavanpatti (Nagarathar)",
+    "tamilName": "வைரவன்பட்டி",
+    "totemEmoji": "🛕",
+    "totemType": "",
+    "totemSpecies": "",
+    "region": "Chettinad (Sivaganga)",
+    "status": "documented",
+    "attestation": "academic",
+    "kind": "community",
+    "parentCaste": "Nattukottai Chettiar",
+    "exogamyBasis": "Temple-clan (Nava Kovil)",
+    "deity": {
+      "slug": "vairavar-swamy-vairavanpatti",
+      "name": "Vairavar Swamy (Vairavanpatti)",
+      "tamilName": "வைரவன்பட்டி வைரவர் சுவாமி",
+      "village": "Vairavanpatti",
+      "district": "Sivaganga",
+      "tradition": "Shaiva (Kala Bhairava / Vairavar)",
+      "festivals": [
+        "Masi Magam",
+        "Mahasivaratri",
+        "Karthikai Deepam"
+      ],
+      "attestation": "academic",
+      "lat": 10.164,
+      "lng": 78.823
+    }
+  }
+]

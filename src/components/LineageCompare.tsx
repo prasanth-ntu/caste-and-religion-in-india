@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import manifestRaw from '../data/lineage-manifest.json';
+import communitiesRaw from '../data/communities-manifest.json';
 import type { ManifestEntry } from './LineageSelector';
 import LineageSelector from './LineageSelector';
 
 const manifest = manifestRaw as ManifestEntry[];
+// Non-kootam comparable lineages (e.g. Nagarathar temple-clans). Merged into
+// compare lookups + pickers only — kept out of every other kootam surface.
+const communities = communitiesRaw as ManifestEntry[];
+const comparable = [...manifest, ...communities];
 
 const TIER_BADGE: Record<string, { label: string; cls: string }> = {
   community: { label: '🟢 community', cls: 'bg-emerald-100 text-emerald-900' },
@@ -24,7 +29,7 @@ export interface LineageCompareProps {
 
 function find(slug?: string | null): ManifestEntry | null {
   if (!slug) return null;
-  return manifest.find((m) => m.slug === slug) ?? null;
+  return comparable.find((m) => m.slug === slug) ?? null;
 }
 
 function paramsFromUrl(): { a: string; b: string | null } {
@@ -134,6 +139,7 @@ export default function LineageCompare({
               value={aSlug}
               compact
               label="A"
+              extraEntries={communities}
               onChange={(sel) => setASlug(sel.kootam)}
             />
           </div>
@@ -155,6 +161,7 @@ export default function LineageCompare({
               value={bSlug ?? ''}
               compact
               label="B"
+              extraEntries={communities}
               onChange={(sel) => setBSlug(sel.kootam)}
             />
           </div>
@@ -164,7 +171,7 @@ export default function LineageCompare({
       {!b && (
         <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-sm text-stone-600">
           <p className="font-medium text-stone-700">Pick a second lineage to compare against {a?.name ?? 'A'}.</p>
-          <p className="mt-1">Try one of: Maniyan, Senganni, Vilayan.</p>
+          <p className="mt-1">Try a kootam (Maniyan, Senganni, Vilayan) — or a different community altogether, like Vairavanpatti (Nagarathar).</p>
         </div>
       )}
 
@@ -238,10 +245,36 @@ interface Row {
   diff: boolean;
 }
 
+function lineageTypeLabel(m: ManifestEntry): string {
+  return m.kind === 'community'
+    ? `${m.parentCaste || 'Other community'} — temple-clan`
+    : 'Kongu Vellala kootam';
+}
+
+function exogamyBasisLabel(m: ManifestEntry): string {
+  return m.kind === 'community' ? m.exogamyBasis || 'Temple-clan' : 'Totem clan (kootam)';
+}
+
 function buildRows(a: ManifestEntry, b: ManifestEntry): Row[] {
   return [
     { key: 'name', label: 'Name', kind: 'scalar', aValue: a.name, bValue: b.name, diff: a.name !== b.name },
     { key: 'tamil', label: 'Tamil name', kind: 'scalar', aValue: a.tamilName, bValue: b.tamilName, diff: a.tamilName !== b.tamilName },
+    {
+      key: 'lineageType',
+      label: 'Lineage type',
+      kind: 'scalar',
+      aValue: lineageTypeLabel(a),
+      bValue: lineageTypeLabel(b),
+      diff: lineageTypeLabel(a) !== lineageTypeLabel(b),
+    },
+    {
+      key: 'exogamyBasis',
+      label: 'Exogamy basis',
+      kind: 'scalar',
+      aValue: exogamyBasisLabel(a),
+      bValue: exogamyBasisLabel(b),
+      diff: exogamyBasisLabel(a) !== exogamyBasisLabel(b),
+    },
     { key: 'totemType', label: 'Totem type', kind: 'scalar', aValue: a.totemType, bValue: b.totemType, diff: a.totemType !== b.totemType },
     { key: 'totemSpecies', label: 'Totem species', kind: 'scalar', aValue: a.totemSpecies, bValue: b.totemSpecies, diff: a.totemSpecies !== b.totemSpecies },
     { key: 'region', label: 'Region', kind: 'scalar', aValue: a.region, bValue: b.region, diff: a.region !== b.region },

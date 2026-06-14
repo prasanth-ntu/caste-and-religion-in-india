@@ -6,7 +6,7 @@ import VarnaJatiLocator from '../components/viz/VarnaJatiLocator.astro';
 
 <BaseLayout
   title="Compare lineages — Decoded"
-  description="Side-by-side comparison of two Kongu Vellala lineages — totem, kuladeivam, exogamy, attestation."
+  description="Side-by-side comparison of two lineages — totem, kuladeivam, exogamy and attestation. Compare Kongu Vellala kootams with each other, or across communities (e.g. Kadai vs a Nagarathar temple-clan)."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <nav class="mb-6 text-sm text-stone-500">
@@ -26,9 +26,16 @@ import VarnaJatiLocator from '../components/viz/VarnaJatiLocator.astro';
         </span>
       </h1>
       <p class="mt-4 max-w-2xl text-lg text-stone-700">
-        Pick two Kongu Vellala lineages and see what they share, where they differ, and what
+        Pick two lineages and see what they share, where they differ, and what
         is honestly still undocumented. Defaults to the author's lineage (Kadai / Konur
-        Kaliamman) for A; pick anything for B.
+        Kaliamman) for A; pick anything for B — another Kongu Vellala kootam, or a different
+        community such as a Nagarathar temple-clan.
+      </p>
+      <p class="mt-3 text-sm text-stone-600">
+        Cross-community example:{' '}
+        <a href="/compare?a=kadai&b=vairavanpatti#chart" class="font-medium text-emerald-700 underline">
+          Kadai (kootam) vs Vairavanpatti (Nagarathar temple-clan) →
+        </a>
       </p>
     </header>
 

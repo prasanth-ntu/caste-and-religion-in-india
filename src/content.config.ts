@@ -159,9 +159,29 @@ const timelineEvents = defineCollection({
   }),
 });
 
+// Comparable non-kootam lineage nodes (e.g. Nagarathar temple-clans). These are
+// deliberately a SEPARATE collection from `kootams` so they never leak into the
+// 145-kootam manifest, force graph, or selector — they surface only in the
+// cross-community compare. See scripts/generate-lineage-manifest.mjs.
+const communities = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/communities' }),
+  schema: z.object({
+    slug: z.string(),
+    name: z.string(),
+    tamil_name: z.string().optional(),
+    parent_caste: z.string(),
+    exogamy_basis: z.string(),
+    region: z.string(),
+    deity: reference('deities'),
+    attestation: z.enum(['academic', 'community', 'oral-family']),
+    status: z.enum(['documented', 'stub']).default('documented'),
+  }),
+});
+
 export const collections = {
   sources,
   claims,
+  communities,
   kootams,
   deities,
   'lineage-nodes': lineageNodes,
