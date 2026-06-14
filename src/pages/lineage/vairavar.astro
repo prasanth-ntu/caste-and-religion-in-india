@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
@@ -16,10 +15,9 @@ const festivals = [
 
 <BaseLayout
   title="Vairavar Swamy — Kala Bhairava of Vairavanpatti — Decoded"
-  description="Long-scroll page on Vairavar Swamy (Kala Bhairava) at Vairavanpatti — clan deity of one of the nine Nagarathar temple-clans, shown as a parallel worked example to the author's own kuladeivam."
+  description="Long-scroll page on Vairavar Swamy (Kala Bhairava) at Vairavanpatti — clan deity of one of the nine Nagarathar temple-clans, shown as a parallel worked example to the Kongu Vellala case study's kuladeivam (Konur Kaliamman)."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     {/* Breadcrumbs */}
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
@@ -37,7 +35,7 @@ const festivals = [
     <div class="mb-8 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
       <p class="text-xs font-semibold uppercase tracking-widest text-violet-700">Another documented community</p>
       <p class="mt-1">
-        This is the clan-deity page for the <strong>second worked example</strong> — the Nattukottai Chettiar (Nagarathar). It runs parallel to the author's own kuladeivam page (Konur Kaliamman), in a different caste branch, to show how the same "clan deity as registry" pattern recurs across very different Tamil communities.
+        This is the clan-deity page for the <strong>second worked example</strong> — the Nattukottai Chettiar (Nagarathar). It runs parallel to the Kongu Vellala case study's kuladeivam page (Konur Kaliamman), in a different caste branch, to show how the same "clan deity as registry" pattern recurs across very different Tamil communities.
       </p>
     </div>
 
@@ -76,7 +74,7 @@ const festivals = [
       </h2>
       <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
         <p>
-          On the author's own branch, the clan deity (Konur Kaliamman) doubles as a pre-bureaucratic genealogical registry: the village shrine kept track of who belonged to which lineage, one life-event at a time. The Nagarathar show the same pattern in a different idiom. Here the clan unit is not a totem-kootam but a <strong>temple-clan</strong> — affiliation to one of the nine ancestral temples — and the deity of that temple is the fixed point a dispersed banking diaspora returned to.
+          In the Kongu Vellala case study, the clan deity (Konur Kaliamman) doubles as a pre-bureaucratic genealogical registry: the village shrine kept track of who belonged to which lineage, one life-event at a time. The Nagarathar show the same pattern in a different idiom. Here the clan unit is not a totem-kootam but a <strong>temple-clan</strong> — affiliation to one of the nine ancestral temples — and the deity of that temple is the fixed point a dispersed banking diaspora returned to.
         </p>
         <p>
           <Claim tier="green" sources={["vairavanpatti-bhairava"]}>
@@ -104,7 +102,7 @@ const festivals = [
           Kala Bhairava is a fierce, guardian aspect of Shiva — typically depicted dark, weapon-bearing, and accompanied by his vahana, the dog (<em>svana</em>). As a Bhairava is classically a <em>kshetrapala</em>, a guardian of place and time, his role as the deity who defines a clan-temple is a natural fit. Strictly, the temple's presiding deity is Shiva as Valaroli Nathar, enshrined with his consort Vadivudai Ammai; Bhairava is the prominent shrine that gives the place its name. The temple carries a five-tiered rajagopuram.
         </p>
         <p class="text-sm text-stone-600">
-          This contrasts with the author's Konur Kaliamman, a village-goddess (Amman) form. Two very different deities — a fierce Shaiva guardian here, a folk Shakta goddess there — performing the same social role for their respective clans.
+          This contrasts with Konur Kaliamman — the Kongu Vellala case study's deity — a village-goddess (Amman) form. Two very different deities — a fierce Shaiva guardian here, a folk Shakta goddess there — performing the same social role for their respective clans.
         </p>
       </div>
     </section>
@@ -148,7 +146,7 @@ const festivals = [
           <a href="/lineage/konur" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-rose-300 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">
             <p class="text-xs uppercase tracking-wide text-stone-500">Compare — clan deity</p>
             <p class="font-medium text-stone-900">Konur Kaliamman</p>
-            <p class="mt-1 text-xs text-stone-600">The author's own kuladeivam, same role, different deity.</p>
+            <p class="mt-1 text-xs text-stone-600">The Kongu Vellala case study's kuladeivam, same role, different deity.</p>
           </a>
         </li>
         <li>
@@ -169,7 +167,7 @@ const festivals = [
       }}
       related={{
         label: 'Related lineage',
-        items: [{ href: '/lineage/konur', title: "Compare with the author's Konur Kaliamman" }],
+        items: [{ href: '/lineage/konur', title: "Compare with Konur Kaliamman (the case study)" }],
       }}
       backTo={{ href: '/lineage', label: 'Lineage hub' }}
     />

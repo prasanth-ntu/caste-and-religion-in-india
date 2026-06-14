@@ -350,7 +350,7 @@ export default function Explorer() {
 function screen2Title(path: PathId): string {
   switch (path) {
     case 'family':
-      return 'Find your kootam';
+      return 'Find a kootam';
     case 'evidence':
       return 'Pick a topic';
     case 'curious':
@@ -435,7 +435,7 @@ function FamilyPicker({ onAfterAction }: { onAfterAction: () => void }) {
   return (
     <div>
       <label className="block text-xs font-medium text-slate-600 mb-1" htmlFor="explorer-kootam">
-        Type your kootam name
+        Type a kootam name
       </label>
       <input
         ref={inputRef}

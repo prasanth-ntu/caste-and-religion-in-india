@@ -1,7 +1,6 @@
 ---
 import { getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
@@ -41,7 +40,6 @@ const diaspora = [
   description="A second documented community shown as a parallel worked example: the Nattukottai Chettiar / Nagarathar — a Tamil merchant-banking caste of Chettinad organised into nine exogamous temple-clans (Nava Kovil)."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     {/* Deep breadcrumb — same path style as the kootam-card pages (e.g. /lineage/k/kadai) */}
     <nav aria-label="Breadcrumb" class="mb-8 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-stone-500">
       <a href="/" class="rounded hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">India</a>
@@ -57,11 +55,11 @@ const diaspora = [
 
     <VarnaJatiLocator highlightSlug="vairavanpatti" class="mb-6" />
 
-    {/* A clear "this is a second community" banner so the page never reads as the author's own */}
+    {/* A clear "this is a second community" banner so the page reads as a parallel case study, not the site's primary lineage */}
     <div class="mb-8 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
       <p class="text-xs font-semibold uppercase tracking-widest text-violet-700">Another documented community</p>
       <p class="mt-1">
-        This page is a <strong>second worked example</strong>, run in parallel to the author's own Kongu Vellala lineage. The Nattukottai Chettiar sit in a different branch of the caste landscape — a Vaishya-classified mercantile community rather than a Shudra-classified cultivator one — yet show a strikingly similar clan-exogamy logic. The point is structural comparison, not personal lineage.
+        This page is a <strong>second worked example</strong>, run in parallel to the Kongu Vellala lineage covered elsewhere on this site. The Nattukottai Chettiar sit in a different branch of the caste landscape — a Vaishya-classified mercantile community rather than a Shudra-classified cultivator one — yet show a strikingly similar clan-exogamy logic. The point is structural comparison, not personal lineage.
       </p>
     </div>
 
@@ -139,7 +137,7 @@ const diaspora = [
           Chettinad — literally "the country of the Chettiars" — is a cluster of roughly seventy villages in the Sivaganga and Pudukkottai districts of southern Tamil Nadu. It is semi-arid and historically poor for intensive agriculture, a constraint often cited as part of why the community oriented itself toward long-distance trade and banking rather than the land. The diaspora's accumulated wealth flowed back into the homeland as the famous Chettinad mansions, built with imported teak, marble, and tile.
         </p>
         <p>
-          The contrast with the author's Kongu Nadu is instructive. Both are dry, tank-dependent Tamil micro-regions that produced a tightly organised, clan-structured community. But where the Kongu Vellala turned dryland constraint into an engineering response — tanks, wells, and a cultivator identity — the Nagarathar turned it into a mobility response: capital, credit, and a banker identity. Same problem, opposite solution.
+          The contrast with the Kongu Nadu case study is instructive. Both are dry, tank-dependent Tamil micro-regions that produced a tightly organised, clan-structured community. But where the Kongu Vellala turned dryland constraint into an engineering response — tanks, wells, and a cultivator identity — the Nagarathar turned it into a mobility response: capital, credit, and a banker identity. Same problem, opposite solution.
         </p>
       </div>
     </section>
@@ -196,8 +194,8 @@ const diaspora = [
         </p>
 
         <p>
-          <strong>Is there a totem?</strong> No — and that is the sharpest contrast with the author's
-          Kongu Vellala side, where every kootam is named for one: a quail (Kadai), an owl
+          <strong>Is there a totem?</strong> No — and that is the sharpest contrast with the
+          Kongu Vellala case study, where every kootam is named for one: a quail (Kadai), an owl
           (Porulthantha), and so on. The Nagarathar clans are <strong>not totemic</strong>. There is
           no clan animal or plant; the clan-temple itself is the identity marker, and affiliation is
           registered to a temple rather than symbolised by a species.
@@ -243,7 +241,7 @@ const diaspora = [
           <span class="inline-flex items-baseline gap-1">This is <FactTier tier="yellow" /></span> for a reason: some sources record an earlier Shudra classification, with the Vaishya claim asserted more recently — frequently in the colonial-census era, when communities across India repositioned themselves within the four-varna schema. The mercantile identity is not in doubt; the varna <em>label</em> is a contested status claim, not a fixed inheritance.
         </p>
         <p>
-          This mirrors the Vellala case almost exactly. The author's own caste-cluster maps cleanly onto none of the four varnas — neither Kshatriya, Vaishya, nor Shudra. The lesson is the same on both branches of this site: <strong>varna is a textual category that Tamil jatis fit only awkwardly</strong>, and the fit was often negotiated rather than given.
+          This mirrors the Vellala case almost exactly. The Kongu Vellala caste-cluster maps cleanly onto none of the four varnas — neither Kshatriya, Vaishya, nor Shudra. The lesson is the same on both branches of this site: <strong>varna is a textual category that Tamil jatis fit only awkwardly</strong>, and the fit was often negotiated rather than given.
         </p>
         <blockquote class="pull-quote">
           Varna is a textual category that Tamil jatis fit only awkwardly — and the fit was often negotiated rather than given.
@@ -266,7 +264,7 @@ const diaspora = [
           <a href="/lineage/kongu" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">
             <p class="text-xs uppercase tracking-wide text-stone-500">Compare — region</p>
             <p class="font-medium text-stone-900">Kongu Nadu</p>
-            <p class="mt-1 text-xs text-stone-600">The author's parallel dryland Tamil micro-region.</p>
+            <p class="mt-1 text-xs text-stone-600">The parallel dryland Tamil micro-region of the Kongu case study.</p>
           </a>
         </li>
         <li>
@@ -287,7 +285,7 @@ const diaspora = [
       }}
       related={{
         label: 'Related lineage',
-        items: [{ href: '/lineage/kongu', title: "Compare with the author's Kongu Nadu" }],
+        items: [{ href: '/lineage/kongu', title: "Compare with the Kongu Nadu case study" }],
       }}
       backTo={{ href: '/lineage', label: 'Lineage hub' }}
     />

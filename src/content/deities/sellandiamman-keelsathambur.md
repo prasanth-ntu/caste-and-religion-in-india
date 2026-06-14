@@ -17,7 +17,7 @@ attestation: community
 
 # Sellandiamman Kovil, Keelsathambur
 
-Kuladeivam (clan deity) for [[vilayan]] kulam lineages in the Kongu region. The author's cousin's family worships at the **Keelsathambur** temple, Tamil Nadu.
+Kuladeivam (clan deity) for [[vilayan]] kulam lineages in the Kongu region. It is the active kuladeivam temple for documented [[vilayan]]-kulam families in this region (**Keelsathambur**, Tamil Nadu).
 
 Community sources (Global Kongu Foundation, tamil.wiki) also link Vilayan lineages more broadly to **Sri Sellandiamman** temples at **Karur** and **Thalai Nallur** — so the Sellandiamman ↔ Vilayan binding is regional, with multiple temple instances rather than a single canonical site.
 

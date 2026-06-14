@@ -1,0 +1,206 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+type Tier = {
+  emoji: string;
+  label: string;
+  gloss: string;
+};
+
+// Tier wording copied verbatim from src/components/site/SiteFooter.astro
+// (the "Evidence legend") so /about and the footer always agree.
+const tiers: Tier[] = [
+  {
+    emoji: '🟢',
+    label: 'well-established',
+    gloss: 'Multiple independent peer-reviewed or primary sources agree.',
+  },
+  {
+    emoji: '🟡',
+    label: 'plausible / debated',
+    gloss: 'Sources disagree, or the evidence is partial.',
+  },
+  {
+    emoji: '🔴',
+    label: 'myth / unverified',
+    gloss: 'Popular folklore not supported by evidence.',
+  },
+  {
+    emoji: '⚖️',
+    label: 'rational basis',
+    gloss:
+      'A plausible practical or material rationale, distinct from the stated tradition.',
+  },
+];
+---
+
+<BaseLayout
+  title="About — Decoded"
+  description="What this platform is, the data-and-evidence stance, the evidence-tier methodology, how citations work, and how to contribute."
+>
+  <main id="main-content" class="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-stone-500">
+      <a
+        href="/"
+        class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+        >Home</a
+      >
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">About</span>
+    </nav>
+
+    <header class="mb-12">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        About
+        <span
+          class="ml-3 font-tamil text-2xl font-medium text-stone-600 sm:text-3xl"
+          lang="ta">பற்றி</span
+        >
+      </h1>
+      <p class="mt-3 max-w-2xl text-base text-stone-600">
+        Methodology and disclaimers — what this platform is, how it reasons
+        about evidence, and how it can grow.
+      </p>
+    </header>
+
+    {/* 1 — Purpose */}
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        Purpose
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        Decoded is a reader-first, pan-India exploration of caste, jati, and
+        lineage through data and evidence. It maps the distance between
+        <em class="font-display italic text-stone-900">what is taught</em> — the
+        stories communities tell about their own origins, clans, and deities —
+        and <em class="font-display italic text-stone-900">what is documented</em>
+        in inscriptions, censuses, genetics, peer-reviewed scholarship, and
+        primary records. The goal is understanding, not assertion: every
+        non-trivial claim is presented with its sources and its level of
+        certainty visible up front.
+      </p>
+    </section>
+
+    {/* 2 — Stance */}
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        Stance
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        This is a data-driven, scientific point of view. It documents social
+        structures — caste, jati, clan, ritual — as objects of study and
+        curiosity, in the way a historian or geneticist would examine any human
+        institution.
+      </p>
+      <div
+        class="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-5 text-base leading-relaxed text-stone-700"
+      >
+        <p>
+          <span class="font-semibold text-stone-900"
+            >This platform is explicitly anti-discrimination.</span
+          >
+          Describing how a structure works is not the same as endorsing it.
+          Nothing here is an endorsement of caste hierarchy, untouchability,
+          segregation, or discrimination of any kind. Documenting that a
+          practice exists, or explaining where it came from, is a statement of
+          fact — never a statement of approval.
+        </p>
+      </div>
+    </section>
+
+    {/* 3 — Evidence-tier methodology */}
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        Evidence-tier methodology
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        Every non-trivial claim carries an evidence tier alongside its citation,
+        so you always know how much weight it can bear. The tiers are the same
+        ones used in the site footer:
+      </p>
+      <ul class="mt-5 space-y-3">
+        {
+          tiers.map((t) => (
+            <li class="flex items-start gap-3 rounded-xl border border-stone-200 bg-white p-4">
+              <span class="mt-0.5 text-lg" aria-hidden="true">
+                {t.emoji}
+              </span>
+              <span class="min-w-0">
+                <span class="block font-medium text-stone-900">{t.label}</span>
+                <span class="mt-0.5 block text-sm leading-snug text-stone-600">
+                  {t.gloss}
+                </span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    {/* 4 — How citations work */}
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        How citations work
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        Each tiered claim links to the source — or sources — that support it.
+        Those sources live in the
+        <a
+          href="/sources"
+          class="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+          >Sources</a
+        >
+        bibliography: papers, books, inscriptions, census records, encyclopedia
+        entries, and oral attestations, each typed and filterable. Where the
+        record is thin, contested, or merely folk tradition, that uncertainty is
+        surfaced through the tier — never hidden. You are meant to be able to
+        check the work.
+      </p>
+    </section>
+
+    {/* 5 — Why the first case study is Kongu Vellala */}
+    <section class="mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        Why the first case study is Kongu Vellala
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        India holds thousands of jatis, and no single platform can do them all
+        at once. The first community traced end to end here is the
+        <a
+          href="/lineage"
+          class="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+          >Kongu Vellala</a
+        >
+        — its region, caste-cluster, the 145 exogamous kootams, and their
+        kuladeivams — simply because that is where the research currently runs
+        deepest. The maintainer began from a familiar starting point out of
+        data-and-scientific interest, and built the method against a case where
+        the records could be checked closely.
+      </p>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        It is one worked example, not the subject of the platform. The data
+        model, the tiering, and the citation system are deliberately general, so
+        other regions and communities can be added as the evidence is gathered.
+      </p>
+    </section>
+
+    {/* 6 — How others can contribute */}
+    <section class="mb-4">
+      <h2 class="text-2xl font-semibold tracking-tight text-stone-900">
+        How others can contribute
+      </h2>
+      <p class="mt-3 text-base leading-relaxed text-stone-700">
+        The platform grows through sourced corrections and new material —
+        attestations, citations, and well-documented community knowledge. If you
+        can point to a source, challenge a tier, or help open up another
+        community, see the
+        <a
+          href="/contribute"
+          class="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+          >Contribute</a
+        >
+        page for how to help.
+      </p>
+    </section>
+  </main>
+</BaseLayout>

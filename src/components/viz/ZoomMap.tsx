@@ -632,14 +632,14 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
         {bundle.isAuthorExample && (
           <div className="pointer-events-none absolute left-3 top-3 z-10">
             <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 shadow-sm">
-              <span aria-hidden="true">★</span> Author's example — Konur, Kadai-Kootam
+              Worked example: Konur Kaliamman, Kadai kootam
             </span>
           </div>
         )}
         {bundle.pendingVillage && (
           <div className="pointer-events-none absolute left-3 top-3 z-10">
             <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 shadow-sm">
-              Your kuladeivam — {bundle.pendingVillage.deityName} ({bundle.pendingVillage.name}) — sits in Kongu Nadu. Exact pin pending.
+              Worked-example kuladeivam — {bundle.pendingVillage.deityName} ({bundle.pendingVillage.name}) — sits in Kongu Nadu. Exact pin pending.
             </span>
           </div>
         )}

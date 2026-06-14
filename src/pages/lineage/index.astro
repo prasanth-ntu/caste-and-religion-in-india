@@ -4,9 +4,6 @@ import Claim from '../../components/Claim.astro';
 import CrossLink from '../../components/CrossLink.astro';
 import ZoomMap from '../../components/viz/ZoomMap.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
-import LineageSelector from '../../components/LineageSelector.tsx';
-import LineagePersonalSentence from '../../components/LineagePersonalSentence.tsx';
-import LineageHubAdapter from '../../components/LineageHubAdapter.tsx';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 import { formatMeta, type Audience } from '../../lib/reading-time';
 
@@ -79,23 +76,11 @@ const konurMeta = formatMeta('everyone', 4);
 
 <BaseLayout
   title="Lineage — Decoded"
-  description="A semantic-zoom map of the personal lineage from India to Konur — Kongu Vellala Gounder, Kadai Kootam, Konur Kaliamman."
+  description="A reader's gateway to lineage in India — how varna, region, caste, title, clan, village, and deity nest, with Kongu Vellala as a worked example."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    {/* Lineage selector — at the top so visitors can switch lineage immediately */}
-    <section class="mb-8">
-      <LineageSelector client:load />
-      <p class="mt-2 text-xs text-stone-500">
-        Default view = the author's lineage (Kadai / Konur Kaliamman). Pick another to explore.
-        Selection is remembered across the site via URL + localStorage.{' '}
-        <a href="/contribute/" class="underline hover:text-stone-700">
-          Don't see yours? Contribute →
-        </a>
-      </p>
-    </section>
-
-    {/* "You are here" mini-tree (SSR default = Kadai; Phase 3 may upgrade to swap client-side) */}
-    <VarnaJatiLocator highlightSlug="kadai" class="mb-6" />
+    {/* Hierarchy locator mini-tree — rendered neutral (no highlighted node) */}
+    <VarnaJatiLocator class="mb-6" />
 
     {/* Hero */}
     <section class="mb-10">
@@ -107,20 +92,24 @@ const konurMeta = formatMeta('everyone', 4);
         </span>
       </h1>
       <p class="mt-4 max-w-2xl text-lg text-stone-700">
-        A trail from the subcontinent down to a single village temple — the literal physical
-        narrowing of one identity.
+        How an identity nests, layer by layer, from the subcontinent down to a single village
+        temple — and how each layer can be checked against evidence.
       </p>
     </section>
 
     {/* Intro */}
     <section class="prose mb-10 max-w-none text-stone-700">
       <p>
-        Generic genealogies stop at the family tree. This one keeps going — outward into the
-        political geography that produced the family. The path: <strong>India → Tamil Nadu →
-        Kongu Nadu → Vellala → Gounder → Kadai Kootam → Konur Kaliamman</strong>. Each step
-        narrows the frame; each step is a claim that can be checked against evidence.
+        Generic genealogies stop at the family tree. A lineage in India keeps going — outward into
+        the political and ritual geography that produced the family. Read top-down, the layers nest
+        like this: <strong>varna → region → caste / jati → title → clan (gotra, kootam, or
+        temple-clan) → village → deity</strong>. Each step narrows the frame, and each step is a
+        claim that can be checked against evidence.
       </p>
       <p>
+        This site walks that hierarchy through one worked example — the Kongu Vellala community of
+        western Tamil Nadu — as a concrete, citable case study, with room for more communities over
+        time.
         <Claim tier="green" sources={["wikipedia-kongu-vellalar"]}>
           The Kongu region historically functioned as a buffer zone between the Chola, Pandya, and Chera kingdoms,
         </Claim>
@@ -129,10 +118,10 @@ const konurMeta = formatMeta('everyone', 4);
         <Claim tier="yellow" sources={["wikipedia-kongu-vellalar", "kongu-mandala-satakam"]}>
           a system of 145 exogamous kootams, each with its own totem — bird, tree, fish, or flower — that members traditionally avoid harming.
         </Claim>
-        <LineagePersonalSentence client:load /> The map below is that path, made literal.
+        The map below makes that nesting literal, from subcontinent to village temple.
       </p>
       <p class="text-sm text-stone-500">
-        <CrossLink section="A" href="/overview/varna-vs-jati" label="Where you are in the bigger tree →" />
+        <CrossLink section="A" href="/overview/varna-vs-jati" label="Where this sits in the bigger tree →" />
       </p>
     </section>
 
@@ -150,49 +139,52 @@ const konurMeta = formatMeta('everyone', 4);
       </p>
     </section>
 
-    {/* Hub → Profile bridge: prominent callout linking to the visitor's kootam profile.
-        SSR-defaulted to Kadai; LineageHubAdapter swaps name/deity/link on hydration. */}
-    <section
-      id="lineage-hub-bridge"
-      class="my-8 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-5 sm:p-6"
-      data-default-lineage="kadai"
-    >
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm uppercase tracking-wide text-indigo-700/80" data-bridge-kicker>Your kootam</p>
-          <p class="mt-1 font-display text-2xl text-stone-900" data-bridge-name>Kadai</p>
-          <p class="mt-0.5 text-sm text-stone-600" data-bridge-deity>Kuladeivam: Konur Kaliamman · Totem: <span aria-hidden="true">🐦</span> Quail (Coturnix coturnix)</p>
-        </div>
+    {/* Navigation cards — a static, generic gateway grouped by section. */}
+    <div id="lineage-hub-cards">
+      {/* Across India — concepts */}
+      <section class="mb-10">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+          Across India
+        </p>
+        <h2 class="mt-1 text-xl font-bold text-stone-900">Start with the concepts</h2>
+        <p class="mt-2 max-w-2xl text-sm text-stone-600">
+          How varna, jati, gotra, and clan fit together across the subcontinent — the framework
+          every lineage below plugs into.
+        </p>
         <a
-          href="/lineage/k/kadai/"
-          data-bridge-link
-          class="inline-flex items-center justify-center rounded-xl bg-indigo-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+          href="/overview"
+          class="group mt-4 flex items-start gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-all bg-stone-50 border-stone-200 hover:border-stone-400"
         >
-          View full profile →
+          <span class="text-3xl" aria-hidden="true">🗺️</span>
+          <span>
+            <span class="block text-lg font-semibold text-stone-900">
+              The Overview
+              <span class="ml-2 font-tamil text-sm font-medium text-stone-500">அறிமுகம்</span>
+            </span>
+            <span class="mt-1 block text-sm text-stone-600">
+              Varna vs jati, the radial taxonomy of India's communities, and how clan-exogamy
+              works — the conceptual map for everything that follows.
+            </span>
+            <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-stone-700 group-hover:underline">
+              Open
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </span>
+          </span>
         </a>
-      </div>
-      <ul class="mt-4 grid grid-cols-2 gap-3 text-xs text-stone-600 sm:grid-cols-4">
-        <li class="flex items-center gap-1.5"><span aria-hidden="true">🪶</span> Totem &amp; origin</li>
-        <li class="flex items-center gap-1.5"><span aria-hidden="true">🛕</span> Kuladeivam &amp; temple</li>
-        <li class="flex items-center gap-1.5"><span aria-hidden="true">🌳</span> Ancestors &amp; exogamy</li>
-        <li class="flex items-center gap-1.5"><span aria-hidden="true">📚</span> Sources &amp; claims</li>
-      </ul>
-    </section>
+      </section>
 
-    {/*
-      Navigation cards.
-
-      SSR default = the author's Kadai canonical card grid. The
-      <LineageHubAdapter /> island below reads the visitor's selected
-      lineage on mount; if it's not Kadai it hides #lineage-hub-cards and
-      renders its own alternate (or stub) grid in place.
-    */}
-    <div id="lineage-hub-cards" data-default-lineage="kadai">
-      <section class="mb-12">
-        <h2 class="mb-4 text-2xl font-semibold text-stone-900">
-          Drill into a layer
+      <section class="mb-12 border-t border-stone-200 pt-10">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+          Case study: Kongu Vellala
+        </p>
+        <h2 class="mt-1 text-2xl font-semibold text-stone-900">
+          One worked example, layer by layer
           <span class="ml-2 font-tamil text-lg font-medium text-stone-600">அடுக்குகள்</span>
         </h2>
+        <p class="mt-2 max-w-2xl text-sm text-stone-600">
+          The Kongu Vellala community of western Tamil Nadu, traced through each layer of the
+          hierarchy — one fully documented example among many that could be added.
+        </p>
         <div class="grid gap-4 sm:grid-cols-2">
           {cards.map((c) => {
             const meta = formatMeta(c.audience, c.readTime);
@@ -259,18 +251,17 @@ const konurMeta = formatMeta('everyone', 4);
         </a>
       </section>
 
-      {/* Another documented community — additive, clearly separated from the
-          author's own lineage above. */}
+      {/* Other communities — additive, clearly separated from the case study above. */}
       <section class="mt-12 border-t border-stone-200 pt-10">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-700">
-          Another documented community
+          Other communities
         </p>
         <h2 class="mt-1 text-xl font-bold text-stone-900">
           A second worked example
         </h2>
         <p class="mt-2 max-w-2xl text-sm text-stone-600">
           The same fact-vs-fiction method, run on a different community in a different branch of
-          the caste landscape — to show the pattern generalises beyond the author's own lineage.
+          the caste landscape — to show the pattern generalises beyond a single lineage.
         </p>
         <a
           href="/lineage/nagarathar"
@@ -300,16 +291,26 @@ const konurMeta = formatMeta('everyone', 4);
       </section>
     </div>
 
-    {/* SSR "Currently viewing" line — visible by default; hidden by LineageHubAdapter
-        once hydrated if the visitor has an explicit non-default selection. */}
-    <p id="lineage-hub-currently-viewing-ssr" class="mb-6 text-xs text-stone-500" data-default-lineage="kadai">
-      <span aria-hidden="true">★</span> Currently viewing:
-      <strong class="font-medium text-stone-700">Kadai Kootam</strong>
-      {' · '}Konur Kaliamman (author's lineage)
-    </p>
-
-    {/* Client-side adapter — renders alt/stub grid when selection ≠ Kadai */}
-    <LineageHubAdapter client:load />
+    {/* Contribute */}
+    <section class="mt-12 border-t border-stone-200 pt-10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-indigo-700">
+        Contribute
+      </p>
+      <h2 class="mt-1 text-xl font-bold text-stone-900">
+        Add a community or fill a gap
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm text-stone-600">
+        This gateway is built to hold many lineages. If a kootam, deity, or community is missing —
+        or a claim needs a better source — contributions are welcome.
+      </p>
+      <a
+        href="/contribute/"
+        class="group mt-4 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/50 px-4 py-2.5 text-sm font-medium text-indigo-800 transition hover:border-indigo-400 hover:bg-indigo-50"
+      >
+        Contribute on GitHub
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </section>
 
     {/* Footer note */}
     <section class="rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-600">

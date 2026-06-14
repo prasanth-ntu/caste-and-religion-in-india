@@ -232,7 +232,7 @@ export default function LineageSelector({
     );
   }
 
-  const labelText = label ?? 'Currently viewing';
+  const labelText = label ?? 'Selected';
 
   return (
     <div className="relative" ref={dropdownRef}>

@@ -12,4 +12,4 @@ claims:
 
 # Nagarathar / Nattukottai Chettiar (நகரத்தார்)
 
-A Tamil merchant-banking community of Chettinad, organised into nine exogamous temple-clans (Nava Kovil). Presented here as a second documented community — a parallel worked example to the author's Kongu Vellala lineage, in a different (Vaishya-classified, mercantile) branch of the caste landscape but with a structurally similar clan-exogamy logic.
+A Tamil merchant-banking community of Chettinad, organised into nine exogamous temple-clans (Nava Kovil). Presented here as a second documented community — a parallel worked example to the Kongu Vellala case study documented on this site, in a different (Vaishya-classified, mercantile) branch of the caste landscape but with a structurally similar clan-exogamy logic.

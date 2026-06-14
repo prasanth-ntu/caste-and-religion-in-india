@@ -220,7 +220,7 @@ export function buildStagesForKootam(entry: ManifestEntry | null): KootamStageBu
     };
   }
 
-  // Stub / undocumented — keep Konur as the author's worked example.
+  // Stub / undocumented — keep Konur as the worked example.
   return {
     stages,
     templePin: konurTemplePin,
