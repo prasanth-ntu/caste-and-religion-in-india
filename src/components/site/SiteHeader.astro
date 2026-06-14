@@ -16,6 +16,17 @@ const isActive = (prefix: string) => {
 
 const focusRing =
   "focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50";
+
+// Active/inactive class sets are shared between the server render and the
+// client-side re-sync script below. The header uses `transition:persist`, so its
+// DOM is reused across View Transitions navigations and the server-rendered
+// highlight would otherwise stay stuck on the previous tab.
+const deskBase = `inline-flex items-center border-b-2 px-3 text-sm transition-colors ${focusRing}`;
+const deskActive = "border-indigo-700 font-semibold text-indigo-700";
+const deskInactive = "border-transparent font-medium text-stone-700 hover:text-indigo-700";
+const mobBase = `flex min-h-[44px] items-center px-5 text-base transition-colors ${focusRing}`;
+const mobActive = "font-semibold text-indigo-700";
+const mobInactive = "font-medium text-stone-700 hover:bg-stone-100 hover:text-indigo-700";
 ---
 
 <header
@@ -47,12 +58,12 @@ const focusRing =
         return (
           <a
             href={p.href}
+            data-pillar
+            data-prefix={p.prefix}
+            data-active-class={deskActive}
+            data-inactive-class={deskInactive}
             aria-current={active ? "page" : undefined}
-            class={`inline-flex items-center border-b-2 px-3 text-sm transition-colors ${focusRing} ${
-              active
-                ? "border-indigo-700 font-semibold text-indigo-700"
-                : "border-transparent font-medium text-stone-700 hover:text-indigo-700"
-            }`}
+            class={`${deskBase} ${active ? deskActive : deskInactive}`}
           >
             {p.label}
           </a>
@@ -136,12 +147,12 @@ const focusRing =
               return (
                 <a
                   href={p.href}
+                  data-pillar
+                  data-prefix={p.prefix}
+                  data-active-class={mobActive}
+                  data-inactive-class={mobInactive}
                   aria-current={active ? "page" : undefined}
-                  class={`flex min-h-[44px] items-center px-5 text-base transition-colors ${focusRing} ${
-                    active
-                      ? "font-semibold text-indigo-700"
-                      : "font-medium text-stone-700 hover:bg-stone-100 hover:text-indigo-700"
-                  }`}
+                  class={`${mobBase} ${active ? mobActive : mobInactive}`}
                 >
                   {p.label}
                 </a>
@@ -159,6 +170,34 @@ const focusRing =
     </div>
   </div>
 </header>
+
+<script>
+  // The header is `transition:persist`-ed, so its DOM survives View Transitions
+  // navigations and the server-rendered active-tab highlight would stay stuck on
+  // the previously visited pillar. Re-sync the highlight from the live pathname
+  // after every navigation (and on initial load) so the correct tab is marked.
+  function syncActivePillar() {
+    const path = window.location.pathname;
+    const isActive = (prefix: string) =>
+      prefix === "/" ? path === "/" : path === prefix || path.startsWith(prefix + "/");
+
+    document.querySelectorAll<HTMLElement>("[data-pillar]").forEach((el) => {
+      const prefix = el.dataset.prefix ?? "";
+      const activeCls = (el.dataset.activeClass ?? "").split(/\s+/).filter(Boolean);
+      const inactiveCls = (el.dataset.inactiveClass ?? "").split(/\s+/).filter(Boolean);
+      const active = isActive(prefix);
+
+      el.classList.remove(...activeCls, ...inactiveCls);
+      el.classList.add(...(active ? activeCls : inactiveCls));
+      if (active) el.setAttribute("aria-current", "page");
+      else el.removeAttribute("aria-current");
+    });
+  }
+
+  // `astro:page-load` fires after the initial load and after each View
+  // Transitions navigation; the listener lives on `document`, so it persists.
+  document.addEventListener("astro:page-load", syncActivePillar);
+</script>
 
 <style>
   /* Hide default <details> disclosure triangle (cross-browser) */
