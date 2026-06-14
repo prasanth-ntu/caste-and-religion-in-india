@@ -60,6 +60,33 @@
     }
   },
   {
+    "slug": "porulthantha",
+    "name": "Porulthantha Kootam",
+    "tamilName": "ஆந்தை",
+    "totemEmoji": "🐦",
+    "totemType": "bird",
+    "totemSpecies": "Owl (Aanthai)",
+    "region": "Kongu Nadu",
+    "status": "documented",
+    "attestation": "oral-family",
+    "exogamyPartners": [
+      "kadai"
+    ],
+    "exogamyPangaliExcluded": [],
+    "deity": {
+      "slug": "malaiyamman-thottakurichi",
+      "name": "Malaiyamman (Thottakurichi)",
+      "tamilName": "மலையம்மன்",
+      "village": "Punjai Thottakurichi",
+      "district": "Karur",
+      "tradition": "Folk Shaktism (Kuladeivam)",
+      "festivals": [],
+      "attestation": "oral-family",
+      "lat": 11.0798181,
+      "lng": 78.0362404
+    }
+  },
+  {
     "slug": "senganni",
     "name": "Senganni Kootam",
     "tamilName": "செங்கண்ணி (வேங்கை மரம்)",

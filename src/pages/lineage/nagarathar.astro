@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LineageContextBanner from '../../components/LineageContextBanner.tsx';
+import Claim from '../../components/Claim.astro';
+import FactTier from '../../components/FactTier.astro';
+import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
+import RelatedNav from '../../components/site/RelatedNav.astro';
+
+// The nine ancestral clan-temples (Nava Kovil). Vairavan Kovil is the one this
+// site maps in depth via the deity page.
+const navaKovil = [
+  { name: 'Ilayathangudi', note: 'Often named the senior / founding temple of the nine.' },
+  { name: 'Mathur', note: 'Mathur Kovil cluster.' },
+  { name: 'Vairavan Kovil', note: 'Vairavanpatti — deity is Kala Bhairava (Vairavar); mapped in depth here.', highlight: true },
+  { name: 'Iraniyur', note: 'Iraniyur Kovil cluster.' },
+  { name: 'Pillaiyarpatti', note: 'Famed for the rock-cut Karpaka Vinayakar.' },
+  { name: 'Nemam', note: 'Nemam Kovil cluster.' },
+  { name: 'Iluppaikudi', note: 'Iluppaikudi Kovil cluster.' },
+  { name: 'Surakudi', note: 'Surakudi Kovil cluster.' },
+  { name: 'Velangudi', note: 'Velangudi Kovil cluster.' },
+];
+
+// Colonial-era banking diaspora — illustrative of the geographic reach.
+const diaspora = [
+  { place: 'Chettinad (homeland)', region: 'Sivaganga / Pudukkottai', note: 'The 70-odd home villages; mansion architecture materialised the diaspora wealth.' },
+  { place: 'Lower Burma', region: 'Rangoon, Irrawaddy delta', note: 'By the late 1920s, Chettiar firms supplied the majority of agricultural credit here.' },
+  { place: 'Ceylon', region: 'Colombo, plantation districts', note: 'Plantation and trade finance.' },
+  { place: 'Malaya & Straits', region: 'Penang, Singapore', note: 'Rubber and tin economy lending.' },
+  { place: 'Madras Presidency', region: 'Tamil country', note: 'The capital base and arbitration networks tied to the temple-clans.' },
+];
+---
+
+<BaseLayout
+  title="Nattukottai Chettiar (Nagarathar) — Decoded"
+  description="A second documented community shown as a parallel worked example: the Nattukottai Chettiar / Nagarathar — a Tamil merchant-banking caste of Chettinad organised into nine exogamous temple-clans (Nava Kovil)."
+>
+  <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+    <LineageContextBanner client:load />
+    <nav class="mb-8 text-sm text-stone-500">
+      <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <a href="/lineage" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Lineage</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-stone-700">Nagarathar</span>
+    </nav>
+
+    <VarnaJatiLocator highlightSlug="vairavanpatti" class="mb-6" />
+
+    {/* A clear "this is a second community" banner so the page never reads as the author's own */}
+    <div class="mb-8 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
+      <p class="text-xs font-semibold uppercase tracking-widest text-violet-700">Another documented community</p>
+      <p class="mt-1">
+        This page is a <strong>second worked example</strong>, run in parallel to the author's own Kongu Vellala lineage. The Nattukottai Chettiar sit in a different branch of the caste landscape — a Vaishya-classified mercantile community rather than a Shudra-classified cultivator one — yet show a strikingly similar clan-exogamy logic. The point is structural comparison, not personal lineage.
+      </p>
+    </div>
+
+    <header class="mb-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-violet-700">Community · சமூகம்</p>
+      <h1 class="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+        <span class="block">Nattukottai Chettiar</span>
+        <span class="mt-2 block font-tamil text-3xl font-medium text-stone-700 sm:text-4xl">
+          நகரத்தார்
+        </span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-base text-stone-600 sm:text-lg">
+        Known endonymically as <em>Nagarathar</em> (or Nakarattar) — a Tamil merchant-banking community of the Chettinad region, organised into nine ancestral temple-clans, whose colonial-era banking network reached across Burma, Ceylon and Malaya.
+      </p>
+    </header>
+
+    {/* Chettinad region */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        Chettinad — the homeland
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">செட்டிநாடு</span>
+      </h2>
+      <div class="prose prose-stone prose-editorial has-dropcap mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          Chettinad — literally "the country of the Chettiars" — is a cluster of roughly seventy villages in the Sivaganga and Pudukkottai districts of southern Tamil Nadu. It is semi-arid and historically poor for intensive agriculture, a constraint often cited as part of why the community oriented itself toward long-distance trade and banking rather than the land. The diaspora's accumulated wealth flowed back into the homeland as the famous Chettinad mansions, built with imported teak, marble, and tile.
+        </p>
+        <p>
+          The contrast with the author's Kongu Nadu is instructive. Both are dry, tank-dependent Tamil micro-regions that produced a tightly organised, clan-structured community. But where the Kongu Vellala turned dryland constraint into an engineering response — tanks, wells, and a cultivator identity — the Nagarathar turned it into a mobility response: capital, credit, and a banker identity. Same problem, opposite solution.
+        </p>
+      </div>
+    </section>
+
+    {/* Mercantile / banking history */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        The merchant-banking diaspora
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">வணிக வரலாறு</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="green" sources={["nagarathar-mercantile-banking"]}>
+            From a base in the Madras Presidency, the Nattukottai Chettiars financed long-distance trade and agriculture across Burma, Ceylon and Malaya from the late nineteenth century — and by the late 1920s supplied the majority of agricultural credit in lower Burma.
+          </Claim>
+          The firms were organised as patrilineal joint-family enterprises (<em>valavu</em> / <em>vilasam</em>), with agent-apprenticeship pipelines and community arbitration anchored to the temple-clusters. David Rudner's study treats this as a counter-example to the old Weberian claim that Hindu caste was incompatible with rational capitalist enterprise: here, caste institutions were the <em>machinery</em> of banking, not an obstacle to it.
+        </p>
+      </div>
+
+      <div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <tr>
+              <th class="px-4 py-3">Where</th>
+              <th class="hidden px-4 py-3 sm:table-cell">Region</th>
+              <th class="px-4 py-3">Role</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            {diaspora.map((d) => (
+              <tr>
+                <td class="px-4 py-3 font-medium text-stone-900">{d.place}</td>
+                <td class="hidden px-4 py-3 text-stone-600 sm:table-cell">{d.region}</td>
+                <td class="px-4 py-3 text-stone-700">{d.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* Nava Kovil — the nine temple-clans */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        The Nava Kovil — nine temple-clans
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">நவ கோயில்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="green" sources={["nagarathar-nine-temples"]}>
+            The Nagarathar are organised into nine ancestral clan-temples ("Nava Kovil"), each of which functions as an exogamous unit — members affiliated to the same temple treat one another as kin (pangali) and may not intermarry, while marriage proceeds between members of different temples.
+          </Claim>
+          On marriage, the bride conventionally takes on the groom's temple affiliation. The structural parallel to the Kongu Vellala kootam system is close: in both, a named clan unit — a temple here, a totem-kootam there — fixes who may marry whom. The two systems are <strong>historically unrelated</strong>; the resemblance is functional convergence, two communities independently solving the same kinship-bookkeeping problem.
+        </p>
+      </div>
+
+      <div class="mt-6 grid gap-3 sm:grid-cols-3">
+        {navaKovil.map((t) => (
+          <div class={`rounded-xl border p-4 ${t.highlight ? 'border-violet-300 bg-violet-50' : 'border-stone-200 bg-white'}`}>
+            <p class={`font-semibold ${t.highlight ? 'text-violet-900' : 'text-stone-900'}`}>{t.name}</p>
+            <p class="mt-1 text-xs text-stone-600">{t.note}</p>
+          </div>
+        ))}
+      </div>
+      <p class="mt-3 text-xs text-stone-500">
+        Conventional list of the nine temples; spellings and the exact senior-temple ordering vary across community sources.
+      </p>
+    </section>
+
+    {/* Vaishya classification debate */}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold tracking-tight">
+        The Vaishya-classification debate
+        <span class="ml-2 font-tamil text-xl font-medium text-stone-600">வர்ண விவாதம்</span>
+      </h2>
+      <div class="prose prose-stone mt-4 max-w-none text-stone-800 sm:text-lg">
+        <p>
+          <Claim tier="yellow" sources={["chettiar-vaishya-classification"]}>
+            The Nattukottai Chettiar / Nagarathar are conventionally placed in the Vaishya (merchant) varna, but this classification is historically contested — like most Tamil caste-to-varna mappings, it reflects later self-assertion as much as any stable ancient category.
+          </Claim>
+          <span class="inline-flex items-baseline gap-1">This is <FactTier tier="yellow" /></span> for a reason: some sources record an earlier Shudra classification, with the Vaishya claim asserted more recently — frequently in the colonial-census era, when communities across India repositioned themselves within the four-varna schema. The mercantile identity is not in doubt; the varna <em>label</em> is a contested status claim, not a fixed inheritance.
+        </p>
+        <p>
+          This mirrors the Vellala case almost exactly. The author's own caste-cluster maps cleanly onto none of the four varnas — neither Kshatriya, Vaishya, nor Shudra. The lesson is the same on both branches of this site: <strong>varna is a textual category that Tamil jatis fit only awkwardly</strong>, and the fit was often negotiated rather than given.
+        </p>
+        <blockquote class="pull-quote">
+          Varna is a textual category that Tamil jatis fit only awkwardly — and the fit was often negotiated rather than given.
+        </blockquote>
+      </div>
+    </section>
+
+    {/* Cross-links */}
+    <section class="rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 class="text-base font-semibold text-stone-900">Connected pages</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        <li>
+          <a href="/lineage/vairavar" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Clan deity</p>
+            <p class="font-medium text-stone-900">Vairavar Swamy</p>
+            <p class="mt-1 text-xs text-stone-600">Kala Bhairava at Vairavanpatti — one of the nine temples.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/lineage/kongu" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-amber-300 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Compare — region</p>
+            <p class="font-medium text-stone-900">Kongu Nadu</p>
+            <p class="mt-1 text-xs text-stone-600">The author's parallel dryland Tamil micro-region.</p>
+          </a>
+        </li>
+        <li>
+          <a href="/overview/varna-vs-jati" class="block rounded-xl border border-stone-200 px-4 py-3 hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">
+            <p class="text-xs uppercase tracking-wide text-stone-500">Overview</p>
+            <p class="font-medium text-stone-900">Varna vs Jati</p>
+            <p class="mt-1 text-xs text-stone-600">Where both communities sit in the larger tree.</p>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <RelatedNav
+      readNext={{
+        href: '/lineage/vairavar',
+        title: 'Vairavar Swamy',
+        sub: 'The Kala Bhairava clan deity at Vairavanpatti.',
+      }}
+      related={{
+        label: 'Related lineage',
+        items: [{ href: '/lineage/kongu', title: "Compare with the author's Kongu Nadu" }],
+      }}
+      backTo={{ href: '/lineage', label: 'Lineage hub' }}
+    />
+  </main>
+</BaseLayout>

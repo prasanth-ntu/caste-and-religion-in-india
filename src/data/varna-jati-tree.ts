@@ -20,7 +20,8 @@ export type CasteLevel =
   | 'caste-cluster'
   | 'jati'
   | 'sub-jati'
-  | 'kootam';
+  | 'kootam'
+  | 'temple-clan';
 
 export type CasteTier = 'green' | 'yellow' | 'red' | 'rational';
 
@@ -39,6 +40,13 @@ export interface TreeNode {
   note?: string;
   /** Marks the "you are here" leaf. */
   highlight?: boolean;
+  /**
+   * Marks a node belonging to a *second* documented community shown as a
+   * parallel worked example (the Nattukottai Chettiar / Nagarathar). Gets a
+   * distinct (violet) visual treatment, separate from the rose "you are here"
+   * highlight, and does NOT anchor the radial rotation.
+   */
+  secondary?: boolean;
   children?: TreeNode[];
 }
 
@@ -96,7 +104,33 @@ export const varnaJatiTree: TreeNode = {
       children: [
         { id: 'bania', name: { en: 'Bania' }, level: 'jati', summary: 'North Indian merchant cluster.' },
         { id: 'marwari', name: { en: 'Marwari' }, level: 'jati', summary: 'Rajasthani trading community.' },
-        { id: 'chettiar', name: { en: 'Chettiar', ta: 'செட்டியார்' }, level: 'jati', summary: 'Tamil merchant / banking community (Nattukottai etc.).' },
+        {
+          id: 'chettiar',
+          name: { en: 'Chettiar', ta: 'செட்டியார்' },
+          level: 'jati',
+          summary: 'Tamil merchant / banking community (Nattukottai etc.).',
+          children: [
+            {
+              id: 'nagarathar',
+              name: { en: 'Nagarathar', ta: 'நகரத்தார்' },
+              level: 'sub-jati',
+              tier: 'green',
+              summary:
+                'Nattukottai Chettiar; mercantile-banking community of Chettinad, organised into nine exogamous temple-clans (Nava Kovil).',
+              children: [
+                {
+                  id: 'vairavanpatti',
+                  name: { en: 'Vairavanpatti', ta: 'வைரவன்பட்டி' },
+                  level: 'temple-clan',
+                  tier: 'green',
+                  secondary: true,
+                  summary:
+                    'One of the nine Nagarathar temple-clans (Nava Kovil). Clan deity: Kala Bhairava (Vairavar). The Nagarathar analogue of a kootam — an exogamous clan defined by a clan-temple.',
+                },
+              ],
+            },
+          ],
+        },
         { id: 'komati', name: { en: 'Komati' }, level: 'jati', summary: 'Telugu merchant community.' },
       ],
     },

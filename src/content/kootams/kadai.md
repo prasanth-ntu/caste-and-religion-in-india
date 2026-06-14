@@ -14,6 +14,7 @@ exogamy_with:
   - aalan
   - velaalan
   - araiyan
+  - porulthantha
 claims:
   - kongu-region-buffer
   - kootam-exogamy-rule

@@ -130,6 +130,9 @@ function findClosestSlug(slug: string | undefined): string | null {
   if (slug === 'kongu' || slug === 'gounder') return 'kongu-vellala';
   if (slug === 'konur') return 'kadai';
   if (slug === 'ancestors') return 'vellala';
+  // Nagarathar (second documented community) narrative slugs.
+  if (slug === 'chettinad') return 'nagarathar';
+  if (slug === 'vairavar') return 'vairavanpatti';
   // Any other slug coming in is almost certainly a Kongu Vellala kootam
   // (144 of 145 kootams aren't in the illustrative tree). Highlight the
   // nearest known ancestor so the locator still answers "where am I".
@@ -518,6 +521,8 @@ const reactivePayload = reactive
         if (slug === 'kongu' || slug === 'gounder') return 'kongu-vellala';
         if (slug === 'konur') return 'kadai';
         if (slug === 'ancestors') return 'vellala';
+        if (slug === 'chettinad') return 'nagarathar';
+        if (slug === 'vairavar') return 'vairavanpatti';
         return 'kongu-vellala';
       }
       function chain(id) {

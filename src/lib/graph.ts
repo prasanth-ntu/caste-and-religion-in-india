@@ -44,6 +44,7 @@ const LINEAGE_NODES_WITH_PAGES = new Set([
   'kongu',
   'vellala',
   'gounder',
+  'nagarathar',
   // konur is its own deity page, not a lineage-node route
 ]);
 
@@ -51,11 +52,17 @@ function hrefForLineageNode(slug: string): string | null {
   // The existing `/lineage/{slug}.astro` set is small; for nodes without a
   // dedicated page we still surface them in the list, but without a link.
   if (LINEAGE_NODES_WITH_PAGES.has(slug)) return `/lineage/${slug}/`;
+  // The Nagarathar parallel chain folds into the two bespoke pages:
+  // Chettinad region → the Nagarathar deep-dive; Vairavanpatti temple-clan →
+  // the Vairavar deity page.
+  if (slug === 'chettinad') return '/lineage/nagarathar/';
+  if (slug === 'vairavanpatti') return '/lineage/vairavar/';
   return null;
 }
 
 function hrefForDeity(slug: string): string | null {
   if (slug === 'konur-kaliamman') return '/lineage/konur/';
+  if (slug === 'vairavar-swamy-vairavanpatti') return '/lineage/vairavar/';
   return null;
 }
 
