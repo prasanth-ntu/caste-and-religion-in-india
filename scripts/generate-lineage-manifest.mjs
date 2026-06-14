@@ -192,6 +192,7 @@ const communitiesManifest = communities.map((c) => ({
   status: c.status ?? 'documented',
   attestation: c.attestation ?? null,
   kind: 'community',
+  href: c.detail_href ?? null,
   parentCaste: c.parent_caste ?? '',
   exogamyBasis: c.exogamy_basis ?? '',
   deity: denormDeity(c.deity && deities[c.deity] ? deities[c.deity] : null),

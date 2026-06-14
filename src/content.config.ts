@@ -175,6 +175,9 @@ const communities = defineCollection({
     deity: reference('deities'),
     attestation: z.enum(['academic', 'community', 'oral-family']),
     status: z.enum(['documented', 'stub']).default('documented'),
+    // Detail-page URL for this community (compare view links A/B names here).
+    // Communities live on bespoke pages rather than the kootam /lineage/k/<slug>/ route.
+    detail_href: z.string().optional(),
   }),
 });
 
