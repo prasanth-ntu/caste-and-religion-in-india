@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { CHART, FG, BG } from '../../lib/chart-tokens';
 
 export type TimelineEvent = {
   slug: string;
@@ -107,16 +110,29 @@ export default function ScrollyTimeline({ events, id }: Props) {
   // sort ascending by year_start
   const sorted = useMemo(() => [...events].sort((a, b) => a.year_start - b.year_start), [events]);
 
-  // Hydration sentinel — set AFTER the first successful D3 draw (see the
-  // draw() callbacks below), not just on mount, so ChartSkeleton.astro only
-  // hides the placeholder once the chart actually has pixels to show.
+  // Shared sizing — single ResizeObserver on the root container. Matches the
+  // prior 640 mobile breakpoint (JS flips to bottom strip <640). The desktop /
+  // mobile draws below still read their own container's clientWidth/clientHeight
+  // (those containers have different dimensions than the root), but the hook now
+  // drives re-measurement in place of the two private ResizeObservers.
+  const { ref: dimRef, width: rootWidth, isMobile, measured } = useChartDimensions({
+    breakpoint: 640,
+    minWidth: 0,
+  });
+
+  // Hydration sentinel — set on the chart root once measured, so ChartSkeleton
+  // hides the placeholder. (Previously gated on the first D3 draw via
+  // markHydrated; the measured flag is the equivalent post-measure signal.)
   const rootRef = useRef<HTMLDivElement>(null);
-  const markHydrated = useCallback(() => {
-    rootRef.current?.setAttribute('data-hydrated', 'true');
-  }, []);
+  const setRootRef = (el: HTMLDivElement | null) => {
+    rootRef.current = el;
+    dimRef.current = el;
+  };
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const desktopCardRefs = useRef<Array<HTMLElement | null>>([]);
@@ -129,19 +145,10 @@ export default function ScrollyTimeline({ events, id }: Props) {
   const mobileContainerRef = useRef<HTMLDivElement | null>(null);
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // mobile detection (also handles tablet narrow strip via CSS; JS only flips to bottom strip <640)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  // prefers-reduced-motion
+  // prefers-reduced-motion (shared helper; keep reactive to runtime changes)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReducedMotion(mq.matches);
+    const update = () => setReducedMotion(prefersReducedMotion());
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
@@ -240,7 +247,6 @@ export default function ScrollyTimeline({ events, id }: Props) {
       const width = container.clientWidth;
       const height = container.clientHeight;
       if (width === 0 || height === 0) return;
-      markHydrated();
 
       const margin = { top: 24, right: 16, bottom: 24, left: 16 };
       const innerH = height - margin.top - margin.bottom;
@@ -285,7 +291,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
         .attr('x2', axisX)
         .attr('y1', margin.top)
         .attr('y2', margin.top + innerH)
-        .attr('stroke', '#a8a29e')
+        .attr('stroke', CHART.axis)
         .attr('stroke-width', 1);
 
       // axis ticks
@@ -298,13 +304,13 @@ export default function ScrollyTimeline({ events, id }: Props) {
           .attr('x2', axisX + 4)
           .attr('y1', y(t))
           .attr('y2', y(t))
-          .attr('stroke', '#78716c');
+          .attr('stroke', CHART.axis);
         axisG
           .append('text')
           .attr('x', axisX + 8)
           .attr('y', y(t) + 3)
           .attr('font-size', 10)
-          .attr('fill', '#57534e')
+          .attr('fill', FG[3])
           .text(formatYear(t));
       });
 
@@ -333,7 +339,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
           .attr('cy', yStart)
           .attr('r', isActive ? 8 : 5)
           .attr('fill', cMeta.color)
-          .attr('stroke', '#ffffff')
+          .attr('stroke', BG.white)
           .attr('stroke-width', 2)
           .style('transition', reducedMotion ? 'none' : 'r 240ms ease, opacity 240ms ease')
           .attr('opacity', isActive ? 1 : 0.85);
@@ -388,10 +394,9 @@ export default function ScrollyTimeline({ events, id }: Props) {
     };
 
     draw();
-    const ro = new ResizeObserver(draw);
-    ro.observe(container);
-    return () => ro.disconnect();
-  }, [sorted, activeIndex, isMobile, minYear, maxYear, reducedMotion, markHydrated]);
+    // Re-measure via the shared hook (rootWidth changes on resize); the desktop
+    // sticky panel's own clientWidth/Height is read inside draw().
+  }, [sorted, activeIndex, isMobile, minYear, maxYear, reducedMotion, rootWidth, measured]);
 
   // ---------- Mobile bottom strip (D3, horizontal — era bands + axis only) ----------
   // Dots/circles are rendered by React buttons below, so D3 only draws the background.
@@ -405,7 +410,6 @@ export default function ScrollyTimeline({ events, id }: Props) {
       const width = container.clientWidth;
       const height = container.clientHeight;
       if (width === 0 || height === 0) return;
-      markHydrated();
 
       const margin = { top: 4, right: 24, bottom: 18, left: 24 };
       const innerW = width - margin.left - margin.right;
@@ -439,7 +443,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
         .attr('y2', axisY)
         .attr('x1', margin.left)
         .attr('x2', margin.left + innerW)
-        .attr('stroke', '#a8a29e');
+        .attr('stroke', CHART.axis);
 
       // sparse tick labels
       x.ticks(5).forEach((t) => {
@@ -449,16 +453,14 @@ export default function ScrollyTimeline({ events, id }: Props) {
           .attr('y', axisY + 12)
           .attr('text-anchor', 'middle')
           .attr('font-size', 9)
-          .attr('fill', '#78716c')
+          .attr('fill', FG[4])
           .text(formatYear(t));
       });
     };
 
     draw();
-    const ro = new ResizeObserver(draw);
-    ro.observe(container);
-    return () => ro.disconnect();
-  }, [sorted, isMobile, minYear, maxYear, markHydrated]);
+    // Re-measure via the shared hook; the strip's own clientWidth is read in draw().
+  }, [sorted, isMobile, minYear, maxYear, rootWidth, measured]);
 
   // auto-scroll mobile strip to keep the active event in view
   useEffect(() => {
@@ -508,7 +510,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
   }
 
   return (
-    <div ref={rootRef} id={id} className="relative">
+    <div ref={setRootRef} id={id} className="relative">
       {/* Desktop / tablet layout */}
       <div className="hidden sm:grid sm:grid-cols-[1fr_320px] sm:gap-8 lg:grid-cols-[1fr_420px] lg:gap-12">
         {/* Left: scrolling prose column */}

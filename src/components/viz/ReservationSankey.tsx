@@ -2,40 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { sankey, sankeyLinkHorizontal, sankeyJustify } from 'd3-sankey';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
-
-// --------- Animation helpers (shared with other charts via copy — small enough not to extract) ---------
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function useInView<T extends Element>(): readonly [React.RefObject<T | null>, boolean] {
-  const ref = useRef<T | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setInView(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setInView(true);
-            io.disconnect();
-            break;
-          }
-        }
-      },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return [ref, inView] as const;
-}
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { FG } from '../../lib/chart-tokens';
 
 // =============================================================================
 // Reservation Sankey — V9
@@ -184,38 +154,27 @@ const COLOR: Record<NonNullable<SankeyNodeIn['category']>, string> = {
   allocated: '#1f2937', // gray-800
 };
 
-// ---------- Container width hook ----------
-function useContainerWidth() {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(800);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (w > 0) setWidth(w);
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, width] as const;
-}
-
 // =============================================================================
 // Sankey chart
 // =============================================================================
 function SankeyChart({ era }: { era: Era }) {
-  const [containerRef, width] = useContainerWidth();
-  const [viewRef, inView] = useInView<HTMLDivElement>();
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({ breakpoint: 640, debounceMs: 160 });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
-  const isMobile = width < 640;
   // On mobile let the chart use a wider virtual canvas and scroll horizontally
   // if labels would otherwise crowd.
   const chartWidth = isMobile ? Math.max(width, 720) : width;
   const height = isMobile ? 540 : 520;
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   const dataset = DATASETS[era];
 
@@ -326,7 +285,7 @@ function SankeyChart({ era }: { era: Era }) {
       .attr('width', (d) => (d.x1 ?? 0) - (d.x0 ?? 0))
       .attr('height', (d) => Math.max(2, (d.y1 ?? 0) - (d.y0 ?? 0)))
       .attr('fill', (d) => COLOR[(d.category ?? 'open') as keyof typeof COLOR])
-      .attr('stroke', '#1c1917')
+      .attr('stroke', FG[1])
       .attr('stroke-width', 0.6);
 
     // Entry animation — staggered fade + lift across nodes + links.
@@ -479,7 +438,7 @@ function SankeyChart({ era }: { era: Era }) {
         .attr('text-anchor', anchor)
         .attr('font-size', fontSize)
         .attr('font-weight', 600)
-        .attr('fill', '#1c1917')
+        .attr('fill', FG[1])
         .text(d.label ?? d.name);
       if (d.sublabel) {
         sel
@@ -488,7 +447,7 @@ function SankeyChart({ era }: { era: Era }) {
           .attr('y', cy + fontSize)
           .attr('text-anchor', anchor)
           .attr('font-size', fontSize - 1)
-          .attr('fill', '#57534e')
+          .attr('fill', FG[3])
           .text(d.sublabel);
       }
       void isMid;
@@ -514,7 +473,7 @@ function SankeyChart({ era }: { era: Era }) {
         .attr('text-anchor', (d) => d.anchor)
         .attr('font-size', 11)
         .attr('font-weight', 700)
-        .attr('fill', '#44403c')
+        .attr('fill', FG[2])
         .attr('text-transform', 'uppercase')
         .text((d) => d.text);
     }
@@ -525,13 +484,13 @@ function SankeyChart({ era }: { era: Era }) {
       .attr('x', margin.left)
       .attr('y', height - 8)
       .attr('font-size', isMobile ? 10 : 11)
-      .attr('fill', '#57534e')
+      .attr('fill', FG[3])
       .text(`Reserved: ${dataset.reservedPct}% · Open: ${(100 - dataset.reservedPct).toFixed(1)}%`);
   }, [chartWidth, height, isMobile, dataset, ariaDesc, inView]);
 
   return (
-    <div ref={containerRef} className="w-full">
-      <div ref={viewRef} className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
+    <div ref={setRef} className="w-full">
+      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg
           ref={svgRef}
           className="block"
@@ -539,6 +498,9 @@ function SankeyChart({ era }: { era: Era }) {
           aria-label={`Reservation sankey — ${era === 'current-tn' ? 'Tamil Nadu current 69%' : 'Pre-Mandal 1989 central government'}`}
         />
       </div>
+      {isMobile && (
+        <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full diagram →</p>
+      )}
       <p className="mt-3 text-sm leading-relaxed text-stone-700">
         <span className="font-semibold">Reading the flow:</span> {dataset.caption}
       </p>

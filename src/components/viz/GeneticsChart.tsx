@@ -1,43 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
-
-// =============================================================================
-// Animation helpers (shared across charts in this file).
-// =============================================================================
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-/** Observe a container and flip a boolean to true the first time it intersects. */
-function useInView<T extends Element>(): readonly [React.RefObject<T | null>, boolean] {
-  const ref = useRef<T | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setInView(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setInView(true);
-            io.disconnect();
-            break;
-          }
-        }
-      },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return [ref, inView] as const;
-}
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { CHART, FG } from '../../lib/chart-tokens';
 
 // =============================================================================
 // Synthesized data (clearly disclosed in the UI alongside this component).
@@ -105,27 +72,6 @@ const FOUNDER_DATA: FounderRow[] = [
   { group: 'Iyer (Tamil Brahmin)', severity: 3.2, kind: 'indian-jati' },
 ];
 
-// =============================================================================
-// Hook: container size with ResizeObserver (mirrors VarnaJatiRadial pattern).
-// =============================================================================
-function useContainerWidth() {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(800);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (w > 0) setWidth(w);
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, width] as const;
-}
-
 function formatYear(y: number): string {
   if (y < 0) return `${Math.abs(y)} BCE`;
   if (y === 0) return '0';
@@ -136,12 +82,20 @@ function formatYear(y: number): string {
 // Chart A: ANI/ASI stacked area
 // =============================================================================
 function AdmixtureChart() {
-  const [containerRef, width] = useContainerWidth();
-  const [viewRef, inView] = useInView<HTMLDivElement>();
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({ breakpoint: 640 });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
-  const isMobile = width < 640;
   const height = isMobile ? 320 : 420;
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
   // On mobile, force a wider virtual chart and let the wrapper scroll horizontally.
   const chartWidth = isMobile ? Math.max(width, 560) : width;
 
@@ -245,7 +199,7 @@ function AdmixtureChart() {
       .datum(ADMIXTURE_SERIES)
       .attr('fill', '#ffffff')
       .attr('fill-opacity', 0.35)
-      .attr('stroke', '#1c1917')
+      .attr('stroke', FG[1])
       .attr('stroke-width', 0.8)
       .attr('stroke-dasharray', '2 3')
       .attr('d', bandArea);
@@ -260,7 +214,7 @@ function AdmixtureChart() {
     g.append('path')
       .datum(ADMIXTURE_SERIES)
       .attr('fill', 'none')
-      .attr('stroke', '#1c1917')
+      .attr('stroke', FG[1])
       .attr('stroke-width', 1.6)
       .attr('d', boundaryLine);
 
@@ -275,9 +229,9 @@ function AdmixtureChart() {
           .tickValues([-4000, -3000, -2000, -1000, 0, 1000, 2000])
           .tickFormat((d) => formatYear(d as number)),
       );
-    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
-    xAxisG.selectAll('line').attr('stroke', '#78716c');
-    xAxisG.select('.domain').attr('stroke', '#78716c');
+    xAxisG.selectAll('text').attr('fill', FG[2]).attr('font-size', isMobile ? 13 : 12);
+    xAxisG.selectAll('line').attr('stroke', CHART.axis);
+    xAxisG.select('.domain').attr('stroke', CHART.axis);
 
     // X axis label
     g.append('text')
@@ -286,7 +240,7 @@ function AdmixtureChart() {
       .attr('text-anchor', 'middle')
       .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
-      .attr('fill', '#44403c')
+      .attr('fill', FG[2])
       .text('Time');
 
     // Y axis
@@ -296,9 +250,9 @@ function AdmixtureChart() {
         .ticks(5)
         .tickFormat((d) => `${Math.round((d as number) * 100)}%`),
     );
-    yAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
-    yAxisG.selectAll('line').attr('stroke', '#78716c');
-    yAxisG.select('.domain').attr('stroke', '#78716c');
+    yAxisG.selectAll('text').attr('fill', FG[2]).attr('font-size', isMobile ? 13 : 12);
+    yAxisG.selectAll('line').attr('stroke', CHART.axis);
+    yAxisG.select('.domain').attr('stroke', CHART.axis);
 
     // Y axis label (rotated)
     g.append('text')
@@ -306,7 +260,7 @@ function AdmixtureChart() {
       .attr('text-anchor', 'middle')
       .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
-      .attr('fill', '#44403c')
+      .attr('fill', FG[2])
       .text('Ancestry share');
 
     // -------- Annotations --------
@@ -407,7 +361,7 @@ function AdmixtureChart() {
       if (target) {
         target
           .style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,.15))')
-          .attr('stroke', '#1c1917')
+          .attr('stroke', FG[1])
           .attr('stroke-width', 2);
         others.forEach((p) => p.style('opacity', 0.5));
       } else {
@@ -441,7 +395,7 @@ function AdmixtureChart() {
   }, [chartWidth, height, isMobile, inView]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={setRef} className="w-full">
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-700">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-3 rounded-sm" style={{ background: '#b45309' }} />
@@ -464,9 +418,12 @@ function AdmixtureChart() {
           Endogamy onset
         </span>
       </div>
-      <div ref={viewRef} className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
+      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg ref={svgRef} className="block" role="img" aria-label="ANI / ASI admixture timeline" />
       </div>
+      {isMobile && (
+        <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full timeline →</p>
+      )}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );
@@ -476,11 +433,19 @@ function AdmixtureChart() {
 // Chart B: Founder-event severity bar chart
 // =============================================================================
 function FounderChart() {
-  const [containerRef, width] = useContainerWidth();
-  const [viewRef, inView] = useInView<HTMLDivElement>();
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({ breakpoint: 640 });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
-  const isMobile = width < 640;
+
+  // Hydration sentinel — see ChartSkeleton.astro.
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   const sorted = useMemo(
     () => [...FOUNDER_DATA].sort((a, b) => b.severity - a.severity),
@@ -533,7 +498,7 @@ function FounderChart() {
       .attr('x2', (d) => x(d))
       .attr('y1', 0)
       .attr('y2', innerH)
-      .attr('stroke', '#e7e5e4')
+      .attr('stroke', CHART.grid)
       .attr('stroke-width', 1);
 
     // Bars
@@ -592,7 +557,7 @@ function FounderChart() {
           const r = d3.select(this).select<SVGRectElement>('rect');
           r.style('transition', reduced ? 'none' : 'opacity 160ms ease, filter 160ms ease, stroke-width 160ms ease');
           if (isMe) {
-            r.style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,.15))').attr('stroke-width', 2).attr('stroke', '#1c1917');
+            r.style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,.15))').attr('stroke-width', 2).attr('stroke', FG[1]);
           } else {
             r.style('opacity', 0.5);
           }
@@ -631,7 +596,7 @@ function FounderChart() {
       .attr('dy', '0.35em')
       .attr('font-size', isMobile ? 12 : 11)
       .attr('font-weight', 600)
-      .attr('fill', '#44403c')
+      .attr('fill', FG[2])
       .text((d) => d.severity.toFixed(1));
 
     // Y axis category labels
@@ -648,7 +613,7 @@ function FounderChart() {
       .attr('fill', (d) => {
         if (d.kind === 'highlight') return '#9f1239';
         if (d.kind === 'reference') return '#475569';
-        return '#1c1917';
+        return FG[1];
       })
       .text((d) => (d.kind === 'highlight' ? `★ ${d.group}` : d.group));
 
@@ -657,9 +622,9 @@ function FounderChart() {
       .append('g')
       .attr('transform', `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(5));
-    xAxisG.selectAll('text').attr('fill', '#44403c').attr('font-size', isMobile ? 13 : 12);
-    xAxisG.selectAll('line').attr('stroke', '#78716c');
-    xAxisG.select('.domain').attr('stroke', '#78716c');
+    xAxisG.selectAll('text').attr('fill', FG[2]).attr('font-size', isMobile ? 13 : 12);
+    xAxisG.selectAll('line').attr('stroke', CHART.axis);
+    xAxisG.select('.domain').attr('stroke', CHART.axis);
 
     // X axis label
     g.append('text')
@@ -668,12 +633,12 @@ function FounderChart() {
       .attr('text-anchor', 'middle')
       .attr('font-size', isMobile ? 13 : 12)
       .attr('font-weight', 600)
-      .attr('fill', '#44403c')
+      .attr('fill', FG[2])
       .text('Founder-event severity (IBD-based, higher = tighter bottleneck)');
   }, [chartWidth, height, sorted, isMobile, innerH, margin.bottom, margin.left, margin.right, margin.top, inView]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={setRef} className="w-full">
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-700">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-3 rounded-sm" style={{ background: '#0d9488' }} />
@@ -688,9 +653,12 @@ function FounderChart() {
           Kongu Vellala (proxy)
         </span>
       </div>
-      <div ref={viewRef} className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
+      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg ref={svgRef} className="block" role="img" aria-label="Founder-event severity by population" />
       </div>
+      {isMobile && (
+        <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full chart →</p>
+      )}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
     </div>
   );

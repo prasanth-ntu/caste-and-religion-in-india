@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { CHART, FG, BG } from '../../lib/chart-tokens';
 
 /**
  * Radial Tamil-month festival calendar for Konur Kaliamman.
@@ -117,29 +120,32 @@ function currentTamilMonthIndex(d = new Date()): number {
   return gDay < 14 ? (idx + 11) % 12 : idx;
 }
 
-export default function FestivalCalendar() {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+export default function FestivalCalendar({ id }: { id?: string } = {}) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [width, setWidth] = useState(720);
-  const [isMobile, setIsMobile] = useState(false);
   const [selected, setSelected] = useState<Festival | null>(null);
 
-  const currentMonth = useMemo(() => currentTamilMonthIndex(), []);
+  // Shared sizing — match the prior 768 mobile breakpoint and 320..720 clamp.
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({
+    breakpoint: 768,
+    initialWidth: 720,
+    minWidth: 320,
+    maxWidth: 720,
+  });
+  const [inViewRef] = useInView<HTMLDivElement>();
+  // Merge the dimensions ref + in-view ref onto the SAME measured container.
+  const setRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
 
-  // Responsive
+  // Hydration sentinel — set data-hydrated on the chart root once measured so
+  // ChartSkeleton's MutationObserver can hide the placeholder. (Previously this
+  // component never set it, leaving up to a 15s dead skeleton.)
   useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        setIsMobile(w < 768);
-        setWidth(Math.max(320, Math.min(720, w)));
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
+
+  const currentMonth = useMemo(() => currentTamilMonthIndex(), []);
 
   // Festivals indexed by month
   const festivalsByMonth = useMemo(() => {
@@ -175,8 +181,8 @@ export default function FestivalCalendar() {
     // Background subtle radial bg
     g.append('circle')
       .attr('r', outerR)
-      .attr('fill', '#fafaf9')
-      .attr('stroke', '#e7e5e4')
+      .attr('fill', BG.paper)
+      .attr('stroke', CHART.grid)
       .attr('stroke-width', 1);
 
     // Angle scale — 12 segments, start at top (-π/2) and go clockwise.
@@ -206,8 +212,8 @@ export default function FestivalCalendar() {
       .data(segments)
       .join('path')
       .attr('d', (d) => arc(d as any) as string)
-      .attr('fill', (d) => (d.idx === currentMonth ? '#fef3c7' : '#ffffff'))
-      .attr('stroke', '#e7e5e4')
+      .attr('fill', (d) => (d.idx === currentMonth ? '#fef3c7' : BG.white))
+      .attr('stroke', CHART.grid)
       .attr('stroke-width', 1);
 
     // Highlight current month segment with darker stroke
@@ -243,7 +249,7 @@ export default function FestivalCalendar() {
           .attr('dy', '-0.1em')
           .attr('font-size', 11)
           .attr('font-weight', idx === currentMonth ? 700 : 600)
-          .attr('fill', idx === currentMonth ? '#92400e' : '#44403c')
+          .attr('fill', idx === currentMonth ? '#92400e' : FG[2])
           .text(m.en);
         sel
           .append('text')
@@ -251,7 +257,7 @@ export default function FestivalCalendar() {
           .attr('dy', '1em')
           .attr('font-size', 10)
           .attr('font-family', '"Noto Sans Tamil", sans-serif')
-          .attr('fill', idx === currentMonth ? '#92400e' : '#78716c')
+          .attr('fill', idx === currentMonth ? '#92400e' : FG[4])
           .text(m.ta);
       });
 
@@ -289,19 +295,19 @@ export default function FestivalCalendar() {
       .attr('dy', '-0.4em')
       .attr('font-size', 12)
       .attr('font-weight', 600)
-      .attr('fill', '#44403c')
+      .attr('fill', FG[2])
       .text('Tamil month wheel');
     g.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.9em')
       .attr('font-size', 10)
-      .attr('fill', '#78716c')
+      .attr('fill', FG[4])
       .text(`now: ${TAMIL_MONTHS[currentMonth].en}`);
     g.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '2.2em')
       .attr('font-size', 9)
-      .attr('fill', '#a8a29e')
+      .attr('fill', FG.muted)
       .text('(approx.)');
 
     // Festival markers — on the OUTER rim
@@ -337,7 +343,7 @@ export default function FestivalCalendar() {
       node
         .append('circle')
         .attr('r', 7)
-        .attr('fill', '#ffffff')
+        .attr('fill', BG.white)
         .attr('stroke', color)
         .attr('stroke-width', 2);
 
@@ -351,7 +357,7 @@ export default function FestivalCalendar() {
   }, [width, isMobile, currentMonth]);
 
   return (
-    <div ref={wrapRef} className="w-full">
+    <div ref={setRef} id={id} className="w-full">
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-600">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-200" />

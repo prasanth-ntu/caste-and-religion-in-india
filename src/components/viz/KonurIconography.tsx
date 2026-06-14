@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { FG } from '../../lib/chart-tokens';
 
 interface IconHotspot {
   id: string;
@@ -62,28 +65,41 @@ const pulseStyles = `
 }
 `;
 
-export default function KonurIconography() {
+export default function KonurIconography({ id }: { id?: string }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // prefers-reduced-motion
+  // Shared sizing foundation — drives the hydration sentinel below. This is an
+  // image-overlay chart with no width-dependent layout (the columns reflow via
+  // `lg:` classes), so only `measured` + the container ref are consumed.
+  const { ref: dimRef, measured } = useChartDimensions({ breakpoint: 640 });
+  const [inViewRef] = useInView<HTMLDivElement>();
+
+  // Merge the dimensions ref + in-view ref onto the same measured container.
+  const setContainer = useCallback(
+    (node: HTMLDivElement | null) => {
+      dimRef.current = node;
+      inViewRef.current = node;
+    },
+    [dimRef, inViewRef],
+  );
+
+  // Hydration sentinel — flips the page's ChartSkeleton off as soon as the
+  // container is measured, instead of waiting the full safety timeout.
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = () => setReducedMotion(mq.matches);
-    apply();
-    mq.addEventListener?.('change', apply);
-    return () => mq.removeEventListener?.('change', apply);
-  }, []);
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   const handleToggle = (id: string) => {
     setActiveId((curr) => (curr === id ? null : id));
   };
 
-  const transitionClass = reducedMotion ? '' : 'transition-all duration-300 ease-out';
+  // Always apply the transition class — the global `prefers-reduced-motion`
+  // rule in global.css neutralizes durations, so this stays hydration-safe
+  // (no server/client markup divergence from a synchronous media query).
+  const transitionClass = 'transition-all duration-300 ease-out';
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] items-start">
+    <div ref={setContainer} id={id} className="grid gap-6 lg:grid-cols-[1.1fr_1fr] items-start">
       <style dangerouslySetInnerHTML={{ __html: pulseStyles }} />
 
       {/* Left Column: Stylised image with hotspots overlay */}
@@ -173,12 +189,12 @@ export default function KonurIconography() {
                       width="180"
                       height="32"
                       rx="6"
-                      fill="#1c1917"
+                      fill={FG[1]}
                       opacity="0.9"
                     />
                     <polygon
                       points={`${h.x - 6},${h.y - 30} ${h.x + 6},${h.y - 30} ${h.x},${h.y - 24}`}
-                      fill="#1c1917"
+                      fill={FG[1]}
                       opacity="0.9"
                     />
                     <text
@@ -193,7 +209,7 @@ export default function KonurIconography() {
                       {h.label.en}
                     </text>
                   </g>
-                  <title>{h.label.en} — {h.label.ta}</title>
+                  <title>{`${h.label.en} — ${h.label.ta}`}</title>
                 </g>
               );
             })}

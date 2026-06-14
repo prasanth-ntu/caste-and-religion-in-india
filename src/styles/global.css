@@ -65,6 +65,23 @@
   --pillar-lineage-50:  #ecfdf5;
   --pillar-rituals-50:  #fff1f2;
   --pillar-sources-50:  #f0f9ff;
+
+  /* Chart neutrals — shared by the D3 viz layer (mirrored in src/lib/chart-tokens.ts).
+     Links default to stone-400 (not 300) for legible branch contrast on white. */
+  --chart-link:        #a8a29e;  /* stone-400 — default link / branch */
+  --chart-link-active: #1c1917;  /* ink — on-path / emphasized */
+  --chart-grid:        #e7e5e4;  /* stone-200 — gridlines */
+  --chart-axis:        #78716c;  /* stone-500 — axis lines / ticks */
+  --chart-label-halo:  #ffffff;  /* white — text halo for contrast */
+
+  /* Categorical data ramp — nominal series only (tier/pillar hues carry fixed
+     meaning and must not be reused for arbitrary categories). Colorblind-aware. */
+  --cat-1: #4338ca;  /* indigo */
+  --cat-2: #0369a1;  /* sky    */
+  --cat-3: #047857;  /* emerald*/
+  --cat-4: #b45309;  /* amber  */
+  --cat-5: #be123c;  /* rose   */
+  --cat-6: #6d28d9;  /* violet */
 }
 
 /* Global reduced-motion override */

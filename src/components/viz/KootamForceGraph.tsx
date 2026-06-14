@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { CHART, FG, BG } from '../../lib/chart-tokens';
 
 // ---------- Types ----------
 // We accept a denormalised shape that the Astro page builds from the kootams collection.
@@ -65,16 +64,41 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 // ---------- Main component ----------
 export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Hydration sentinel — see ChartSkeleton.astro.
-  useEffect(() => {
-    containerRef.current?.setAttribute('data-hydrated', 'true');
-  }, []);
+  // Shared sizing (640 breakpoint: mobile grid vs. force layout) + a slightly
+  // higher debounce because the force-sim relayout on resize is expensive. The
+  // hook's internal 0-width fallback replaces the old window.resize / innerWidth
+  // workaround. The in-view observer drives the one-shot entry animation; both
+  // observers attach to the same container via a merged callback ref.
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({
+    breakpoint: 640,
+    debounceMs: 160,
+  });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
 
-  const [size, setSize] = useState({ width: 800, height: 600 });
-  const [layoutMode, setLayoutMode] = useState<'force' | 'grid'>('force');
+  // Hydration sentinel for ChartSkeleton — fires once we have a real measurement.
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
+
+  // Mobile uses the grouped grid; tablet/desktop the force layout.
+  const layoutMode: 'force' | 'grid' = isMobile ? 'grid' : 'force';
+
+  // Canvas size derived from the measured container width.
+  //  • Mobile (grid): height is unused by the grid, kept for parity.
+  //  • Tablet (<1024): clamp 560–900, height 500.
+  //  • Desktop: clamp 720–1000, height 600.
+  const size = useMemo(() => {
+    if (isMobile) return { width: Math.max(320, width), height: 500 };
+    if (width < 1024) return { width: Math.max(560, Math.min(width, 900)), height: 500 };
+    return { width: Math.max(720, Math.min(width, 1000)), height: 600 };
+  }, [isMobile, width]);
+
   const [filters, setFilters] = useState<Set<TotemType>>(
     new Set(['bird', 'tree', 'fish', 'flower', 'other']),
   );
@@ -82,60 +106,6 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SimNode | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setInView(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setInView(true);
-            io.disconnect();
-            break;
-          }
-        }
-      },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // -------- Responsive: pick layout mode + canvas size --------
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () => {
-      // Use viewport width as the source of truth — container clientWidth can be 0
-      // immediately after hydration. The viewport breakpoint matches CSS reasoning.
-      const vw = typeof window !== 'undefined' ? window.innerWidth : el.clientWidth;
-      const w = el.clientWidth || vw;
-      if (vw < 640) {
-        setLayoutMode('grid');
-        setSize({ width: Math.max(320, w), height: 500 });
-      } else if (vw < 1024) {
-        setLayoutMode('force');
-        setSize({ width: Math.max(560, Math.min(w, 900)), height: 500 });
-      } else {
-        setLayoutMode('force');
-        setSize({ width: Math.max(720, Math.min(w, 1000)), height: 600 });
-      }
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    window.addEventListener('resize', update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', update);
-    };
-  }, []);
 
   // -------- Filtered dataset --------
   const filteredNodes: SimNode[] = useMemo(() => {
@@ -242,7 +212,7 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
 
     const linkSel = g
       .append('g')
-      .attr('stroke', '#a8a29e')
+      .attr('stroke', CHART.link)
       .attr('stroke-opacity', 0.55)
       .selectAll('line')
       .data(links)
@@ -364,6 +334,17 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
       nodeG.style('opacity', 0);
     }
 
+    // Invisible ≥44px touch target behind every node so taps/clicks land
+    // reliably (WCAG 2.5.5). It carries all pointer events; the visible dots
+    // keep `pointer-events: none` so the group's handlers fire from this hit
+    // circle. Appended first → rendered behind the visible marker.
+    nodeG
+      .append('circle')
+      .attr('r', 22)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+      .style('pointer-events', 'all');
+
     // Highlight halo for Kadai
     nodeG
       .filter((d) => d.isHighlight)
@@ -382,7 +363,8 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
       .attr('stroke', (d) => TOTEM_PALETTE[d.totemType].stroke)
       .attr('stroke-width', (d) => (d.isHighlight ? 2.5 : 1.5))
       .attr('fill-opacity', (d) => (d.isStub ? 0.45 : 1))
-      .attr('filter', (d) => (d.isHighlight ? 'url(#kadai-quail-glow)' : null));
+      .attr('filter', (d) => (d.isHighlight ? 'url(#kadai-quail-glow)' : null))
+      .style('pointer-events', 'none');
 
     // Star marker for Kadai
     nodeG
@@ -404,9 +386,9 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
       .attr('dy', '0.32em')
       .attr('font-size', (d) => (d.isHighlight ? 12 : 10))
       .attr('font-weight', (d) => (d.isHighlight ? 600 : 500))
-      .attr('fill', '#1c1917')
+      .attr('fill', FG[1])
       .attr('paint-order', 'stroke')
-      .attr('stroke', '#ffffff')
+      .attr('stroke', BG.white)
       .attr('stroke-width', 3)
       .attr('pointer-events', 'none')
       .text((d) => (d.isHighlight ? `★ ${d.name.replace(' Kootam', '')}` : d.name.replace(' Kootam', '')));
@@ -438,7 +420,7 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
   };
 
   return (
-    <div ref={containerRef} id={id} className="relative w-full">
+    <div ref={setRef} id={id} className="relative w-full">
       {/* Controls */}
       <div className="mb-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">

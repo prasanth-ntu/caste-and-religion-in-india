@@ -2,11 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { varnaJatiTree, type TreeNode, type CasteLevel } from '../../data/varna-jati-tree';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { CHART } from '../../lib/chart-tokens';
 
 // ---------- Palette ----------
 const LEVEL_COLOR: Record<
@@ -19,7 +18,12 @@ const LEVEL_COLOR: Record<
   jati: { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Jati' },
   'sub-jati': { fill: '#10b981', stroke: '#047857', text: '#064e3b', label: 'Sub-jati' },
   kootam: { fill: '#f43f5e', stroke: '#be123c', text: '#881337', label: 'Kootam' },
+  'temple-clan': { fill: '#8b5cf6', stroke: '#6d28d9', text: '#4c1d95', label: 'Temple-clan (Koil)' },
 };
+
+// Violet accent for the "second documented community" (secondary) treatment —
+// distinct from the rose Kadai "you are here" highlight.
+const SECONDARY_RING = '#8b5cf6';
 
 const TIER_BADGE: Record<string, { emoji: string; label: string; bg: string; fg: string }> = {
   green: { emoji: '🟢', label: 'well-established', bg: 'bg-emerald-50', fg: 'text-emerald-800' },
@@ -38,73 +42,46 @@ function findPath(
   return target.ancestors().reverse();
 }
 
-// Fixed mobile SVG height: 4 depth levels × 90 px + 80 px padding.
-const MOBILE_HEIGHT = 4 * 90 + 80;
+// Mobile vertical tree: comfortable per-level spacing so levels never crowd.
+// Canvas height grows with tree depth (the card scrolls vertically + pinch-zooms),
+// and breadth scrolls horizontally inside the card when leaves are dense.
+const MOBILE_DEPTH_STEP = 104;
+const MOBILE_PAD_T = 40;
+const MOBILE_PAD_B = 40;
+const MOBILE_PAD_X = 16;
+const MOBILE_LEAF_BREADTH = 18; // min horizontal px budget per leaf node
 
 interface VarnaJatiRadialProps {
   id?: string;
 }
 
 export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const transformRef = useRef(d3.zoomIdentity);
   const [zoomed, setZoomed] = useState(false);
 
-  const [measured, setMeasured] = useState(false);
-  const [size, setSize] = useState({ width: 800, height: 800 });
-  const [isMobile, setIsMobile] = useState(false);
   const [selected, setSelected] = useState<TreeNode | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
-  const [inView, setInView] = useState(false);
 
-  // IntersectionObserver: one-shot entry animation trigger.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) { setInView(true); io.disconnect(); break; }
-        }
-      },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  // Shared sizing (768 breakpoint: radial desktop vs. vertical mobile) and
+  // one-shot in-view trigger for the entry animation. Both observers attach to
+  // the same container via a merged ref.
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({
+    breakpoint: 768,
+    initialWidth: 800,
+  });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setContainerRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
 
-  // ResizeObserver: responsive sizing.
+  // Hydration sentinel for ChartSkeleton — fires once we have a real measurement.
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        const mobile = w < 768;
-        setIsMobile(mobile);
-        if (mobile) {
-          // Top-down tree: fixed height, full container width.
-          setSize({ width: Math.max(w, 320), height: MOBILE_HEIGHT });
-        } else {
-          const dim = Math.min(1000, Math.max(560, w));
-          setSize({ width: dim, height: dim });
-        }
-        setMeasured(true);
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Hydration sentinel for ChartSkeleton.
-  useEffect(() => {
-    if (!measured) return;
-    containerRef.current?.setAttribute('data-hydrated', 'true');
-  }, [measured]);
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   // Build hierarchy (memoised).
   const root = useMemo(() => {
@@ -123,27 +100,51 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     return new Set(path.map((d) => d.data.id));
   }, [root]);
 
+  // Tree shape metrics (depth + leaf count) drive the responsive canvas size.
+  const treeMetrics = useMemo(() => {
+    const maxDepth = root.height || 4;
+    const leafCount = root.leaves().length;
+    const longestLeafLabel = root.leaves().reduce((m, d) => Math.max(m, d.data.name.en.length), 0);
+    return { maxDepth, leafCount, longestLeafLabel };
+  }, [root]);
+
+  // Derive the SVG canvas from the measured width + tree shape.
+  //  • Mobile: vertical tree — height grows with depth; breadth scrolls inside
+  //    the card so dense leaf levels never overlap.
+  //  • Desktop: a square that the radial chart fills edge-to-edge (see `radius`).
+  const size = useMemo(() => {
+    if (isMobile) {
+      const { maxDepth, leafCount } = treeMetrics;
+      const height = MOBILE_PAD_T + MOBILE_PAD_B + maxDepth * MOBILE_DEPTH_STEP;
+      const breadth = Math.max(width, leafCount * MOBILE_LEAF_BREADTH + MOBILE_PAD_X * 2);
+      return { width: Math.max(breadth, 320), height };
+    }
+    const dim = Math.min(920, Math.max(560, width));
+    return { width: dim, height: dim };
+  }, [isMobile, width, treeMetrics]);
+
   // Compute layout whenever size / mode changes.
   const laidOut = useMemo(() => {
     const r = root.copy();
     if (isMobile) {
       // Top-down tree layout: d.x = horizontal breadth, d.y = vertical depth.
-      const padL = 16, padR = 16, padT = 36, padB = 36;
       const maxDepth = r.height || 4;
-      const depthSpan = MOBILE_HEIGHT - padT - padB;
-      const depthStep = Math.floor(depthSpan / Math.max(1, maxDepth));
+      const treeHeight = maxDepth * MOBILE_DEPTH_STEP;
       d3.tree<TreeNode>()
-        .size([size.width - padL - padR, maxDepth * depthStep])
+        .size([size.width - MOBILE_PAD_X * 2, treeHeight])
         .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
       return r;
     }
-    // Desktop: radial layout.
-    const radius = Math.min(size.width, size.height) / 2 - 100;
+    // Desktop: radial layout. Label-aware padding makes outer labels fit *inside*
+    // the square, so the circular tree fills the canvas with no dead corners.
+    const labelPx = Math.min(treeMetrics.longestLeafLabel, 18) * 6.2;
+    const pad = Math.max(72, labelPx + 24);
+    const radius = Math.min(size.width, size.height) / 2 - pad;
     d3.tree<TreeNode>()
       .size([2 * Math.PI, radius])
       .separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1))(r);
     return r;
-  }, [root, size, isMobile]);
+  }, [root, size, isMobile, treeMetrics]);
 
   // Hover/selection augmented path.
   const activePathIds = useMemo(() => {
@@ -170,6 +171,16 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     const merge = filter.append('feMerge');
     merge.append('feMergeNode').attr('in', 'blur');
     merge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    // Glow filter for the secondary (Nagarathar) community node.
+    const filter2 = defs.append('filter')
+      .attr('id', 'secondary-glow')
+      .attr('x', '-50%').attr('y', '-50%')
+      .attr('width', '200%').attr('height', '200%');
+    filter2.append('feGaussianBlur').attr('stdDeviation', 3).attr('result', 'blur');
+    const merge2 = filter2.append('feMerge');
+    merge2.append('feMergeNode').attr('in', 'blur');
+    merge2.append('feMergeNode').attr('in', 'SourceGraphic');
 
     if (isMobile) {
       renderVertical(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
@@ -214,7 +225,7 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   };
 
   return (
-    <div ref={containerRef} id={id} className="relative w-full">
+    <div ref={setContainerRef} id={id} className="relative w-full">
       {/* Legend */}
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-600">
         {(['root', 'varna', 'caste-cluster', 'sub-jati', 'kootam'] as CasteLevel[]).map((lv) => (
@@ -226,6 +237,10 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-3 animate-pulse rounded-full bg-rose-500 ring-2 ring-rose-300" />
           You are here (Kadai)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-violet-500 ring-2 ring-violet-300" />
+          Also mapped: Nattukottai Chettiar
         </span>
       </div>
 
@@ -310,15 +325,16 @@ function renderVertical(
   handlers: Handlers,
 ) {
   const reduced = prefersReducedMotion();
-  const padL = 16, padT = 36;
+  const padL = MOBILE_PAD_X, padT = MOBILE_PAD_T;
 
   // d.x = horizontal, d.y = vertical (from d3.tree top-down layout).
   const nx = (d: d3.HierarchyNode<TreeNode>) => padL + (d as any).x as number;
   const ny = (d: d3.HierarchyNode<TreeNode>) => padT + (d as any).y as number;
 
-  // Only label: root, varna level, and nodes on the active highlight path.
+  // Only label: root, varna level, the secondary node, and nodes on the active
+  // highlight path.
   const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
-    d.data.level === 'root' || d.data.level === 'varna' || activePathIds.has(d.data.id);
+    d.data.level === 'root' || d.data.level === 'varna' || d.data.secondary || activePathIds.has(d.data.id);
 
   const g = svg.append('g').attr('class', 'vjr-zoom-layer');
 
@@ -340,15 +356,17 @@ function renderVertical(
     })
     .attr('stroke', (d: any) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? '#0f172a' : '#d6d3d1';
+      return onPath ? CHART.linkActive : CHART.link;
     })
+    .attr('stroke-linecap', 'round')
     .attr('stroke-width', (d: any) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? 3 : 1;
+      // Depth-tapered: trunk reads heavier than leaf twigs.
+      return onPath ? 3 : Math.max(1.2, 2.2 - d.target.depth * 0.3);
     })
     .attr('stroke-opacity', (d: any) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return focusActive && !onPath ? 0.3 : 1;
+      return focusActive && !onPath ? 0.35 : 0.85;
     });
 
   // Nodes.
@@ -391,12 +409,12 @@ function renderVertical(
 
   node
     .append('circle')
-    .attr('r', (d) => d.data.highlight ? 8 : d.children ? 5 : 4)
+    .attr('r', (d) => d.data.highlight ? 8 : d.data.secondary ? 7 : d.children ? 5 : 4)
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
     .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
     .style('pointer-events', 'none')
-    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : null)
+    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : d.data.secondary ? 'url(#secondary-glow)' : null)
     .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
 
   // Highlight ring around Kadai.
@@ -408,6 +426,16 @@ function renderVertical(
     .attr('stroke-width', 1.5)
     .attr('stroke-opacity', 0.7)
     .attr('class', 'animate-pulse');
+
+  // Secondary ring around the Nagarathar node (violet, no pulse).
+  node.filter((d) => !!d.data.secondary)
+    .append('circle')
+    .attr('r', 12)
+    .attr('fill', 'none')
+    .attr('stroke', SECONDARY_RING)
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3 2')
+    .attr('stroke-opacity', 0.8);
 
   // Labels: root/varna = below (dy 18), active internal = above (dy -10), active leaf = below (dy 18).
   node.filter((d) => showLabel(d))
@@ -424,14 +452,17 @@ function renderVertical(
       return 9;
     })
     .attr('font-weight', (d) =>
-      d.data.highlight || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500
+      d.data.highlight || d.data.secondary || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500
     )
-    .attr('fill', (d) => activePathIds.has(d.data.id) ? '#0f172a' : LEVEL_COLOR[d.data.level].text)
+    .attr('fill', (d) =>
+      d.data.secondary ? LEVEL_COLOR['temple-clan'].text
+      : activePathIds.has(d.data.id) ? '#0f172a' : LEVEL_COLOR[d.data.level].text
+    )
     .attr('paint-order', 'stroke')
     .attr('stroke', '#ffffff')
     .attr('stroke-width', 3)
     .text((d) => {
-      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en;
+      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
       if (d.data.level === 'root') return truncate(raw, 18);
       if (d.data.level === 'varna') return truncate(raw, 12);
       return truncate(raw, 20);
@@ -471,9 +502,10 @@ function renderRadial(
 
   const g = svg.append('g').attr('transform', `rotate(${rotation})`);
 
-  // Only show labels for: root, varna, and nodes on the active/highlight path.
+  // Only show labels for: root, varna, the secondary node, and nodes on the
+  // active/highlight path.
   const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
-    d.depth <= 1 || activePathIds.has(d.data.id) || d.data.highlight;
+    d.depth <= 1 || activePathIds.has(d.data.id) || d.data.highlight || d.data.secondary;
 
   // Links.
   const linkGen = d3
@@ -487,15 +519,20 @@ function renderRadial(
     .data(root.links())
     .join('path')
     .attr('d', linkGen as any)
+    .attr('stroke-linecap', 'round')
     .attr('stroke', (d) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? '#0f172a' : '#d6d3d1';
+      return onPath ? CHART.linkActive : CHART.link;
     })
     .attr('stroke-width', (d) => {
       const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? 2.2 : 1;
+      // Depth-tapered: the varna trunk carries visual weight, leaf twigs recede.
+      return onPath ? 2.6 : Math.max(1, 2.4 - d.target.depth * 0.35);
     })
-    .attr('stroke-opacity', 0.9);
+    .attr('stroke-opacity', (d) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return onPath ? 1 : 0.75;
+    });
 
   // Nodes.
   const node = g
@@ -543,11 +580,11 @@ function renderRadial(
 
   node
     .append('circle')
-    .attr('r', (d) => d.data.highlight ? 9 : d.children ? 5 : 4)
+    .attr('r', (d) => d.data.highlight ? 9 : d.data.secondary ? 8 : d.children ? 5 : 4)
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
     .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
-    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : null)
+    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : d.data.secondary ? 'url(#secondary-glow)' : null)
     .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
 
   if (!reduced && handlers.inView) {
@@ -570,7 +607,17 @@ function renderRadial(
     .attr('stroke-opacity', 0.7)
     .attr('class', 'animate-pulse');
 
-  // Labels: only for root, varna, and active path. All others rely on tooltip.
+  // Secondary ring around the Nagarathar node (violet, dashed, no pulse).
+  node.filter((d) => !!d.data.secondary)
+    .append('circle')
+    .attr('r', 13)
+    .attr('fill', 'none')
+    .attr('stroke', SECONDARY_RING)
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3 2')
+    .attr('stroke-opacity', 0.85);
+
+  // Labels: only for root, varna, secondary, and active path. All others rely on tooltip.
   node.filter((d) => showLabel(d))
     .append('text')
     .attr('dy', '0.32em')
@@ -595,14 +642,17 @@ function renderRadial(
       const screenDeg = (x * 180) / Math.PI - 90 + rotation;
       return `rotate(${-screenDeg})`;
     })
-    .attr('font-size', (d) => d.data.level === 'root' ? 13 : d.data.highlight ? 12 : d.depth <= 1 ? 11 : 10)
-    .attr('font-weight', (d) => d.data.highlight || d.depth <= 1 ? 600 : 500)
-    .attr('fill', (d) => activePathIds.has(d.data.id) ? '#0f172a' : '#44403c')
+    .attr('font-size', (d) => d.data.level === 'root' ? 13 : d.data.highlight ? 12 : d.data.secondary ? 11 : d.depth <= 1 ? 11 : 10)
+    .attr('font-weight', (d) => d.data.highlight || d.data.secondary || d.depth <= 1 ? 600 : 500)
+    .attr('fill', (d) =>
+      d.data.secondary ? LEVEL_COLOR['temple-clan'].text
+      : activePathIds.has(d.data.id) ? '#0f172a' : '#44403c'
+    )
     .attr('paint-order', 'stroke')
     .attr('stroke', '#ffffff')
     .attr('stroke-width', 3)
     .text((d) => {
-      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.name.en;
+      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
       // Truncate deep path labels to avoid overlap with outer nodes.
       if (d.depth >= 3) return truncate(raw, 18);
       return raw;
@@ -760,6 +810,21 @@ function Drawer({
               <p className="mt-1 text-sm">
                 This is your kootam. The Kadai (quail) totem marks one of the ~145 exogamous clans of the Kongu Vellala.
               </p>
+            </div>
+          )}
+          {node.secondary && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-violet-900">
+              <p className="text-xs font-semibold uppercase tracking-wide">Also mapped</p>
+              <p className="mt-1 text-sm">
+                A second documented community — the Nattukottai Chettiar (Nagarathar), shown here as a parallel worked example. Vairavanpatti is one of their nine exogamous temple-clans (Nava Kovil), with Kala Bhairava as its clan deity.
+              </p>
+              <a
+                href="/lineage/nagarathar/"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-violet-800 underline hover:text-violet-950"
+              >
+                Read the Nagarathar deep-dive
+                <span aria-hidden="true">→</span>
+              </a>
             </div>
           )}
           {node.summary && <p>{node.summary}</p>}

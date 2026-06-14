@@ -20,6 +20,9 @@ import {
   subscribeLineageChange,
   manifest,
 } from '../../lib/lineage-selection';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import { CHART, FG, BG } from '../../lib/chart-tokens';
 
 // ---------------- Constants ----------------
 const SCALE_EXTENT: [number, number] = [0.8, 200];
@@ -63,17 +66,45 @@ interface ZoomMapProps {
 
 export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Hydration sentinel — see ChartSkeleton.astro.
-  useEffect(() => {
-    containerRef.current?.setAttribute('data-hydrated', 'true');
-  }, []);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const gRef = useRef<SVGGElement | null>(null);
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const reducedMotionRef = useRef(false);
 
-  const [size, setSize] = useState({ width: 800, height: 600 });
+  // Shared sizing — single ResizeObserver on the container. Keep ZoomMap's own
+  // 400/500/600 height tiers keyed off width (aspect would not match them), so
+  // we don't pass `aspect` and derive `size` below.
+  const { ref: dimRef, width: measuredWidth, measured } = useChartDimensions({
+    breakpoint: 640,
+    initialWidth: 800,
+  });
+  const setContainerRef = (el: HTMLDivElement | null) => {
+    containerRef.current = el;
+    dimRef.current = el;
+  };
+
+  // Hydration sentinel — see ChartSkeleton.astro. Now gated on first real
+  // measurement so the skeleton hides once the chart has dimensions.
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
+
+  // Detect reduced motion once (shared helper).
+  useEffect(() => {
+    reducedMotionRef.current = prefersReducedMotion();
+  }, []);
+
+  // Derive responsive size from the measured width, preserving the prior tiers.
+  const size = useMemo(() => {
+    const w = Math.max(320, Math.floor(measuredWidth));
+    let h: number;
+    if (heightProp) h = heightProp;
+    else if (w >= 1024) h = 600;
+    else if (w >= 640) h = 500;
+    else h = 400;
+    return { width: w, height: h };
+  }, [measuredWidth, heightProp]);
+
   const [activeStage, setActiveStage] = useState<StageId>('india');
   const [currentK, setCurrentK] = useState(1);
   const [showTemplePopover, setShowTemplePopover] = useState(false);
@@ -147,33 +178,6 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // ---------------- Responsive sizing ----------------
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    // Detect reduced motion once.
-    if (typeof window !== 'undefined' && 'matchMedia' in window) {
-      reducedMotionRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    }
-
-    const compute = (w: number) => {
-      let h: number;
-      if (heightProp) h = heightProp;
-      else if (w >= 1024) h = 600;
-      else if (w >= 640) h = 500;
-      else h = 400;
-      setSize({ width: Math.max(320, Math.floor(w)), height: h });
-    };
-
-    compute(el.getBoundingClientRect().width);
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) compute(e.contentRect.width);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [heightProp]);
 
   // ---------------- Projection ----------------
   // We fit the projection ONCE to all-India (k=1 in d3.zoom space). Then d3.zoom
@@ -344,7 +348,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
 
   // ---------------- Render ----------------
   return (
-    <div ref={containerRef} id={id} className="relative w-full">
+    <div ref={setContainerRef} id={id} className="relative w-full">
       {/* Stage controls */}
       <div
         className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2"
@@ -460,8 +464,8 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                   <path
                     key={`state-${i}`}
                     d={pathGen(f as any) || ''}
-                    fill={isTN ? '#fef3c7' : '#fafaf9'}
-                    stroke="#a8a29e"
+                    fill={isTN ? '#fef3c7' : BG.paper}
+                    stroke={CHART.link}
                     strokeWidth={0.6 / currentK}
                     vectorEffect="non-scaling-stroke"
                   />
@@ -515,14 +519,14 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                   if (!xy) return null;
                   return (
                     <g key={`cap-${p.label}`} transform={`translate(${xy[0]},${xy[1]})`}>
-                      <circle r={3 / currentK} fill="#57534e" stroke="#fff" strokeWidth={0.5 / currentK} />
+                      <circle r={3 / currentK} fill={FG[3]} stroke={BG.white} strokeWidth={0.5 / currentK} />
                       <text
                         x={5 / currentK}
                         y={3 / currentK}
                         fontSize={9 / currentK}
-                        fill="#44403c"
+                        fill={FG[2]}
                         paintOrder="stroke"
-                        stroke="#fff"
+                        stroke={BG.white}
                         strokeWidth={2 / currentK}
                       >
                         {p.label}
@@ -541,7 +545,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                   if (!xy) return null;
                   return (
                     <g key={`kp-${p.label}`} transform={`translate(${xy[0]},${xy[1]})`}>
-                      <circle r={2.2 / currentK} fill="#92400e" stroke="#fff" strokeWidth={0.4 / currentK} />
+                      <circle r={2.2 / currentK} fill="#92400e" stroke={BG.white} strokeWidth={0.4 / currentK} />
                       {layers.districtLabels && (
                         <text
                           x={4 / currentK}
@@ -550,7 +554,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                           fill="#78350f"
                           fontWeight={500}
                           paintOrder="stroke"
-                          stroke="#fff"
+                          stroke={BG.white}
                           strokeWidth={1.5 / currentK}
                         >
                           {p.label}
@@ -601,7 +605,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                   <circle
                     r={3 / currentK}
                     fill="#f43f5e"
-                    stroke="#fff"
+                    stroke={BG.white}
                     strokeWidth={0.6 / currentK}
                     filter="url(#konur-glow)"
                   />
@@ -612,7 +616,7 @@ export default function ZoomMap({ height: heightProp, id }: ZoomMapProps = {}) {
                     fontWeight={700}
                     fill="#9f1239"
                     paintOrder="stroke"
-                    stroke="#fff"
+                    stroke={BG.white}
                     strokeWidth={2 / currentK}
                   >
                     ★ {pin.label}

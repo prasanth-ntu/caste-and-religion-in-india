@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { FG } from '../../lib/chart-tokens';
 
 /**
  * AncestorPractices — V8 (Enhanced Visuals)
@@ -191,43 +194,39 @@ const pulseStyles = `
 }
 `;
 
-export default function AncestorPractices() {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+export default function AncestorPractices({ id }: { id?: string }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Responsive
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setIsMobile(entry.contentRect.width < 720);
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  // Shared sizing foundation (site-canonical 640 mobile breakpoint).
+  const { ref: dimRef, isMobile, measured } = useChartDimensions({ breakpoint: 640 });
+  const [inViewRef] = useInView<HTMLDivElement>();
 
-  // prefers-reduced-motion
+  // Merge the dimensions ref + in-view ref onto the same measured container.
+  const setContainer = useCallback(
+    (node: HTMLDivElement | null) => {
+      dimRef.current = node;
+      inViewRef.current = node;
+    },
+    [dimRef, inViewRef],
+  );
+
+  // Hydration sentinel — flips the page's ChartSkeleton off as soon as the
+  // container is measured, instead of waiting the full safety timeout.
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = () => setReducedMotion(mq.matches);
-    apply();
-    mq.addEventListener?.('change', apply);
-    return () => mq.removeEventListener?.('change', apply);
-  }, []);
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
 
   const active = HOTSPOTS.find((h) => h.id === activeId) ?? null;
 
   const toggle = (id: string) => setActiveId((curr) => (curr === id ? null : id));
 
-  const transitionClass = reducedMotion ? '' : 'transition-all duration-300 ease-out';
+  // Always apply the transition class — the global `prefers-reduced-motion` rule
+  // in global.css neutralizes durations, so this stays hydration-safe (no
+  // server/client markup divergence from a synchronous media query at render).
+  const transitionClass = 'transition-all duration-300 ease-out';
 
   return (
-    <div ref={wrapRef} className="w-full">
+    <div ref={setContainer} id={id} className="w-full">
       <style dangerouslySetInnerHTML={{ __html: pulseStyles }} />
 
       {/* Legend */}
@@ -422,12 +421,12 @@ function LandscapeSVG({
                     width="180"
                     height="32"
                     rx="6"
-                    fill="#1c1917"
+                    fill={FG[1]}
                     opacity="0.9"
                   />
                   <polygon
                     points={`${h.x - 6},${h.y - 30} ${h.x + 6},${h.y - 30} ${h.x},${h.y - 24}`}
-                    fill="#1c1917"
+                    fill={FG[1]}
                     opacity="0.9"
                   />
                   <text
