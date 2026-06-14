@@ -86,7 +86,7 @@ export const PATHS: Record<PathId, PathDef> = {
     stops: [
       {
         index: 1,
-        title: 'Pick your kootam',
+        title: 'Pick a kootam',
         tamilTitle: 'குலம்',
         href: '/lineage?path=family&stop=1',
         minutes: 1,
@@ -100,7 +100,7 @@ export const PATHS: Record<PathId, PathDef> = {
         href: '/lineage/k/kadai?path=family&stop=2',
         minutes: 5,
         teaser:
-          'The author’s kadai (quail) clan: totem, region, the canonical narrative used on this site.',
+          'The Kadai (quail) kootam: totem, region, and the worked example used across this site.',
       },
       {
         index: 3,
@@ -126,7 +126,7 @@ export const PATHS: Record<PathId, PathDef> = {
         tamilTitle: 'பங்களிப்பு',
         href: '/contribute?path=family&stop=5',
         minutes: 3,
-        teaser: 'If your kootam isn’t documented yet — what we need, and how to send it.',
+        teaser: 'If a kootam isn’t documented yet — what we need, and how to send it.',
       },
     ],
   },

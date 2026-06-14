@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
@@ -11,7 +10,7 @@ const communities = [
     en: 'Kongu Vellala Gounder',
     ta: 'கொங்கு வேளாள கவுண்டர்',
     region: 'Kongu Nadu (western Tamil Nadu)',
-    note: 'The user’s community. Vellala cultivator caste-cluster with 145-kootam structure. By far the largest and most-cited Gounder community.',
+    note: 'The worked-example community on this site. Vellala cultivator caste-cluster with 145-kootam structure. By far the largest and most-cited Gounder community.',
     highlight: true,
   },
   {
@@ -46,7 +45,6 @@ const communities = [
   description="Deep-dive on the Gounder title — its etymology, function as village headman, and how multiple unrelated Tamil communities use the same title."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
@@ -135,7 +133,7 @@ const communities = [
                     {c.en}
                     {c.highlight && (
                       <span class="ml-2 rounded-full bg-rose-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-900">
-                        your community
+                        case study
                       </span>
                     )}
                   </p>
@@ -150,7 +148,7 @@ const communities = [
       </div>
 
       <p class="mt-3 text-sm text-stone-600">
-        Vanniyar communities are sometimes also referenced under "Gounder" in colloquial speech, but the formal Vanniyar Kula Kshatriya identification is distinct from the Gounder title; we leave that to the Vanniyar deep-dive (TBD).
+        Vanniyar communities are sometimes also referenced under "Gounder" in colloquial speech, but the formal Vanniyar Kula Kshatriya identification is distinct from the Gounder title; that is left to the Vanniyar deep-dive (TBD).
       </p>
     </section>
 
@@ -168,7 +166,7 @@ const communities = [
           The economic history here is well-documented in industrial-economics literature on Tamil Nadu — Tiruppur's growth has been the subject of dozens of academic papers as a case of agrarian-capital-led mid-tech industrialisation without significant external industrial parentage. The Gounder community was the dominant ownership cohort throughout this transition.
         </p>
         <p>
-          The community's contemporary BC/MBC reservation classification, voting patterns, and political organisation (notably around the Kongu Munnetra Kazhagam and other Kongu-specific outfits) are downstream of this economic transition rather than upstream of it. We treat the political-economy dimension in the Reservation page; here we flag only that the Gounder title today carries a substantial industrial-capital connotation that the 19th-century usage did not.
+          The community's contemporary BC/MBC reservation classification, voting patterns, and political organisation (notably around the Kongu Munnetra Kazhagam and other Kongu-specific outfits) are downstream of this economic transition rather than upstream of it. The political-economy dimension is treated in the Reservation page; the point to flag here is only that the Gounder title today carries a substantial industrial-capital connotation that the 19th-century usage did not.
         </p>
       </div>
     </section>

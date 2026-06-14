@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import manifestRaw from '../data/lineage-manifest.json';
+import communitiesRaw from '../data/communities-manifest.json';
 import type { ManifestEntry } from './LineageSelector';
 import LineageCompare from './LineageCompare';
 
 const manifest = manifestRaw as ManifestEntry[];
+// Cross-community comparables (e.g. Nagarathar temple-clans) — same merge the
+// main /compare picker uses, so the overlay offers the same set of lineages.
+const communities = communitiesRaw as ManifestEntry[];
 
 export interface LineageCompareOverlayProps {
   /** The slug of the lineage currently being viewed on the page. */
@@ -49,19 +53,31 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
     return () => window.removeEventListener('keydown', handler);
   }, [open]);
 
-  const candidates = useMemo(() => {
+  // Reconciled picker rule (shared with the main /compare LineageSelector):
+  // offer ALL comparable lineages, not just documented ones — but VISUALLY MARK
+  // stubs / undocumented entries so the data-gap stays honest. Cross-community
+  // temple-clans are folded in under their own group, mirroring /compare.
+  const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return manifest
-      .filter((m) => m.slug !== currentSlug && m.status === 'documented' && m.deity)
-      .filter(
-        (m) =>
-          !q ||
-          m.name.toLowerCase().includes(q) ||
-          m.slug.toLowerCase().includes(q) ||
-          (m.deity?.name?.toLowerCase().includes(q) ?? false) ||
-          (m.deity?.village?.toLowerCase().includes(q) ?? false)
-      );
+    const match = (m: ManifestEntry) =>
+      m.slug !== currentSlug &&
+      (!q ||
+        m.name.toLowerCase().includes(q) ||
+        m.slug.toLowerCase().includes(q) ||
+        (m.deity?.name?.toLowerCase().includes(q) ?? false) ||
+        (m.deity?.village?.toLowerCase().includes(q) ?? false));
+    const documented = manifest.filter((m) => m.status === 'documented' && m.deity && match(m));
+    const namedNoDeity = manifest.filter((m) => m.status === 'documented' && !m.deity && match(m));
+    const stubs = manifest.filter((m) => m.status === 'stub' && match(m));
+    const communityClans = communities.filter(match);
+    return { documented, namedNoDeity, stubs, communityClans };
   }, [query, currentSlug]);
+
+  const totalCandidates =
+    groups.documented.length +
+    groups.namedNoDeity.length +
+    groups.stubs.length +
+    groups.communityClans.length;
 
   const drawerWidth = isDesktop && pickedB ? 'max-w-[min(960px,calc(100vw-3rem))]' : 'max-w-md';
 
@@ -125,34 +141,32 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
                   placeholder="Search by kootam, deity, village…"
                   className="mb-3 w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                 />
-                <ul className="space-y-1">
-                  {candidates.map((m) => (
-                    <li key={m.slug}>
-                      <button
-                        type="button"
-                        onClick={() => setPickedB(m.slug)}
-                        className="flex w-full items-start gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left text-sm hover:border-stone-400 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
-                      >
-                        <span aria-hidden="true">{m.totemEmoji}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-medium text-stone-900">{m.name}</span>
-                          {m.deity && (
-                            <span className="block text-xs text-stone-500">
-                              {m.deity.name}
-                              {m.deity.village ? `, ${m.deity.village}` : ''}
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-stone-400">→</span>
-                      </button>
-                    </li>
-                  ))}
-                  {candidates.length === 0 && (
-                    <li className="rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-4 text-center text-sm text-stone-500">
+                <div className="space-y-4">
+                  <PickGroup title={`Documented (${groups.documented.length})`} items={groups.documented} onPick={setPickedB} />
+                  <PickGroup
+                    title={`Other communities (${groups.communityClans.length})`}
+                    hint="Cross-community — e.g. Nagarathar temple-clans"
+                    items={groups.communityClans}
+                    onPick={setPickedB}
+                  />
+                  <PickGroup
+                    title={`Named, deity pending (${groups.namedNoDeity.length})`}
+                    items={groups.namedNoDeity}
+                    onPick={setPickedB}
+                  />
+                  <PickGroup
+                    title={`Undocumented stubs (${groups.stubs.length})`}
+                    hint="Honest data-gap — pick to see what's missing"
+                    items={groups.stubs}
+                    onPick={setPickedB}
+                    limit={query ? undefined : 6}
+                  />
+                  {totalCandidates === 0 && (
+                    <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-4 text-center text-sm text-stone-500">
                       No matches.
-                    </li>
+                    </div>
                   )}
-                </ul>
+                </div>
               </div>
             )}
 
@@ -216,6 +230,76 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
 }
 
 function labelFor(slug: string): string {
-  const m = manifest.find((x) => x.slug === slug);
+  const m = manifest.find((x) => x.slug === slug) ?? communities.find((x) => x.slug === slug);
   return m ? `${m.totemEmoji} ${m.name}` : slug;
+}
+
+function PickGroup({
+  title,
+  hint,
+  items,
+  onPick,
+  limit,
+}: {
+  title: string;
+  hint?: string;
+  items: ManifestEntry[];
+  onPick: (slug: string) => void;
+  limit?: number;
+}) {
+  if (items.length === 0) return null;
+  const shown = limit ? items.slice(0, limit) : items;
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+        {title}
+        {hint && <span className="ml-2 font-normal normal-case tracking-normal text-stone-400">— {hint}</span>}
+      </p>
+      <ul className="space-y-1">
+        {shown.map((m) => (
+          <li key={m.slug}>
+            <button
+              type="button"
+              onClick={() => onPick(m.slug)}
+              className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 ${
+                m.status === 'stub'
+                  ? 'border-stone-200 bg-stone-50/60 hover:border-stone-400 hover:bg-stone-100'
+                  : 'border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50'
+              }`}
+            >
+              <span aria-hidden="true">{m.totemEmoji}</span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5">
+                  <span className={`font-medium ${m.status === 'stub' ? 'text-stone-500' : 'text-stone-900'}`}>
+                    {m.name}
+                  </span>
+                  {m.status === 'stub' && (
+                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-600">
+                      stub
+                    </span>
+                  )}
+                </span>
+                {m.deity ? (
+                  <span className="block text-xs text-stone-500">
+                    {m.deity.name}
+                    {m.deity.village ? `, ${m.deity.village}` : ''}
+                  </span>
+                ) : (
+                  <span className="block text-xs italic text-stone-400">
+                    {m.status === 'stub' ? 'Not yet documented' : 'Kuladeivam not yet documented'}
+                  </span>
+                )}
+              </span>
+              <span className="text-stone-400">→</span>
+            </button>
+          </li>
+        ))}
+        {limit && items.length > limit && (
+          <li className="px-3 py-1 text-[11px] italic text-stone-400">
+            …{items.length - limit} more — use search to find a specific stub.
+          </li>
+        )}
+      </ul>
+    </div>
+  );
 }

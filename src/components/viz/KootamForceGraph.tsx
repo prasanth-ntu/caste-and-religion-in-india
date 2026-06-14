@@ -609,7 +609,7 @@ function KootamDrawer({ node, onClose }: { node: SimNode; onClose: () => void })
         <div className="space-y-4 p-5 text-sm leading-relaxed text-stone-700">
           {node.isHighlight && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-900">
-              <p className="text-xs font-semibold uppercase tracking-wide">★ This is your kootam</p>
+              <p className="text-xs font-semibold uppercase tracking-wide">Worked example: Kadai kootam</p>
               <p className="mt-1">
                 The Kadai (quail) totem marks one of the ~145 exogamous clans of the Kongu Vellala Gounder community.
               </p>

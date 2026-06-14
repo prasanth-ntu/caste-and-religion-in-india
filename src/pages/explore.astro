@@ -88,7 +88,7 @@ const lanes: Lane[] = [
     },
     stops: [
       {
-        title: 'Pick your kootam',
+        title: 'Pick a kootam',
         titleTa: 'குலம்',
         teaser: 'Start here. Pick one of 145 documented kootams — the exogamous clan unit.',
         href: '/lineage?path=family&stop=1',
@@ -97,7 +97,7 @@ const lanes: Lane[] = [
       {
         title: 'Kadai kootam',
         titleTa: 'கடை குலம்',
-        teaser: 'The author’s kadai (quail) clan: totem, region, the canonical narrative used on this site.',
+        teaser: 'The Kadai (quail) kootam: totem, region, and the worked example used across this site.',
         href: '/lineage/k/kadai?path=family&stop=2',
         minutes: 5,
       },
@@ -118,7 +118,7 @@ const lanes: Lane[] = [
       {
         title: 'Contribute',
         titleTa: 'பங்களிப்பு',
-        teaser: 'If your kootam isn’t documented yet — what we need, and how to send it.',
+        teaser: 'If a kootam isn’t documented yet — what we need, and how to send it.',
         href: '/contribute?path=family&stop=5',
         minutes: 3,
       },
@@ -257,6 +257,8 @@ function totalMinutes(stops: Stop[]): number {
                     <li>
                       <a
                         href={stop.href}
+                        target="_blank"
+                        rel="noopener"
                         data-stop-link
                         data-path={lane.id}
                         data-stop-index={idx}

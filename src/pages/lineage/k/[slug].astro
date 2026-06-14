@@ -2,7 +2,6 @@
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Claim from '../../../components/Claim.astro';
-import LineageSelector from '../../../components/LineageSelector.tsx';
 import LineageCompareOverlay from '../../../components/LineageCompareOverlay.tsx';
 import VarnaJatiLocator from '../../../components/viz/VarnaJatiLocator.astro';
 import RelatedNav from '../../../components/site/RelatedNav.astro';
@@ -107,11 +106,6 @@ const tierBadge: Record<string, string> = {
       <a href="/lineage/" class="hover:text-indigo-700">← All kootams</a>
     </nav>
 
-    {/* Sticky selector bar */}
-    <div class="sticky top-0 z-20 -mx-6 mb-6 border-b border-stone-200 bg-stone-50/95 px-6 py-3 backdrop-blur">
-      <LineageSelector client:load />
-    </div>
-
     {/* Breadcrumb */}
     <nav class="mb-6 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900">India</a>
@@ -209,10 +203,10 @@ const tierBadge: Record<string, string> = {
     {isKadai && (
       <div class="mb-6 rounded-2xl border-2 border-rose-300 bg-gradient-to-br from-rose-50 to-amber-50 p-5 shadow-sm">
         <p class="text-xs font-semibold uppercase tracking-widest text-rose-700">
-          ★ The author's lineage
+          The worked-example kootam
         </p>
         <p class="mt-1 text-sm text-stone-800">
-          This is the kootam the author of this site belongs to. The full prose deep-dives
+          Kadai is the kootam used as this site's worked example. The full prose deep-dives
           (region, caste, title, deity, ancestor practices) are available as canonical pages:
         </p>
         <div class="mt-3 flex flex-wrap gap-2">
@@ -391,8 +385,8 @@ const tierBadge: Record<string, string> = {
               }
             : {
                 href: '/lineage/konur',
-                title: 'Konur Kaliamman (★ Kadai)',
-                sub: "How a kuladeivam looks up close — the author's lineage.",
+                title: 'Konur Kaliamman (Kadai)',
+                sub: 'How a kuladeivam looks up close — the worked-example lineage.',
               }
         }
         related={{

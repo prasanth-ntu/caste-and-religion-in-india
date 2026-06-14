@@ -808,7 +808,7 @@ function Drawer({
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-900">
               <p className="text-xs font-semibold uppercase tracking-wide">You are here</p>
               <p className="mt-1 text-sm">
-                This is your kootam. The Kadai (quail) totem marks one of the ~145 exogamous clans of the Kongu Vellala.
+                The Kadai (quail) kootam — the worked example used across this site — is one of the ~145 exogamous clans of the Kongu Vellala.
               </p>
             </div>
           )}

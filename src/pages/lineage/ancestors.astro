@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import AncestorPractices from '../../components/viz/AncestorPractices.tsx';
@@ -13,7 +12,6 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
   description="A material-practice tour of Kongu Vellala ancestry: crops, tools, governance roles, and memorial markers — each tier-tagged with tradition framing vs. evidence framing."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
@@ -41,8 +39,9 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
         tools they used, which offices they held, and how they remembered their dead.
       </p>
       <p class="mt-3 max-w-2xl text-base text-stone-600 sm:text-lg">
-        Each hotspot below is tagged with an evidence tier. Tradition framing and evidence framing are shown
-        side by side so the gaps between them are visible.
+        This is the documented ancestral practice of the Kongu Vellala cluster — the worked example the site
+        runs deepest on. Each hotspot below is tagged with an evidence tier. Tradition framing and evidence
+        framing are shown side by side so the gaps between them are visible.
       </p>
     </header>
 

@@ -4,11 +4,29 @@ import communitiesRaw from '../data/communities-manifest.json';
 import type { ManifestEntry } from './LineageSelector';
 import LineageSelector from './LineageSelector';
 
-const manifest = manifestRaw as ManifestEntry[];
+// The shared ManifestEntry type (LineageSelector) doesn't declare the exogamy
+// fields, but the generated manifest JSON carries them (see
+// scripts/generate-lineage-manifest.mjs → exogamyPartners / exogamyPangaliExcluded,
+// each an array of kootam *slugs*). Compare needs them, so widen the type locally.
+type CompareEntry = ManifestEntry & {
+  exogamyPartners?: string[];
+  exogamyPangaliExcluded?: string[];
+};
+
+const manifest = manifestRaw as CompareEntry[];
 // Non-kootam comparable lineages (e.g. Nagarathar temple-clans). Merged into
 // compare lookups + pickers only — kept out of every other kootam surface.
-const communities = communitiesRaw as ManifestEntry[];
+// Community entries have no totem-clan exogamy arrays (their exogamy is
+// temple-clan based — see exogamyBasis), so these stay undefined for them.
+const communities = communitiesRaw as CompareEntry[];
 const comparable = [...manifest, ...communities];
+
+/** Resolve a kootam slug to its display name, falling back to the raw token
+ *  when it isn't a known entry (some partner lists use spelling variants that
+ *  don't map to a canonical slug — e.g. "kaadai" for "kadai"). */
+function partnerLabel(slug: string): string {
+  return comparable.find((m) => m.slug === slug)?.name ?? slug;
+}
 
 const TIER_BADGE: Record<string, { label: string; cls: string }> = {
   community: { label: '🟢 community', cls: 'bg-emerald-100 text-emerald-900' },
@@ -27,7 +45,7 @@ export interface LineageCompareProps {
   compact?: boolean;
 }
 
-function find(slug?: string | null): ManifestEntry | null {
+function find(slug?: string | null): CompareEntry | null {
   if (!slug) return null;
   return comparable.find((m) => m.slug === slug) ?? null;
 }
@@ -195,7 +213,7 @@ export default function LineageCompare({
   );
 }
 
-function CompareGrid({ a, b, compact }: { a: ManifestEntry; b: ManifestEntry; compact: boolean }) {
+function CompareGrid({ a, b, compact }: { a: CompareEntry; b: CompareEntry; compact: boolean }) {
   const rows = useMemo(() => buildRows(a, b), [a, b]);
   return (
     <div id="chart" className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm scroll-mt-24">
@@ -237,25 +255,91 @@ function CompareGrid({ a, b, compact }: { a: ManifestEntry; b: ManifestEntry; co
 interface Row {
   key: string;
   label: string;
-  kind: 'scalar' | 'set';
+  kind: 'scalar' | 'set' | 'exogamy';
   aValue?: string;
   bValue?: string;
   aSet?: string[];
   bSet?: string[];
   diff: boolean;
+  /** scalar/set rows: when the side has no documented value, render this honest
+   *  "not yet documented" label instead of a bare em-dash. Keyed per side. */
+  aEmptyLabel?: string;
+  bEmptyLabel?: string;
+  /** exogamy rows: per-side partner chips (display names) + the cross-pair verdict. */
+  aExogamy?: ExogamyCell;
+  bExogamy?: ExogamyCell;
+  verdict?: ExogamyVerdict;
 }
 
-function lineageTypeLabel(m: ManifestEntry): string {
+interface ExogamyCell {
+  /** Marriageable partner clans (display names). */
+  partners: string[];
+  /** Pangali / excluded clans (display names). */
+  excluded: string[];
+  /** True when this side is a community whose exogamy isn't totem-clan based. */
+  notKootamBased: boolean;
+  /** True when the side carries no exogamy arrays at all (undocumented gap). */
+  undocumented: boolean;
+}
+
+type ExogamyVerdict =
+  | { kind: 'marriageable' }
+  | { kind: 'excluded' }
+  | { kind: 'unknown' };
+
+function lineageTypeLabel(m: CompareEntry): string {
   return m.kind === 'community'
     ? `${m.parentCaste || 'Other community'} — temple-clan`
     : 'Kongu Vellala kootam';
 }
 
-function exogamyBasisLabel(m: ManifestEntry): string {
+function exogamyBasisLabel(m: CompareEntry): string {
   return m.kind === 'community' ? m.exogamyBasis || 'Temple-clan' : 'Totem clan (kootam)';
 }
 
-function buildRows(a: ManifestEntry, b: ManifestEntry): Row[] {
+/** Build the per-side exogamy cell from the raw slug arrays. */
+function exogamyCell(m: CompareEntry): ExogamyCell {
+  const partners = m.exogamyPartners ?? [];
+  const excluded = m.exogamyPangaliExcluded ?? [];
+  return {
+    partners: partners.map(partnerLabel),
+    excluded: excluded.map(partnerLabel),
+    // Communities use a temple-clan (Nava Kovil) exogamy system, not the
+    // Kongu totem-clan one — so we can't express their rule as kootam chips.
+    notKootamBased: m.kind === 'community',
+    undocumented:
+      m.kind !== 'community' && partners.length === 0 && excluded.length === 0,
+  };
+}
+
+/** Derive the cross-pair verdict honestly: only assert marriageable/excluded
+ *  when the *raw slugs* attest it. If neither side names the other, stay unknown
+ *  rather than inventing a relationship. Excluded (pangali) takes precedence —
+ *  a single excluded listing is a hard block regardless of any partner listing. */
+function exogamyVerdict(a: CompareEntry, b: CompareEntry): ExogamyVerdict {
+  // No verdict across communities — different exogamy systems.
+  if (a.kind === 'community' || b.kind === 'community') return { kind: 'unknown' };
+  const aPartners = a.exogamyPartners ?? [];
+  const aExcluded = a.exogamyPangaliExcluded ?? [];
+  const bPartners = b.exogamyPartners ?? [];
+  const bExcluded = b.exogamyPangaliExcluded ?? [];
+  if (aExcluded.includes(b.slug) || bExcluded.includes(a.slug)) {
+    return { kind: 'excluded' };
+  }
+  if (aPartners.includes(b.slug) || bPartners.includes(a.slug)) {
+    return { kind: 'marriageable' };
+  }
+  return { kind: 'unknown' };
+}
+
+/** Honest empty-state label for the deity-derived rows of one side. */
+function deityEmptyLabel(m: CompareEntry): string {
+  if (m.status === 'stub') return 'Stub — not yet documented';
+  if (!m.deity) return 'Kuladeivam not yet documented';
+  return 'Not yet documented';
+}
+
+function buildRows(a: CompareEntry, b: CompareEntry): Row[] {
   return [
     { key: 'name', label: 'Name', kind: 'scalar', aValue: a.name, bValue: b.name, diff: a.name !== b.name },
     { key: 'tamil', label: 'Tamil name', kind: 'scalar', aValue: a.tamilName, bValue: b.tamilName, diff: a.tamilName !== b.tamilName },
@@ -275,6 +359,17 @@ function buildRows(a: ManifestEntry, b: ManifestEntry): Row[] {
       bValue: exogamyBasisLabel(b),
       diff: exogamyBasisLabel(a) !== exogamyBasisLabel(b),
     },
+    {
+      key: 'exogamyPartners',
+      label: 'Exogamy partners',
+      kind: 'exogamy',
+      aExogamy: exogamyCell(a),
+      bExogamy: exogamyCell(b),
+      verdict: exogamyVerdict(a, b),
+      // Highlight the row when a definite verdict exists — that's the most
+      // marriage-relevant signal on the table.
+      diff: exogamyVerdict(a, b).kind !== 'unknown',
+    },
     { key: 'totemType', label: 'Totem type', kind: 'scalar', aValue: a.totemType, bValue: b.totemType, diff: a.totemType !== b.totemType },
     { key: 'totemSpecies', label: 'Totem species', kind: 'scalar', aValue: a.totemSpecies, bValue: b.totemSpecies, diff: a.totemSpecies !== b.totemSpecies },
     { key: 'region', label: 'Region', kind: 'scalar', aValue: a.region, bValue: b.region, diff: a.region !== b.region },
@@ -282,32 +377,40 @@ function buildRows(a: ManifestEntry, b: ManifestEntry): Row[] {
       key: 'deityName',
       label: 'Kuladeivam',
       kind: 'scalar',
-      aValue: a.deity?.name ?? '—',
-      bValue: b.deity?.name ?? '—',
+      aValue: a.deity?.name ?? '',
+      bValue: b.deity?.name ?? '',
+      aEmptyLabel: deityEmptyLabel(a),
+      bEmptyLabel: deityEmptyLabel(b),
       diff: (a.deity?.name ?? null) !== (b.deity?.name ?? null),
     },
     {
       key: 'village',
       label: 'Temple village',
       kind: 'scalar',
-      aValue: a.deity?.village ?? '—',
-      bValue: b.deity?.village ?? '—',
+      aValue: a.deity?.village ?? '',
+      bValue: b.deity?.village ?? '',
+      aEmptyLabel: deityEmptyLabel(a),
+      bEmptyLabel: deityEmptyLabel(b),
       diff: (a.deity?.village ?? null) !== (b.deity?.village ?? null),
     },
     {
       key: 'district',
       label: 'District',
       kind: 'scalar',
-      aValue: a.deity?.district ?? '—',
-      bValue: b.deity?.district ?? '—',
+      aValue: a.deity?.district ?? '',
+      bValue: b.deity?.district ?? '',
+      aEmptyLabel: deityEmptyLabel(a),
+      bEmptyLabel: deityEmptyLabel(b),
       diff: (a.deity?.district ?? null) !== (b.deity?.district ?? null),
     },
     {
       key: 'tradition',
       label: 'Deity tradition',
       kind: 'scalar',
-      aValue: a.deity?.tradition ?? '—',
-      bValue: b.deity?.tradition ?? '—',
+      aValue: a.deity?.tradition ?? '',
+      bValue: b.deity?.tradition ?? '',
+      aEmptyLabel: deityEmptyLabel(a),
+      bEmptyLabel: deityEmptyLabel(b),
       diff: (a.deity?.tradition ?? null) !== (b.deity?.tradition ?? null),
     },
     {
@@ -316,14 +419,19 @@ function buildRows(a: ManifestEntry, b: ManifestEntry): Row[] {
       kind: 'set',
       aSet: a.deity?.festivals ?? [],
       bSet: b.deity?.festivals ?? [],
+      // Distinguish "deity has no festivals recorded yet" from "no deity at all".
+      aEmptyLabel: a.deity ? 'Not yet documented' : deityEmptyLabel(a),
+      bEmptyLabel: b.deity ? 'Not yet documented' : deityEmptyLabel(b),
       diff: !setsEqual(a.deity?.festivals ?? [], b.deity?.festivals ?? []),
     },
     {
       key: 'attestation',
       label: 'Attestation',
       kind: 'scalar',
-      aValue: a.attestation ?? '—',
-      bValue: b.attestation ?? '—',
+      aValue: a.attestation ?? '',
+      bValue: b.attestation ?? '',
+      aEmptyLabel: 'Not yet documented',
+      bEmptyLabel: 'Not yet documented',
       diff: a.attestation !== b.attestation,
     },
     {
@@ -343,15 +451,31 @@ function setsEqual(x: string[], y: string[]) {
   return y.every((v) => sx.has(v));
 }
 
+const VERDICT_BADGE: Record<
+  Exclude<ExogamyVerdict['kind'], 'unknown'>,
+  { label: string; cls: string }
+> = {
+  marriageable: { label: '✓ Marriageable', cls: 'bg-emerald-100 text-emerald-900' },
+  excluded: { label: '✕ Excluded (pangali)', cls: 'bg-rose-100 text-rose-900' },
+};
+
 function TableRow({ row, compact }: { row: Row; compact: boolean }) {
   const diffHighlight = row.diff ? 'bg-emerald-50/40' : '';
+  const verdict = row.kind === 'exogamy' ? row.verdict : undefined;
   return (
     <tr className={diffHighlight}>
       <td className="py-2.5 pl-4 pr-3 text-xs font-medium text-stone-500">
         <span>{row.label}</span>
-        {row.diff && (
+        {row.diff && row.kind !== 'exogamy' && (
           <span aria-label="differs" className="ml-1.5 font-mono text-[10px] text-emerald-600">
             ≠
+          </span>
+        )}
+        {verdict && verdict.kind !== 'unknown' && (
+          <span
+            className={`mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal ${VERDICT_BADGE[verdict.kind].cls}`}
+          >
+            {VERDICT_BADGE[verdict.kind].label}
           </span>
         )}
       </td>
@@ -365,13 +489,68 @@ function TableRow({ row, compact }: { row: Row; compact: boolean }) {
   );
 }
 
+function EmptyState({ label }: { label?: string }) {
+  return <span className="text-xs italic text-stone-400">{label || 'Not yet documented'}</span>;
+}
+
 function CellContent({ row, side }: { row: Row; side: 'A' | 'B' }) {
   const isA = side === 'A';
+
+  if (row.kind === 'exogamy') {
+    const cell = isA ? row.aExogamy : row.bExogamy;
+    if (!cell) return <EmptyState />;
+    if (cell.notKootamBased) {
+      return (
+        <span className="text-xs italic text-stone-500">
+          Temple-clan (Nava Kovil) exogamy — not totem-clan based
+        </span>
+      );
+    }
+    if (cell.undocumented) {
+      return <EmptyState label="Exogamy partners not yet documented" />;
+    }
+    return (
+      <div className="space-y-1.5">
+        {cell.partners.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {cell.partners.map((v) => (
+              <li
+                key={`p-${v}`}
+                className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-900"
+              >
+                {v}
+              </li>
+            ))}
+          </ul>
+        )}
+        {cell.excluded.length > 0 && (
+          <div>
+            <span className="block text-[10px] uppercase tracking-wide text-stone-400">
+              Pangali — excluded
+            </span>
+            <ul className="mt-0.5 flex flex-wrap gap-1.5">
+              {cell.excluded.map((v) => (
+                <li
+                  key={`x-${v}`}
+                  className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-800"
+                >
+                  {v}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (row.kind === 'set') {
     const set = isA ? row.aSet ?? [] : row.bSet ?? [];
     const other = isA ? row.bSet ?? [] : row.aSet ?? [];
     const otherSet = new Set(other);
-    if (set.length === 0) return <span className="text-sm italic text-stone-400">—</span>;
+    if (set.length === 0) {
+      return <EmptyState label={isA ? row.aEmptyLabel : row.bEmptyLabel} />;
+    }
     return (
       <ul className="flex flex-wrap gap-1.5">
         {set.map((v) => {
@@ -401,9 +580,12 @@ function CellContent({ row, side }: { row: Row; side: 'A' | 'B' }) {
       </span>
     );
   }
+  if (!v) {
+    return <EmptyState label={isA ? row.aEmptyLabel : row.bEmptyLabel} />;
+  }
   return (
     <span className={`text-sm leading-snug ${row.diff ? 'font-medium text-stone-900' : 'text-stone-600'}`}>
-      {v || '—'}
+      {v}
     </span>
   );
 }

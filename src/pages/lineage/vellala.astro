@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
@@ -9,7 +8,7 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
 const subgroups = [
   { en: 'Saiva Pillai', ta: 'சைவ பிள்ளை', note: 'Saivite, often temple-affiliated; concentrated in the Cauvery delta and Tondai country.' },
   { en: 'Karkatha (Kondaikatti)', ta: 'கொண்டைகட்டி வேளாளர்', note: 'Tondai-country Vellala; the "knotted-tuft" reference is to a distinctive hairstyle.' },
-  { en: 'Kongu Vellala Gounder', ta: 'கொங்கு வேளாள கவுண்டர்', note: 'Western Tamil Nadu; 145-kootam structure; Gounder title — the user’s community.' },
+  { en: 'Kongu Vellala Gounder', ta: 'கொங்கு வேளாள கவுண்டர்', note: 'Western Tamil Nadu; 145-kootam structure; Gounder title — the worked-example community on this site.' },
   { en: 'Tuluva Vellalar (Mudaliar)', ta: 'துளுவ வேளாளர் / முதலியார்', note: 'Northern Tamil; Mudaliar title common; some sub-groups trace migration from Tulu Nadu (coastal Karnataka).' },
   { en: 'Saiva Pillai (Sri Lankan)', ta: 'ஈழ வேளாளர்', note: 'Jaffna-region Vellala; historically the demographic majority of northern Sri Lankan Tamils.' },
 ];
@@ -20,7 +19,6 @@ const subgroups = [
   description="Deep-dive on the Vellala caste-cluster: etymology, Sangam origins, sub-groups, irrigation legacy, and the contested 'noble cultivator' narrative."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
@@ -55,7 +53,7 @@ const subgroups = [
           The most commonly cited Tamil derivation is <strong>vellam</strong> (வெள்ளம், flood / abundant water) + <strong>aanmai</strong> (ஆண்மை, mastery / governance) — "masters of water" — referencing the community's historical role in tank and well irrigation. Alternative derivations relate the word to <em>vēl</em> (வேள், chieftain) or to the Velir clans of the Sangam era.
         </p>
         <p>
-          Folk etymologies are common in caste names and are usually retrospective. The "masters of water" gloss is plausible and resonant; it is also, frankly, flattering to the community. We treat it as a popular etymology with a real material referent (the documented irrigation systems) rather than a securely established linguistic origin.
+          Folk etymologies are common in caste names and are usually retrospective. The "masters of water" gloss is plausible and resonant; it is also, frankly, flattering to the community. It is best read as a popular etymology with a real material referent (the documented irrigation systems) rather than a securely established linguistic origin.
           <FactTier tier="yellow" />
         </p>
       </div>

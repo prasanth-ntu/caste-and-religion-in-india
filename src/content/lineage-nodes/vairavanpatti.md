@@ -15,4 +15,4 @@ claims:
 
 # Vairavanpatti (வைரவன்பட்டி)
 
-One of the nine Nagarathar temple-clans, centred on the Vairavan Kovil (Kala Bhairava temple). The Nagarathar analogue of a kootam — an exogamous clan defined by a clan-temple — shown here as part of a second documented community running parallel to the author's own lineage.
+One of the nine Nagarathar temple-clans, centred on the Vairavan Kovil (Kala Bhairava temple). The Nagarathar analogue of a kootam — an exogamous clan defined by a clan-temple — shown here as part of a second documented community running parallel to the Kongu Vellala case study documented on this site.

@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import LineageCompareOverlay from '../../components/LineageCompareOverlay.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
@@ -72,7 +71,6 @@ const diaspora = [
   description="Long-scroll page on Konur Kaliamman, Kuladeivam (clan deity) of the Kadai Kootam, with festival calendar, iconography, lifecycle rituals, and diaspora pilgrimage."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    <LineageContextBanner client:load />
     {/* Breadcrumbs */}
     <nav class="mb-8 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
@@ -122,14 +120,14 @@ const diaspora = [
           A Kuladeivam (குலதெய்வம், literally "clan deity") is a deity adopted by a specific lineage — typically a village goddess or local form of Shiva, Vishnu, or Murugan — to whom the lineage returns for major life events. It is not a sect, not a chosen deity, not a personal favourite. It is inherited, like a surname.
         </p>
         <p>
-          Functionally — and this is the part that survives even when you stop believing in the supernatural part — the Kuladeivam is a <strong>pre-bureaucratic genealogical registry</strong>. Before census rolls, before Aadhaar, before parish records, the village shrine kept track of who belonged to which lineage. Every tonsure, ear-piercing, and marriage produced a witness event at the same physical location. Diaspora branches that had moved hundreds of kilometres still had a coordinate they shared with their cousins. A great-grandmother and a great-grandchild born seventy years apart had visited the same compound.
+          Functionally — and this is the part that survives even when the supernatural framing is set aside — the Kuladeivam is a <strong>pre-bureaucratic genealogical registry</strong>. Before census rolls, before Aadhaar, before parish records, the village shrine kept track of who belonged to which lineage. Every tonsure, ear-piercing, and marriage produced a witness event at the same physical location. Diaspora branches that had moved hundreds of kilometres still had a coordinate they shared with their cousins. A great-grandmother and a great-grandchild born seventy years apart had visited the same compound.
         </p>
         <p>
           The covenant is framed in supernatural language —
           <Claim tier="red" sources={["wikipedia-kongu-vellalar"]}>
             failure to visit the Kuladeivam for major life events is said to bring misfortune, illness, or infertility upon the family.
           </Claim>
-          That specific causal claim is folklore, not evidence; there is no controlled data showing that pilgrimage attendance affects health outcomes. But the <em>social</em> function the threat enforces — periodic gatherings across a dispersing lineage, intergenerational signalling that "we are still one family" — is real and measurable.
+          That specific causal claim is folklore, not evidence; there is no controlled data showing that pilgrimage attendance affects health outcomes. But the <em>social</em> function the threat enforces — periodic gatherings across a dispersing lineage, intergenerational signalling that the dispersed branches are still one family — is real and measurable.
         </p>
         <p>
           The 145-kootam structure of the Kongu Vellala overlays this neatly.
@@ -155,7 +153,7 @@ const diaspora = [
           The answer is geographic, not theological. The branches of the Kadai Kootam that settled in or around <strong>Konur village in Namakkal district</strong> consecrated the local Kaliamman shrine as their Kuladeivam, and their descendants — wherever they later moved — kept that tie. Other Kadai branches further west (toward Kangayam, Erode) often have a different Kaliamman shrine as their Kuladeivam. <span class="inline-flex items-baseline gap-1">This is <FactTier tier="yellow" /></span> — community ethnography, well-known to families but not centrally documented.
         </p>
         <p>
-          The practical implication: if you are a Kadai family in the Bengaluru or Chennai diaspora, your specific Kuladeivam shrine depends on which village your great-great-grandfather farmed in. There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster. The Konur shrine is one of them.
+          The practical implication: for a Kadai family in the Bengaluru or Chennai diaspora, the specific Kuladeivam shrine depends on which village the family's great-great-grandfather farmed in. There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster. The Konur shrine is one of them.
         </p>
         <blockquote class="pull-quote">
           There is no single "Kadai Kuladeivam" — there are several, one per settlement cluster.
@@ -282,7 +280,7 @@ const diaspora = [
           >
             <p class="text-xs uppercase tracking-wide text-stone-500">Kootam</p>
             <p class="font-medium text-stone-900">Kadai Kootam (கடை)</p>
-            <p class="mt-1 text-xs text-stone-600">Your clan — quail totem, 145-kootam structure.</p>
+            <p class="mt-1 text-xs text-stone-600">The case-study clan — quail totem, 145-kootam structure.</p>
           </a>
         </li>
         <li>

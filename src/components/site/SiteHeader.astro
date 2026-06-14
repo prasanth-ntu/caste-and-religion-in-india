@@ -1,6 +1,4 @@
 ---
-import LineageChip from './LineageChip.tsx';
-
 const path = Astro.url.pathname;
 
 type Pillar = { href: string; label: string; prefix: string };
@@ -62,11 +60,8 @@ const focusRing =
       })}
     </nav>
 
-    {/* Right: lineage chip slot + Sources icon + mobile hamburger */}
+    {/* Right: Sources icon + mobile hamburger */}
     <div class="flex items-center gap-2">
-      <LineageChip client:load />
-      <div data-lineage-chip-slot></div>
-
       <a
         href="/sources"
         aria-label="Sources"

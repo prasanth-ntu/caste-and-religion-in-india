@@ -27,7 +27,7 @@ import VarnaJatiLocator from '../components/viz/VarnaJatiLocator.astro';
       </h1>
       <p class="mt-4 max-w-2xl text-lg text-stone-700">
         Pick two lineages and see what they share, where they differ, and what
-        is honestly still undocumented. Defaults to the author's lineage (Kadai / Konur
+        is honestly still undocumented. Defaults to the worked example (Kadai / Konur
         Kaliamman) for A; pick anything for B — another Kongu Vellala kootam, or a different
         community such as a Nagarathar temple-clan.
       </p>
@@ -51,12 +51,17 @@ import VarnaJatiLocator from '../components/viz/VarnaJatiLocator.astro';
 
     <section class="mt-12 rounded-xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-700">
       <p>
-        Don't see your kootam in the picker?{' '}
+        Every one of the 145 kootams is selectable — but only 4 have populated kuladeivam
+        data so far. Stubs are marked as such in the picker, and any field that isn't
+        documented yet shows <span class="italic text-stone-500">"not yet documented"</span>
+        rather than a fabricated value.
+      </p>
+      <p class="mt-2">
+        Don't see a kootam, or can fill a gap?{' '}
         <a href="/contribute/" class="font-medium text-emerald-700 underline">
           Contribute it →
         </a>{' '}
-        Only 4 of 145 kootams have populated kuladeivam data so far. This site needs your
-        family/community input.
+        This site needs your family/community input.
       </p>
     </section>
   </main>
