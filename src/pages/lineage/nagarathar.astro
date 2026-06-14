@@ -1,10 +1,16 @@
 ---
+import { getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LineageContextBanner from '../../components/LineageContextBanner.tsx';
 import Claim from '../../components/Claim.astro';
 import FactTier from '../../components/FactTier.astro';
 import VarnaJatiLocator from '../../components/viz/VarnaJatiLocator.astro';
 import RelatedNav from '../../components/site/RelatedNav.astro';
+
+// Kuladeivam quick-facts are read from the deity collection so this card stays
+// in sync with the canonical /lineage/vairavar page (single source of truth).
+const deityEntry = await getEntry('deities', 'vairavar-swamy-vairavanpatti');
+const deity = deityEntry?.data;
 
 // The nine ancestral clan-temples (Nava Kovil). Vairavan Kovil is the one this
 // site maps in depth via the deity page.
@@ -36,12 +42,17 @@ const diaspora = [
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
     <LineageContextBanner client:load />
-    <nav class="mb-8 text-sm text-stone-500">
-      <a href="/" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Home</a>
-      <span class="mx-2" aria-hidden="true">/</span>
-      <a href="/lineage" class="hover:text-stone-900 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Lineage</a>
-      <span class="mx-2" aria-hidden="true">/</span>
-      <span class="text-stone-700">Nagarathar</span>
+    {/* Deep breadcrumb — same path style as the kootam-card pages (e.g. /lineage/k/kadai) */}
+    <nav aria-label="Breadcrumb" class="mb-8 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-stone-500">
+      <a href="/" class="rounded hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">India</a>
+      <span aria-hidden="true">›</span>
+      <a href="/lineage" class="rounded hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50">Tamil Nadu</a>
+      <span aria-hidden="true">›</span>
+      <span>Chettinad</span>
+      <span aria-hidden="true">›</span>
+      <span class="font-medium text-stone-800">Nattukottai Chettiar</span>
+      <span aria-hidden="true">›</span>
+      <span class="text-stone-700">Vairavar Swamy</span>
     </nav>
 
     <VarnaJatiLocator highlightSlug="vairavanpatti" class="mb-6" />
@@ -66,6 +77,56 @@ const diaspora = [
         Known endonymically as <em>Nagarathar</em> (or Nakarattar) — a Tamil merchant-banking community of the Chettinad region, organised into nine ancestral temple-clans, whose colonial-era banking network reached across Burma, Ceylon and Malaya.
       </p>
     </header>
+
+    {/* Kuladeivam quick-facts — mirrors the kootam-card deity panel, in the
+        page's violet accent (vs the kadai card's rose) to keep the "second
+        community" colour-coding consistent with the locator + context banner. */}
+    {deity && (
+      <section class="mb-12 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-stone-50 p-5">
+        <p class="text-xs font-semibold uppercase tracking-widest text-violet-700">
+          Kuladeivam · குலதெய்வம்
+        </p>
+        <h2 class="mt-1 text-2xl font-bold text-stone-900">{deity.name}</h2>
+        {deity.tamil_name && (
+          <p class="mt-1 font-tamil text-base text-violet-800">{deity.tamil_name}</p>
+        )}
+        <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          {deity.village && (
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Village</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.village}</dd>
+            </div>
+          )}
+          {deity.district && (
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">District</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.district}</dd>
+            </div>
+          )}
+          {deity.tradition && (
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Tradition</dt>
+              <dd class="mt-0.5 text-stone-800">{deity.tradition}</dd>
+            </div>
+          )}
+          {deity.festivals?.length > 0 && (
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500">Festivals</dt>
+              <dd class="mt-0.5 flex flex-wrap gap-1.5 text-stone-800">
+                {deity.festivals.map((f) => (
+                  <span class="rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs">{f}</span>
+                ))}
+              </dd>
+            </div>
+          )}
+        </dl>
+        <p class="mt-4">
+          <a href="/lineage/vairavar" class="text-sm font-medium text-violet-800 underline">
+            Visit the full temple page →
+          </a>
+        </p>
+      </section>
+    )}
 
     {/* Chettinad region */}
     <section class="mb-12">
