@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { varnaJatiTree, type TreeNode, type CasteLevel } from '../../data/varna-jati-tree';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
+import { Drawer as UIDrawer } from '../ui/Drawer';
 import { useChartDimensions } from '../../hooks/useChartDimensions';
 import { useInView } from '../../hooks/useInView';
 import { prefersReducedMotion } from '../../lib/chart-motion';
@@ -382,18 +383,15 @@ function renderVertical(
     .style('cursor', 'pointer')
     .style('outline', 'none')
     .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.4 : 1))
+    // The vertical tree is mobile-only: a tap opens the bottom-sheet drawer
+    // (setSelected), so the floating tooltip is suppressed here — on touch it
+    // only flashes a redundant black box behind the drawer. The path-highlight
+    // (setHoveredId) is kept for hover/keyboard-focus dimming.
     .on('click', (_, d) => handlers.setSelected(d.data))
-    .on('mouseenter', (event: MouseEvent, d) => {
-      handlers.setHoveredId(d.data.id);
-      handlers.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
-    })
-    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('focus', function (_: FocusEvent, d) {
-      handlers.setHoveredId(d.data.id);
-      const r = (this as SVGGElement).getBoundingClientRect();
-      handlers.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
-    })
-    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
+    .on('mouseenter', (_event: MouseEvent, d) => { handlers.setHoveredId(d.data.id); })
+    .on('mouseleave', () => { handlers.setHoveredId(null); })
+    .on('focus', function (_: FocusEvent, d) { handlers.setHoveredId(d.data.id); })
+    .on('blur', () => { handlers.setHoveredId(null); })
     .on('keydown', function (event: KeyboardEvent, d) {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handlers.setSelected(d.data); }
     });
@@ -683,20 +681,6 @@ function Drawer({
   onClose: () => void;
   isMobile: boolean;
 }) {
-  const [dragY, setDragY] = useState(0);
-  const dragStart = useRef<number | null>(null);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') goSibling(-1);
-      if (e.key === 'ArrowRight') goSibling(1);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onClose, node, siblings]);
-
   const color = LEVEL_COLOR[node.level];
   const tier = node.tier ? TIER_BADGE[node.tier] : null;
 
@@ -708,96 +692,51 @@ function Drawer({
     if (next) onNavigate(next);
   };
 
-  // Swipe-down-to-dismiss on the mobile handle.
-  const onHandleTouchStart = (e: React.TouchEvent) => { dragStart.current = e.touches[0].clientY; };
-  const onHandleTouchMove = (e: React.TouchEvent) => {
-    if (dragStart.current == null) return;
-    setDragY(Math.max(0, e.touches[0].clientY - dragStart.current));
-  };
-  const onHandleTouchEnd = () => {
-    if (dragY > 90) onClose();
-    setDragY(0);
-    dragStart.current = null;
-  };
+  const header = (
+    <>
+      <span
+        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
+        style={{ background: color.fill }}
+      >
+        {color.label}
+      </span>
+      <h3 className="mt-2 text-2xl font-bold text-stone-900">{node.name.en}</h3>
+      {node.name.ta && <p className="mt-1 font-tamil text-lg text-stone-600">{node.name.ta}</p>}
+    </>
+  );
 
-  const panelClasses = isMobile
-    ? 'fixed inset-x-0 bottom-0 max-h-[80vh] w-full overflow-y-auto rounded-t-2xl border-t border-stone-200 bg-white shadow-2xl'
-    : 'fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-stone-200 bg-white shadow-2xl';
-
-  return (
-    <div className="fixed inset-0 z-40">
+  const subheader = hasSiblings ? (
+    <div className="flex items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-5 py-2.5">
       <button
         type="button"
-        aria-label="Close drawer"
-        onClick={onClose}
-        className="absolute inset-0 cursor-default bg-stone-900/30 backdrop-blur-sm"
-      />
-      <aside
-        className={panelClasses}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${node.name.en} details`}
-        style={
-          isMobile
-            ? { transform: `translateY(${dragY}px)`, transition: dragStart.current == null ? 'transform 200ms ease' : 'none', paddingBottom: 'env(safe-area-inset-bottom)' }
-            : undefined
-        }
+        onClick={() => goSibling(-1)}
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        {isMobile && (
-          <div
-            className="flex cursor-grab touch-none justify-center pt-2.5 pb-1 active:cursor-grabbing"
-            onTouchStart={onHandleTouchStart}
-            onTouchMove={onHandleTouchMove}
-            onTouchEnd={onHandleTouchEnd}
-            aria-hidden="true"
-          >
-            <span className="h-1.5 w-10 rounded-full bg-stone-300" />
-          </div>
-        )}
-        <div className="flex items-start justify-between gap-4 border-b border-stone-200 p-5 pt-3">
-          <div>
-            <span
-              className="inline-block rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white"
-              style={{ background: color.fill }}
-            >
-              {color.label}
-            </span>
-            <h3 className="mt-2 text-2xl font-bold text-stone-900">{node.name.en}</h3>
-            {node.name.ta && <p className="mt-1 font-tamil text-lg text-stone-600">{node.name.ta}</p>}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
-            aria-label="Close"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-        {hasSiblings && (
-          <div className="flex items-center justify-between gap-2 border-b border-stone-200 bg-stone-50 px-5 py-2.5">
-            <button
-              type="button"
-              onClick={() => goSibling(-1)}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              <span aria-hidden="true">‹</span> Prev
-            </button>
-            <span className="text-[11px] text-stone-500">
-              {idx + 1} of {siblings.length} siblings
-            </span>
-            <button
-              type="button"
-              onClick={() => goSibling(1)}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              Next <span aria-hidden="true">›</span>
-            </button>
-          </div>
-        )}
-        <div className="space-y-4 p-5 text-sm leading-relaxed text-stone-700">
+        <span aria-hidden="true">‹</span> Prev
+      </button>
+      <span className="text-[11px] text-stone-500">
+        {idx + 1} of {siblings.length} siblings
+      </span>
+      <button
+        type="button"
+        onClick={() => goSibling(1)}
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      >
+        Next <span aria-hidden="true">›</span>
+      </button>
+    </div>
+  ) : undefined;
+
+  return (
+    <UIDrawer
+      isMobile={isMobile}
+      onClose={onClose}
+      ariaLabel={`${node.name.en} details`}
+      header={header}
+      subheader={subheader}
+      onArrow={goSibling}
+    >
+      <div className="space-y-4 p-5 text-sm leading-relaxed text-stone-700">
           {tier && (
             <div className={`flex items-center gap-2 rounded-lg px-3 py-2 ${tier.bg} ${tier.fg}`}>
               <span aria-hidden="true">{tier.emoji}</span>
@@ -847,7 +786,6 @@ function Drawer({
             )}
           </dl>
         </div>
-      </aside>
-    </div>
+    </UIDrawer>
   );
 }

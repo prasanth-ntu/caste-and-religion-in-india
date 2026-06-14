@@ -1,316 +1,108 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { WALKTHROUGH } from '../data/paths';
 
-type Stop = {
-  title: string;
-  titleTa?: string;
-  teaser: string;
-  href: string;
-  minutes: number;
-};
-
-type Lane = {
-  id: 'researcher' | 'family' | 'curious';
-  label: string;
-  tamil: string;
-  description: string;
-  accent: {
-    border: string;
-    chip: string;
-    button: string;
-    rule: string;
-  };
-  stops: Stop[];
-};
-
-const lanes: Lane[] = [
-  {
-    id: 'researcher',
-    label: 'For the researcher',
-    tamil: 'ஆராய்ச்சியாளர்',
-    description:
-      'Skim the structural argument, then the evidence behind it — varna vs jati, the genetics, two thousand years on one timeline, and how reservation actually allocates seats.',
-    accent: {
-      border: 'border-indigo-200',
-      chip: 'bg-indigo-50 text-indigo-700',
-      button: 'bg-indigo-700 hover:bg-indigo-800',
-      rule: 'border-indigo-300',
-    },
-    stops: [
-      {
-        title: 'Varna vs Jati',
-        titleTa: 'வர்ணமும் ஜாதியும்',
-        teaser: 'Varna ≠ jati: the structural difference that almost every popular account flattens.',
-        href: '/overview/varna-vs-jati?path=researcher&stop=1',
-        minutes: 5,
-      },
-      {
-        title: 'Genetics',
-        titleTa: 'மரபியல்',
-        teaser: 'What genetics actually says about ANI/ASI admixture, founder effects, and caste endogamy.',
-        href: '/overview/genetics?path=researcher&stop=2',
-        minutes: 6,
-      },
-      {
-        title: 'Timeline',
-        titleTa: 'காலவரிசை',
-        teaser: 'Sangam → 1881 census → Mandal → today: two thousand years in one chart.',
-        href: '/overview/timeline?path=researcher&stop=3',
-        minutes: 4,
-      },
-      {
-        title: 'Reservation policy',
-        titleTa: 'இடஒதுக்கீடு',
-        teaser: 'The Sankey of category → education → jobs, with Tamil Nadu’s 69% as a case study.',
-        href: '/overview/reservation-policy?path=researcher&stop=4',
-        minutes: 4,
-      },
-      {
-        title: 'Sources',
-        titleTa: 'ஆதாரங்கள்',
-        teaser: 'The full tier-coded bibliography — every claim on the site points back here.',
-        href: '/sources?path=researcher&stop=5',
-        minutes: 3,
-      },
-    ],
-  },
-  {
-    id: 'family',
-    label: 'For the family historian',
-    tamil: 'வம்சாவளி',
-    description:
-      'Start from a kootam and follow it down to a deity and to the practices people actually did — paddy, kamalai wells, hero stones — not the temple-pamphlet version.',
-    accent: {
-      border: 'border-emerald-200',
-      chip: 'bg-emerald-50 text-emerald-700',
-      button: 'bg-emerald-700 hover:bg-emerald-800',
-      rule: 'border-emerald-300',
-    },
-    stops: [
-      {
-        title: 'Pick a kootam',
-        titleTa: 'குலம்',
-        teaser: 'Start here. Pick one of 145 documented kootams — the exogamous clan unit.',
-        href: '/lineage?path=family&stop=1',
-        minutes: 1,
-      },
-      {
-        title: 'Kadai kootam',
-        titleTa: 'கடை குலம்',
-        teaser: 'The Kadai (quail) kootam: totem, region, and the worked example used across this site.',
-        href: '/lineage/k/kadai?path=family&stop=2',
-        minutes: 5,
-      },
-      {
-        title: 'Konur Kaliamman',
-        titleTa: 'கோனூர் காளியம்மன்',
-        teaser: 'The kuladeivam at the bottom of the trail — a village goddess, not a Brahmanical import.',
-        href: '/lineage/konur?path=family&stop=3',
-        minutes: 4,
-      },
-      {
-        title: 'Ancestor practices',
-        titleTa: 'முன்னோர் செய்தவை',
-        teaser: 'What Vellala actually did — material life, tier-tagged, over a stylised Kongu landscape.',
-        href: '/lineage/ancestors?path=family&stop=4',
-        minutes: 5,
-      },
-      {
-        title: 'Contribute',
-        titleTa: 'பங்களிப்பு',
-        teaser: 'If a kootam isn’t documented yet — what we need, and how to send it.',
-        href: '/contribute?path=family&stop=5',
-        minutes: 3,
-      },
-    ],
-  },
-  {
-    id: 'curious',
-    label: 'For the curious reader',
-    tamil: 'ஆர்வம்',
-    description:
-      'The shortest honest tour: what this site is, the big-picture distinction, why a village goddess sits at the bottom of the trail, and what a ritual looks like when you decode it.',
-    accent: {
-      border: 'border-amber-200',
-      chip: 'bg-amber-50 text-amber-800',
-      button: 'bg-amber-700 hover:bg-amber-800',
-      rule: 'border-amber-300',
-    },
-    stops: [
-      {
-        title: 'What this site is about',
-        titleTa: 'அறிமுகம்',
-        teaser: 'Fact vs fiction in caste, religion, and ritual — the one-paragraph version.',
-        href: '/?path=curious&stop=1',
-        minutes: 1,
-      },
-      {
-        title: 'The big picture in 5 minutes',
-        titleTa: 'பெரிய படம்',
-        teaser: 'Varna is a textual category of four. Jati is the lived reality of thousands.',
-        href: '/overview/varna-vs-jati?path=curious&stop=2',
-        minutes: 5,
-      },
-      {
-        title: 'Why a village goddess',
-        titleTa: 'கிராம தெய்வம்',
-        teaser: 'Konur Kaliamman: why a village goddess sits at the bottom of any honest lineage trail.',
-        href: '/lineage/konur?path=curious&stop=3',
-        minutes: 3,
-      },
-      {
-        title: 'Decoding a ritual',
-        titleTa: 'சடங்கு',
-        teaser: 'Tonsuring: what a ritual actually is when you peel back the temple-pamphlet version.',
-        href: '/rituals/tonsuring?path=curious&stop=4',
-        minutes: 3,
-      },
-    ],
-  },
-];
+const path = WALKTHROUGH;
+const total = path.stops.reduce((sum, s) => sum + s.minutes, 0);
 
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50';
-
-function totalMinutes(stops: Stop[]): number {
-  return stops.reduce((sum, s) => sum + s.minutes, 0);
-}
 ---
 
 <BaseLayout
-  title="Explore — three ways into this material"
-  description="Three named entry-paths into decoded.prasanth.io: for the researcher, the family historian, and the curious reader. Each path is 4-6 ordered stops with a small progress indicator."
+  title="Explore — the Decoded Walkthrough"
+  description="One guided path through decoded.prasanth.io: six ordered stops covering the evidence-tier method, varna vs jati, genetics, a lineage case study, the Konur Kaliamman deity, and a decoded ritual."
 >
-  <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+  <main id="main-content" class="mx-auto max-w-3xl px-6 py-12 sm:py-16">
     <nav class="mb-8 text-sm text-stone-500">
-      <a
-        href="/"
-        class={`hover:text-stone-900 rounded ${focusRing}`}
-        >Home</a
-      >
+      <a href="/" class={`hover:text-stone-900 rounded ${focusRing}`}>Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
       <span class="text-stone-700">Explore</span>
     </nav>
 
-    <header class="mb-12 max-w-2xl">
+    <header class="mb-10 max-w-2xl">
+      <p class="mb-3 text-xs font-medium uppercase tracking-wide text-indigo-700">
+        Guided walkthrough
+      </p>
       <h1 class="font-display text-4xl font-semibold tracking-tight text-stone-900 sm:text-5xl">
-        Three ways into this material
+        {path.name}
         <span class="mt-2 block font-tamil text-2xl font-medium text-stone-600 sm:text-3xl">
-          மூன்று வழிகள்
+          {path.tamilName}
         </span>
       </h1>
       <p class="mt-5 text-base leading-relaxed text-stone-700 sm:text-lg">
-        The same evidence, three different entry-paths. Pick the one that fits why you’re here —
-        each is a short, ordered sequence of stops with an estimated read time. Your place is
-        remembered locally; you can resume from any page.
+        {path.description}
       </p>
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        <span
+          class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700"
+        >
+          ~{total} min · {path.stops.length} stops
+        </span>
+        <a
+          href={path.stops[0].href}
+          data-start-path={path.id}
+          data-total={path.stops.length}
+          class={`inline-flex min-h-[44px] items-center justify-center rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-800 ${focusRing}`}
+        >
+          Start the walkthrough →
+        </a>
+      </div>
     </header>
 
-    <div class="space-y-12">
-      {
-        lanes.map((lane) => {
-          const total = totalMinutes(lane.stops);
-          return (
-            <section
-              aria-labelledby={`lane-${lane.id}-title`}
-              class={`overflow-hidden rounded-2xl border bg-white shadow-sm ${lane.accent.border}`}
-            >
-              <header class={`border-b ${lane.accent.rule} px-6 py-5 sm:px-8`}>
-                <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <h2
-                    id={`lane-${lane.id}-title`}
-                    class="font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl"
-                  >
-                    {lane.label}
-                  </h2>
+    <section
+      aria-label={path.name}
+      class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+    >
+      <ol class="divide-y divide-stone-100">
+        {
+          path.stops.map((stop, idx) => (
+            <li>
+              <a
+                href={stop.href}
+                data-stop-link
+                data-path={path.id}
+                data-stop-index={idx}
+                data-total={path.stops.length}
+                class={`flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-stone-50 sm:flex-row sm:items-start sm:gap-5 sm:px-8 ${focusRing}`}
+              >
+                <div class="flex items-baseline gap-3 sm:w-16 sm:shrink-0">
                   <span
-                    lang="ta"
-                    class="font-tamil text-lg text-stone-600 sm:text-xl"
+                    aria-hidden="true"
+                    class="font-display text-2xl font-semibold tabular-nums text-stone-400 sm:text-3xl"
                   >
-                    {lane.tamil}
+                    {String(idx + 1).padStart(2, '0')}
                   </span>
                 </div>
-                <p class="mt-2 max-w-prose text-sm leading-relaxed text-stone-700 sm:text-base">
-                  {lane.description}
-                </p>
-                <div class="mt-4 flex flex-wrap items-center gap-3">
-                  <span
-                    class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${lane.accent.chip}`}
-                  >
-                    Estimated read time: ~{total} min · {lane.stops.length} stops
-                  </span>
-                  <button
-                    type="button"
-                    data-start-path={lane.id}
-                    data-total={lane.stops.length}
-                    data-first-href={lane.stops[0].href}
-                    class={`inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors ${lane.accent.button} ${focusRing}`}
-                  >
-                    Start this path →
-                  </button>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <h2 class="text-base font-semibold text-stone-900 sm:text-lg">
+                      {stop.title}
+                    </h2>
+                    {stop.tamilTitle && (
+                      <span lang="ta" class="font-tamil text-sm text-stone-500 sm:text-base">
+                        {stop.tamilTitle}
+                      </span>
+                    )}
+                  </div>
+                  <p class="mt-1 text-sm leading-relaxed text-stone-700">{stop.teaser}</p>
+                  <p class="mt-2 text-xs text-stone-500">
+                    ~{stop.minutes} min · stop {idx + 1} of {path.stops.length}
+                  </p>
                 </div>
-              </header>
+                <div class="hidden text-sm font-medium text-stone-400 sm:flex sm:items-center">
+                  →
+                </div>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
 
-              <ol class="divide-y divide-stone-100">
-                {
-                  lane.stops.map((stop, idx) => (
-                    <li>
-                      <a
-                        href={stop.href}
-                        target="_blank"
-                        rel="noopener"
-                        data-stop-link
-                        data-path={lane.id}
-                        data-stop-index={idx}
-                        data-total={lane.stops.length}
-                        class={`flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-stone-50 sm:flex-row sm:items-start sm:gap-5 sm:px-8 ${focusRing}`}
-                      >
-                        <div class="flex items-baseline gap-3 sm:w-24 sm:shrink-0">
-                          <span
-                            aria-hidden="true"
-                            class="font-display text-2xl font-semibold tabular-nums text-stone-400 sm:text-3xl"
-                          >
-                            {String(idx + 1).padStart(2, '0')}
-                          </span>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                            <h3 class="text-base font-semibold text-stone-900 sm:text-lg">
-                              {stop.title}
-                            </h3>
-                            {stop.titleTa && (
-                              <span
-                                lang="ta"
-                                class="font-tamil text-sm text-stone-500 sm:text-base"
-                              >
-                                {stop.titleTa}
-                              </span>
-                            )}
-                          </div>
-                          <p class="mt-1 text-sm leading-relaxed text-stone-700">
-                            {stop.teaser}
-                          </p>
-                          <p class="mt-2 text-xs text-stone-500">
-                            ~{stop.minutes} min · stop {idx + 1} of {lane.stops.length}
-                          </p>
-                        </div>
-                        <div class="hidden text-sm font-medium text-stone-400 sm:flex sm:items-center">
-                          →
-                        </div>
-                      </a>
-                    </li>
-                  ))
-                }
-              </ol>
-            </section>
-          );
-        })
-      }
-    </div>
-
-    <p class="mt-12 text-sm text-stone-500">
-      Your progress lives only in this browser — clear local storage and it’s gone. Nothing leaves
-      the device.
+    <p class="mt-10 text-sm text-stone-500">
+      Your place is remembered locally in this browser — clear local storage and it’s gone. Nothing
+      leaves the device.
     </p>
   </main>
 
@@ -318,13 +110,10 @@ function totalMinutes(stops: Stop[]): number {
     (function () {
       function writeProgress(pathId, stopIdx, total) {
         try {
-          const key = 'pathProgress.' + pathId;
-          const payload = {
-            stop: stopIdx,
-            total: total,
-            updatedAt: new Date().toISOString(),
-          };
-          localStorage.setItem(key, JSON.stringify(payload));
+          localStorage.setItem(
+            'pathProgress.' + pathId,
+            JSON.stringify({ stop: stopIdx, total: total, updatedAt: new Date().toISOString() }),
+          );
           localStorage.setItem('pathProgress.active', pathId);
           window.dispatchEvent(new CustomEvent('decoded:path-progress-changed'));
         } catch (e) {
@@ -332,27 +121,22 @@ function totalMinutes(stops: Stop[]): number {
         }
       }
 
-      // Wire "Start this path" buttons: set progress to stop 0, then navigate to first stop.
-      document.querySelectorAll('[data-start-path]').forEach((btn) => {
-        btn.addEventListener('click', function () {
-          const id = btn.getAttribute('data-start-path');
-          const total = Number(btn.getAttribute('data-total') || '0');
-          const href = btn.getAttribute('data-first-href') || '/';
-          if (!id || !total) return;
-          writeProgress(id, 0, total);
-          window.location.href = href;
+      // "Start the walkthrough" → record stop 0, then follow the link normally.
+      document.querySelectorAll('[data-start-path]').forEach((a) => {
+        a.addEventListener('click', function () {
+          const id = a.getAttribute('data-start-path');
+          const total = Number(a.getAttribute('data-total') || '0');
+          if (id && total) writeProgress(id, 0, total);
         });
       });
 
-      // Wire stop links: when a user clicks any individual stop, record their place
-      // as having reached that stop (stop index is zero-based).
+      // Individual stop links record the reached stop (zero-based).
       document.querySelectorAll('[data-stop-link]').forEach((a) => {
         a.addEventListener('click', function () {
           const id = a.getAttribute('data-path');
           const idx = Number(a.getAttribute('data-stop-index') || '0');
           const total = Number(a.getAttribute('data-total') || '0');
-          if (!id || !total) return;
-          writeProgress(id, idx, total);
+          if (id && total) writeProgress(id, idx, total);
         });
       });
     })();

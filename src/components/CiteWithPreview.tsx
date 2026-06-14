@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Popover } from './ui/Popover';
+import { CitationDrawer } from './ui/CitationDrawer';
 
 export interface CiteSourceMeta {
   id: string;
@@ -16,7 +18,7 @@ export interface CiteWithPreviewProps {
   source: CiteSourceMeta;
 }
 
-const TYPE_LABEL: Record<CiteSourceMeta['type'], string> = {
+export const TYPE_LABEL: Record<CiteSourceMeta['type'], string> = {
   paper: 'paper',
   book: 'book',
   wiki: 'wiki',
@@ -24,7 +26,7 @@ const TYPE_LABEL: Record<CiteSourceMeta['type'], string> = {
   oral: 'oral',
 };
 
-const TYPE_CLASSES: Record<CiteSourceMeta['type'], string> = {
+export const TYPE_CLASSES: Record<CiteSourceMeta['type'], string> = {
   paper: 'bg-indigo-50 text-indigo-800 ring-indigo-200',
   book: 'bg-amber-50 text-amber-800 ring-amber-200',
   wiki: 'bg-sky-50 text-sky-800 ring-sky-200',
@@ -32,7 +34,7 @@ const TYPE_CLASSES: Record<CiteSourceMeta['type'], string> = {
   oral: 'bg-rose-50 text-rose-800 ring-rose-200',
 };
 
-function formatAuthors(authors: string[]): string {
+export function formatAuthors(authors: string[]): string {
   if (!authors || authors.length === 0) return '';
   if (authors.length <= 3) return authors.join(' · ');
   return `${authors.slice(0, 3).join(' · ')} et al.`;
@@ -45,22 +47,66 @@ function truncate(text: string, max: number): string {
   return trimmed.slice(0, max - 1).trimEnd() + '…';
 }
 
+// The visible pill is ~20px tall; `before:` extends the clickable area past the
+// glyph to a ≥24px touch target (WCAG 2.5.5) without changing inline layout.
+const CHIP_CLASS =
+  'relative ml-0.5 inline-flex items-center rounded-full bg-stone-100 px-1.5 py-px text-[11px] font-medium text-stone-700 ring-1 ring-inset ring-stone-200 no-underline align-baseline ' +
+  "before:absolute before:-inset-x-1 before:-inset-y-1.5 before:content-[''] " +
+  'hover:bg-stone-200 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50';
+
+function useIsMobile(query = '(max-width: 640px)'): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia(query);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, [query]);
+  return isMobile;
+}
+
 /**
- * Inline citation chip with a hover/focus popover preview card.
- * Wraps an anchor → /sources/{id} in a Popover. The chip itself is small,
- * stone-tinted, and ring-focusable; the popover shows title, authors, year,
- * type badge, a 1-line notes excerpt, and a "View full entry →" link.
+ * Inline citation chip. On desktop, a hover/focus popover preview wrapping an
+ * anchor → /sources/{id}. On mobile (≤640px), tapping the chip opens a bottom
+ * sheet preview (via CitationDrawer) instead of instantly navigating away, so
+ * the citation summary is readable inline; the drawer links on to the full
+ * entry. The chip carries an enlarged invisible tap target either way.
  */
 export function CiteWithPreview({ n, source }: CiteWithPreviewProps) {
   const { id, type, title, authors, year, notes } = source;
   const href = `/sources/${id}`;
   const ariaLabel = `Reference ${n}: ${title}${year ? `, ${year}` : ''}`;
 
+  const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  if (isMobile) {
+    return (
+      <>
+        <a
+          href={href}
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          onClick={(e) => {
+            e.preventDefault();
+            setDrawerOpen(true);
+          }}
+          className={CHIP_CLASS}
+        >
+          {n}
+        </a>
+        {drawerOpen && (
+          <CitationDrawer source={source} isMobile onClose={() => setDrawerOpen(false)} />
+        )}
+      </>
+    );
+  }
+
   const preview = (
     <div className="w-[260px] max-w-[280px] p-1">
-      <div className="font-display text-[15px] leading-snug text-stone-900">
-        {title}
-      </div>
+      <div className="font-display text-[15px] leading-snug text-stone-900">{title}</div>
       {(authors.length > 0 || year) && (
         <div className="mt-1 text-xs text-stone-600">
           {formatAuthors(authors)}
@@ -75,11 +121,7 @@ export function CiteWithPreview({ n, source }: CiteWithPreviewProps) {
           {TYPE_LABEL[type]}
         </span>
       </div>
-      {notes && (
-        <p className="mt-2 text-xs leading-snug text-stone-700">
-          {truncate(notes, 100)}
-        </p>
-      )}
+      {notes && <p className="mt-2 text-xs leading-snug text-stone-700">{truncate(notes, 100)}</p>}
       <div className="mt-2 border-t border-stone-200 pt-2">
         <a
           href={href}
@@ -93,11 +135,7 @@ export function CiteWithPreview({ n, source }: CiteWithPreviewProps) {
 
   return (
     <Popover content={preview} placement="bottom" trigger="hover">
-      <a
-        href={href}
-        aria-label={ariaLabel}
-        className="ml-0.5 inline-flex items-center rounded-full bg-stone-100 px-1.5 py-px text-[11px] font-medium text-stone-700 ring-1 ring-inset ring-stone-200 no-underline align-baseline hover:bg-stone-200 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
-      >
+      <a href={href} aria-label={ariaLabel} className={CHIP_CLASS}>
         {n}
       </a>
     </Popover>
