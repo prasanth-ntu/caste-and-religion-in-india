@@ -19,6 +19,10 @@
 // for desktop, sideways (x = depth * step, y = leafIdx * row) for mobile.
 
 import { varnaJatiTree, type TreeNode } from '../../data/varna-jati-tree';
+import manifest from '../../data/lineage-manifest.json';
+
+type KootamManifestEntry = { slug: string; name: string; tamilName?: string };
+const kootamManifest = manifest as KootamManifestEntry[];
 
 export interface Props {
   highlightSlug?: string;
@@ -32,6 +36,15 @@ export interface Props {
    * only known at runtime (not at build time).
    */
   reactive?: boolean;
+  /**
+   * When true, the locator re-derives its single highlighted node from the
+   * site-wide lineage selection (`?kootam=` / localStorage) on the client and
+   * updates whenever it changes. Used on the /lineage hub, where one static
+   * page is shared across all kootams. Highlights the selected kootam's node
+   * (or its parent jati if the kootam isn't a tree leaf) and names it in a
+   * caption that links to the canonical detail page.
+   */
+  reactiveKootam?: boolean;
 }
 
 const {
@@ -40,6 +53,7 @@ const {
   class: classAttr = '',
   aspect: _aspect = 'radial',
   reactive = false,
+  reactiveKootam = false,
 } = Astro.props as Props;
 
 // -------------------- Layout precompute --------------------
@@ -96,7 +110,52 @@ function walk(n: TreeNode, parentId: string | null, depth: number): { leafStart:
   });
   return { leafStart, leafEnd };
 }
-walk(varnaJatiTree, null, 0);
+
+// -------------------- Kootam leaf injection --------------------
+// The illustrative tree only carries ~8 representative Kongu Vellala kootams as
+// leaves. When the page is *about* a specific kootam (e.g. /lineage/k/<slug>/),
+// inject that kootam as a real leaf so the locator highlights it directly
+// instead of collapsing to the parent jati. All 149 documented kootams are
+// Kongu Vellala, so the parent is always `kongu-vellala`.
+const KOOTAM_PARENT_ID = 'kongu-vellala';
+
+function collectTreeIds(n: TreeNode, set: Set<string>): void {
+  set.add(n.id);
+  (n.children ?? []).forEach((c) => collectTreeIds(c, set));
+}
+
+function withInjectedKootam(tree: TreeNode, slug: string | undefined): TreeNode {
+  if (!slug) return tree;
+  const present = new Set<string>();
+  collectTreeIds(tree, present);
+  if (present.has(slug)) return tree; // already a node — no-op (e.g. kadai)
+  const entry = kootamManifest.find((m) => m.slug === slug);
+  if (!entry) return tree; // unknown slug — keep findClosestSlug() fallback
+  const leaf: TreeNode = {
+    id: entry.slug,
+    name: { en: entry.name, ta: entry.tamilName },
+    level: 'kootam',
+  };
+  // Clone so the shared module import is never mutated across requests/builds.
+  const clone = structuredClone(tree);
+  const stack: TreeNode[] = [clone];
+  while (stack.length) {
+    const node = stack.pop()!;
+    if (node.id === KOOTAM_PARENT_ID) {
+      (node.children ??= []).push(leaf);
+      break;
+    }
+    if (node.children) stack.push(...node.children);
+  }
+  return clone;
+}
+
+let treeForLayout: TreeNode = varnaJatiTree;
+for (const s of highlightSlugs ? [highlightSlugs[0], highlightSlugs[1]] : highlightSlug ? [highlightSlug] : []) {
+  treeForLayout = withInjectedKootam(treeForLayout, s);
+}
+
+walk(treeForLayout, null, 0);
 const totalLeaves = nextLeafIndex;
 
 // Radial: theta from leaf midpoint, radius from depth.
@@ -268,6 +327,27 @@ const reactivePayload = reactive
       })),
     }
   : null;
+
+// Payload for the single-kootam reactive client script (hub page only). The
+// hub is one shared static page, so the selected kootam is only known at
+// runtime. We don't recompute SVG layout client-side — instead we highlight the
+// kootam's node (or its parent jati if it isn't a tree leaf) and name the
+// kootam in a caption that links to its canonical detail page.
+const reactiveKootamPayload = reactiveKootam
+  ? {
+      colors: {
+        A: COLOR_A, node: COLOR_NODE, nodeStroke: COLOR_NODE_STROKE, edge: COLOR_EDGE,
+      },
+      defaultSlug: 'kadai',
+      storageKey: 'decoded.lineage',
+      parentId: KOOTAM_PARENT_ID,
+      // slug -> display name for every documented kootam (for the caption).
+      kootams: kootamManifest.map((m) => ({ slug: m.slug, name: m.name })),
+      nodes: allNodes.map((n) => ({
+        id: n.id, name: n.name, parentId: n.parentId,
+      })),
+    }
+  : null;
 ---
 
 <figure
@@ -291,6 +371,18 @@ const reactivePayload = reactive
       Open full chart →
     </a>
   </figcaption>
+
+  {reactiveKootam && (
+    <p class="vjl-kootam-caption mb-2 text-[11px] text-stone-600" style="display:none;">
+      <span aria-hidden="true">📍</span> You are here:
+      <span class="vjl-kootam-name font-semibold text-indigo-700"></span>
+      <span class="mx-1 text-stone-400">·</span>
+      <a
+        class="vjl-kootam-link text-indigo-700 underline decoration-stone-300 underline-offset-2 hover:decoration-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+        href="#"
+      >Open full page →</a>
+    </p>
+  )}
 
   {compareMode && slugA && slugB && lcaId && (
     <p class="vjl-summary mb-2 text-[11px] text-stone-600">
@@ -615,6 +707,104 @@ const reactivePayload = reactive
       apply();
       // Re-apply when the compare component rewrites the URL (history.replaceState
       // doesn't fire popstate, so poll the search string cheaply).
+      var last = window.location.search;
+      setInterval(function () {
+        if (window.location.search !== last) { last = window.location.search; apply(); }
+      }, 400);
+    })();
+  </script>
+  </Fragment>
+)}
+
+{reactiveKootam && reactiveKootamPayload && (
+  <Fragment>
+  <script
+    type="application/json"
+    class="vjl-kootam-data"
+    set:html={JSON.stringify(reactiveKootamPayload)}
+  />
+  <script is:inline>
+    (function () {
+      var root = document.querySelector('.varna-jati-locator');
+      var dataEl = document.querySelector('.vjl-kootam-data');
+      if (!root || !dataEl) return;
+      var payload;
+      try { payload = JSON.parse(dataEl.textContent || '{}'); } catch (_) { return; }
+      var COL = payload.colors;
+      var byId = {};
+      payload.nodes.forEach(function (n) { byId[n.id] = n; });
+      var kootamName = {};
+      payload.kootams.forEach(function (k) { kootamName[k.slug] = k.name; });
+      var validKootam = {};
+      payload.kootams.forEach(function (k) { validKootam[k.slug] = 1; });
+
+      // Mirror readCurrentSlug() from lib/lineage-selection.ts (inline scripts
+      // can't import). URL ?kootam= wins, then localStorage, then default.
+      function readSlug() {
+        try {
+          var fromUrl = new URLSearchParams(window.location.search).get('kootam');
+          if (fromUrl && validKootam[fromUrl]) return fromUrl;
+        } catch (_) {}
+        try {
+          var raw = window.localStorage.getItem(payload.storageKey);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.kootam && validKootam[parsed.kootam]) return parsed.kootam;
+          }
+        } catch (_) {}
+        return payload.defaultSlug;
+      }
+      // The kootam's own node if it's a tree leaf, else its parent jati.
+      function resolveNode(slug) { return byId[slug] ? slug : payload.parentId; }
+      function chain(id) {
+        var out = {}, cur = id ? byId[id] : null;
+        while (cur) { out[cur.id] = 1; cur = cur.parentId ? byId[cur.parentId] : null; }
+        return out;
+      }
+
+      function apply() {
+        var slug = readSlug();
+        var nodeId = resolveNode(slug);
+        var anc = chain(nodeId);
+
+        root.querySelectorAll('.vjl-node').forEach(function (g) {
+          var id = g.getAttribute('data-slug');
+          var hl = id === nodeId;
+          var circle = g.querySelector('circle');
+          var label = g.querySelector('text.vjl-label');
+          if (circle) {
+            circle.setAttribute('r', hl ? '4.5' : '3');
+            circle.setAttribute('fill', hl ? COL.A : COL.node);
+            circle.setAttribute('stroke', hl ? COL.A : COL.nodeStroke);
+            circle.setAttribute('stroke-width', hl ? '1.2' : '0.6');
+          }
+          g.setAttribute('data-highlight', hl ? 'true' : 'false');
+          if (label) {
+            label.setAttribute('fill', hl ? COL.A : '#44403c');
+            label.setAttribute('font-weight', hl ? '700' : '400');
+            label.style.display = hl ? '' : 'none';
+          }
+        });
+
+        root.querySelectorAll('.vjl-edges [data-from]').forEach(function (e) {
+          var on = anc[e.getAttribute('data-from')] && anc[e.getAttribute('data-to')];
+          e.setAttribute('stroke', on ? COL.A : COL.edge);
+          e.setAttribute('stroke-width', on ? '1.5' : '0.75');
+        });
+
+        var cap = root.querySelector('.vjl-kootam-caption');
+        if (cap) {
+          cap.style.display = '';
+          var nm = cap.querySelector('.vjl-kootam-name');
+          if (nm) nm.textContent = kootamName[slug] || (byId[nodeId] ? byId[nodeId].name : slug);
+          var lnk = cap.querySelector('.vjl-kootam-link');
+          if (lnk) lnk.setAttribute('href', '/lineage/k/' + slug + '/');
+        }
+      }
+
+      apply();
+      window.addEventListener('decoded:lineage-changed', apply);
+      window.addEventListener('storage', apply);
       var last = window.location.search;
       setInterval(function () {
         if (window.location.search !== last) { last = window.location.search; apply(); }

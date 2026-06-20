@@ -79,8 +79,10 @@ const konurMeta = formatMeta('everyone', 4);
   description="A reader's gateway to lineage in India — how varna, region, caste, title, clan, village, and deity nest, with Kongu Vellala as a worked example."
 >
   <main id="main-content" class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-    {/* Hierarchy locator mini-tree — rendered neutral (no highlighted node) */}
-    <VarnaJatiLocator class="mb-6" />
+    {/* Hierarchy locator mini-tree — highlights the visitor's current kootam
+        selection (?kootam= / localStorage) client-side, with a caption linking
+        to its canonical detail page. */}
+    <VarnaJatiLocator class="mb-6" reactiveKootam />
 
     {/* Hero */}
     <section class="mb-10">
