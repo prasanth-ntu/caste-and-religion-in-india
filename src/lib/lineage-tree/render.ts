@@ -32,7 +32,7 @@ function esc(s: string): string {
  * drops into SSR markup or a runtime `innerHTML` assignment.
  */
 export function renderMinimapInner(layout: Layout, hl: MinimapHighlight): string {
-  const { byId, mode } = layout;
+  const { byId } = layout;
   const slugA = hl.slugA;
   const slugB = hl.slugB ?? null;
   const compare = slugB !== null;
@@ -54,18 +54,15 @@ export function renderMinimapInner(layout: Layout, hl: MinimapHighlight): string
       const stroke = onA && onB ? C.lca : onA ? C.a : onB ? C.b : C.edge;
       const width = onA || onB ? 1.5 : 0.75;
       const attrs = `data-from="${esc(e.from)}" data-to="${esc(e.to)}" stroke="${stroke}" stroke-width="${width}"`;
-      if (mode === 'radial') {
-        return `<line ${attrs} x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`;
-      }
-      // vertical: cubic bezier, top-down.
+      // top-down cubic bezier
       const my = (a.y + b.y) / 2;
       return `<path ${attrs} d="M${a.x},${a.y}C${a.x},${my} ${b.x},${my} ${b.x},${b.y}"/>`;
     })
     .join('');
 
   // ---- nodes ----
-  const baseFont = mode === 'radial' ? 10 : 9;
-  const dimFont = mode === 'radial' ? 9 : 8;
+  const baseFont = 9;
+  const dimFont = 8;
   const nodeMarkup = layout.nodes
     .map((n) => {
       const isA = n.id === slugA;
@@ -97,7 +94,7 @@ export function renderMinimapInner(layout: Layout, hl: MinimapHighlight): string
   let lcaMarker = '';
   if (compare && lcaId && byId[lcaId]) {
     const m = byId[lcaId];
-    const pts = mode === 'radial' ? '0,-6 6,0 0,6 -6,0' : '0,-5 5,0 0,5 -5,0';
+    const pts = '0,-5 5,0 0,5 -5,0';
     lcaMarker =
       `<g class="vjl-lca-marker" transform="translate(${m.x} ${m.y})">` +
       `<polygon points="${pts}" fill="none" stroke="${C.lca}" stroke-width="1.5"><title>Common ancestor: ${esc(m.name)}</title></polygon>` +

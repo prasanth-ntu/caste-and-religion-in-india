@@ -1,22 +1,13 @@
 // =============================================================================
-// lineage-tree/layout — analytic (dependency-free) layout for the mini-map
-// locator. Produces node positions + edges for two modes:
-//   • radial   — desktop: theta from leaf midpoint, radius from depth.
-//   • vertical — mobile: top-down, y from depth, x from leaf midpoint.
+// lineage-tree/layout — analytic (dependency-free) top-down layout for the
+// mini-map locator: y from depth, x from leaf midpoint.
 //
 // No D3, no DOM — runs identically in Astro frontmatter and a browser-bundled
 // script, so the reactive /compare + /lineage paths recompute positions for any
 // runtime-selected kootam with the exact same math used at build time.
 // =============================================================================
 
-import type { TreeNode, LayoutMode, LayoutNode, LayoutEdge, Layout } from './types';
-
-// Radial constants (preserve the locator's established look).
-const RADIAL_STEP = 42;
-const RADIAL_CX = 220;
-const RADIAL_CY = 200;
-const RADIAL_W = 440;
-const RADIAL_H = 400;
+import type { TreeNode, LayoutNode, LayoutEdge, Layout } from './types';
 
 // Vertical (top-down) constants.
 const V_Y_STEP = 68; // px per depth level
@@ -62,32 +53,18 @@ function walk(n: TreeNode, parentId: string | null, depth: number, acc: WalkAcc)
   });
 }
 
-export function layoutTree(root: TreeNode, mode: LayoutMode): Layout {
+export function layoutTree(root: TreeNode): Layout {
   const acc: WalkAcc = { nodes: new Map(), nextLeaf: 0 };
   walk(root, null, 0, acc);
   const totalLeaves = Math.max(acc.nextLeaf, 1);
   const nodes = Array.from(acc.nodes.values());
   const maxDepth = nodes.reduce((m, n) => Math.max(m, n.depth), 0);
 
-  let width: number;
-  let height: number;
-
-  if (mode === 'radial') {
-    width = RADIAL_W;
-    height = RADIAL_H;
-    for (const node of nodes) {
-      const theta = (node.leafIndex / totalLeaves) * Math.PI * 2 - Math.PI / 2;
-      const r = node.depth * RADIAL_STEP;
-      node.x = RADIAL_CX + Math.cos(theta) * r;
-      node.y = RADIAL_CY + Math.sin(theta) * r;
-    }
-  } else {
-    width = V_PAD_X * 2 + (totalLeaves - 1) * V_X_STEP + V_LABEL_PAD;
-    height = V_PAD_T + V_PAD_B + maxDepth * V_Y_STEP;
-    for (const node of nodes) {
-      node.x = V_PAD_X + node.leafIndex * V_X_STEP;
-      node.y = V_PAD_T + node.depth * V_Y_STEP;
-    }
+  const width = V_PAD_X * 2 + (totalLeaves - 1) * V_X_STEP + V_LABEL_PAD;
+  const height = V_PAD_T + V_PAD_B + maxDepth * V_Y_STEP;
+  for (const node of nodes) {
+    node.x = V_PAD_X + node.leafIndex * V_X_STEP;
+    node.y = V_PAD_T + node.depth * V_Y_STEP;
   }
 
   const edges: LayoutEdge[] = [];
@@ -97,7 +74,7 @@ export function layoutTree(root: TreeNode, mode: LayoutMode): Layout {
     if (node.parentId) edges.push({ from: node.parentId, to: node.id });
   }
 
-  return { mode, nodes, edges, width, height, byId };
+  return { nodes, edges, width, height, byId };
 }
 
 /** Root→target id chain (inclusive), using the layout's byId map. */
