@@ -48,15 +48,13 @@ export interface TreeNode {
 // chart. Coordinates are in the layout's own viewBox space.
 // ---------------------------------------------------------------------------
 
-export type LayoutMode = 'radial' | 'vertical';
-
 export interface LayoutNode {
   id: string;
   name: string;
   level: CasteLevel;
   parentId: string | null;
   depth: number;
-  /** Mid-index over descendant leaves — drives both layouts. */
+  /** Mid-index over descendant leaves — drives the top-down layout. */
   leafIndex: number;
   isLeaf: boolean;
   highlight: boolean;
@@ -74,7 +72,6 @@ export interface LayoutEdge {
 }
 
 export interface Layout {
-  mode: LayoutMode;
   nodes: LayoutNode[];
   edges: LayoutEdge[];
   /** viewBox dimensions. */

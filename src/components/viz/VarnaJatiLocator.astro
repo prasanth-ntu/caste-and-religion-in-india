@@ -3,9 +3,9 @@
 //
 // Renders the Varna→Jati tree as a compact SVG at BUILD time, with the
 // highlighted node (or two, in compare mode) emphasised and the ancestor path
-// from root traced in indigo. Desktop = radial; mobile = top-down vertical
-// (matching the interactive chart's mobile layout — one design language across
-// the site). No React, no D3 runtime.
+// from root traced in indigo. Top-down vertical at every width — one design
+// language across the site (matches the interactive chart and the overview
+// dendrogram). No React, no D3 runtime.
 //
 // All tree shape, selection resolution, layout, and rendering come from the
 // shared core (src/lib/lineage-tree) so SSR and the reactive client scripts use
@@ -62,22 +62,22 @@ const injectSlugs = highlightSlugs
     : [];
 const tree = buildTree({ injectSlugs });
 
-const radial = layoutTree(tree, 'radial');
-const vertical = layoutTree(tree, 'vertical');
-const has = (id: string) => Object.prototype.hasOwnProperty.call(radial.byId, id);
+// Top-down vertical at every width — one design language across the site
+// (matches the interactive chart and the overview dendrogram).
+const vertical = layoutTree(tree);
+const has = (id: string) => Object.prototype.hasOwnProperty.call(vertical.byId, id);
 
 const compareMode = mode === 'compare' || Boolean(highlightSlugs);
 const slugA = resolveSelection(highlightSlug ?? highlightSlugs?.[0], has);
 const slugB = highlightSlugs ? resolveSelection(highlightSlugs[1], has) : null;
 
-const radialInner = renderMinimapInner(radial, { slugA, slugB });
 const verticalInner = renderMinimapInner(vertical, { slugA, slugB });
 
-const summary = compareMode ? compareSummary(radial, slugA, slugB) : null;
-const fork = compareMode ? forkPath(radial, slugA, slugB) : null;
+const summary = compareMode ? compareSummary(vertical, slugA, slugB) : null;
+const fork = compareMode ? forkPath(vertical, slugA, slugB) : null;
 
-const aName = slugA ? radial.byId[slugA]?.name ?? '' : '';
-const bName = slugB ? radial.byId[slugB]?.name ?? '' : '';
+const aName = slugA ? vertical.byId[slugA]?.name ?? '' : '';
+const bName = slugB ? vertical.byId[slugB]?.name ?? '' : '';
 
 // Accessibility label.
 const a11yTitle = compareMode
@@ -159,29 +159,15 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
     />
   )}
 
-  {/* Radial — desktop / wide */}
+  {/* Top-down vertical, every width. Capped + centred so the portrait mini-tree
+      stays compact on a wide desktop card and fills a narrow mobile one. */}
   <svg
-    class="vjl-svg hidden sm:block"
-    data-layout="radial"
-    viewBox={`0 0 ${radial.width} ${radial.height}`}
-    role="img"
-    width="100%"
-    preserveAspectRatio="xMidYMid meet"
-    aria-label={a11yTitle}
-    style="max-height: 360px;"
-    set:html={radialInner}
-  />
-
-  {/* Top-down vertical — narrow mobile */}
-  <svg
-    class="vjl-svg block sm:hidden"
-    data-layout="vertical"
+    class="vjl-svg mx-auto block"
     viewBox={`0 0 ${vertical.width} ${vertical.height}`}
     role="img"
-    width="100%"
     preserveAspectRatio="xMidYMid meet"
     aria-label={a11yTitle}
-    style="max-height: 300px;"
+    style="width: 100%; max-width: 22rem; max-height: 360px;"
     set:html={verticalInner}
   />
 </figure>
@@ -249,20 +235,18 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
     const rawB = params.get('b');
     // Inject the actual selection so positions exist for any kootam.
     const tree = buildTree({ injectSlugs: [rawA, rawB] });
-    const radial = layoutTree(tree, 'radial');
-    const vertical = layoutTree(tree, 'vertical');
-    const has = (id: string) => Object.prototype.hasOwnProperty.call(radial.byId, id);
+    const vertical = layoutTree(tree);
+    const has = (id: string) => Object.prototype.hasOwnProperty.call(vertical.byId, id);
     const slugA = resolveSelection(rawA, has);
     const slugB = resolveSelection(rawB, has);
 
     root.querySelectorAll<SVGSVGElement>('.vjl-svg').forEach((svg) => {
-      const layout = svg.getAttribute('data-layout') === 'vertical' ? vertical : radial;
-      svg.setAttribute('viewBox', `0 0 ${layout.width} ${layout.height}`);
-      svg.innerHTML = renderMinimapInner(layout, { slugA, slugB });
+      svg.setAttribute('viewBox', `0 0 ${vertical.width} ${vertical.height}`);
+      svg.innerHTML = renderMinimapInner(vertical, { slugA, slugB });
     });
 
     // Summary line.
-    const sum = compareSummary(radial, slugA, slugB);
+    const sum = compareSummary(vertical, slugA, slugB);
     const summaryEl = root.querySelector<HTMLElement>('.vjl-summary');
     if (summaryEl) {
       if (sum) {
@@ -283,7 +267,7 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
     // Ancestry fork breadcrumb.
     const forkEl = root.querySelector<HTMLElement>('.vjl-fork');
     if (forkEl) {
-      const fork = forkPath(radial, slugA, slugB);
+      const fork = forkPath(vertical, slugA, slugB);
       if (fork) {
         forkEl.style.display = '';
         forkEl.innerHTML = renderForkBreadcrumb(fork);
@@ -308,22 +292,20 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
   function applyKootam(root: Element) {
     const slug = readCurrentSlug();
     const tree = buildTree({ injectSlugs: [slug] });
-    const radial = layoutTree(tree, 'radial');
-    const vertical = layoutTree(tree, 'vertical');
-    const has = (id: string) => Object.prototype.hasOwnProperty.call(radial.byId, id);
+    const vertical = layoutTree(tree);
+    const has = (id: string) => Object.prototype.hasOwnProperty.call(vertical.byId, id);
     const slugA = resolveSelection(slug, has);
 
     root.querySelectorAll<SVGSVGElement>('.vjl-svg').forEach((svg) => {
-      const layout = svg.getAttribute('data-layout') === 'vertical' ? vertical : radial;
-      svg.setAttribute('viewBox', `0 0 ${layout.width} ${layout.height}`);
-      svg.innerHTML = renderMinimapInner(layout, { slugA, slugB: null });
+      svg.setAttribute('viewBox', `0 0 ${vertical.width} ${vertical.height}`);
+      svg.innerHTML = renderMinimapInner(vertical, { slugA, slugB: null });
     });
 
     const cap = root.querySelector<HTMLElement>('.vjl-kootam-caption');
     if (cap) {
       cap.style.display = '';
       const nm = cap.querySelector('.vjl-kootam-name');
-      if (nm) nm.textContent = NAME_MAP[slug] ?? (slugA ? radial.byId[slugA]?.name ?? slug : slug);
+      if (nm) nm.textContent = NAME_MAP[slug] ?? (slugA ? vertical.byId[slugA]?.name ?? slug : slug);
       const lnk = cap.querySelector<HTMLAnchorElement>('.vjl-kootam-link');
       if (lnk) lnk.setAttribute('href', `/lineage/k/${slug}/`);
     }

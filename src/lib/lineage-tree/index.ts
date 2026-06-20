@@ -9,7 +9,6 @@ export type {
   CasteLevel,
   CasteTier,
   TreeNode,
-  LayoutMode,
   LayoutNode,
   LayoutEdge,
   Layout,
