@@ -31,14 +31,16 @@ function findPath(
   return target.ancestors().reverse();
 }
 
-// Mobile vertical tree: comfortable per-level spacing so levels never crowd.
-// Canvas height grows with tree depth (the card scrolls vertically + pinch-zooms),
+// Top-down vertical tree at every width (one design language across the site —
+// desktop and mobile both read as a structured dendrogram). Canvas height grows
+// with tree depth (the card scrolls vertically; pinch-zoom + drag-pan on touch),
 // and breadth scrolls horizontally inside the card when leaves are dense.
-const MOBILE_DEPTH_STEP = 104;
-const MOBILE_PAD_T = 40;
-const MOBILE_PAD_B = 40;
-const MOBILE_PAD_X = 16;
-const MOBILE_LEAF_BREADTH = 18; // min horizontal px budget per leaf node
+// Desktop gets airier tiers and wider leaf spacing for a roomier read.
+const DEPTH_STEP = { mobile: 104, desktop: 134 };
+const LEAF_BREADTH = { mobile: 18, desktop: 30 }; // min horizontal px per leaf
+const PAD_T = 40;
+const PAD_B = 44;
+const PAD_X = 16;
 
 interface VarnaJatiRadialProps {
   id?: string;
@@ -93,47 +95,33 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const treeMetrics = useMemo(() => {
     const maxDepth = root.height || 4;
     const leafCount = root.leaves().length;
-    const longestLeafLabel = root.leaves().reduce((m, d) => Math.max(m, d.data.name.en.length), 0);
-    return { maxDepth, leafCount, longestLeafLabel };
+    return { maxDepth, leafCount };
   }, [root]);
 
-  // Derive the SVG canvas from the measured width + tree shape.
-  //  • Mobile: vertical tree — height grows with depth; breadth scrolls inside
-  //    the card so dense leaf levels never overlap.
-  //  • Desktop: a square that the radial chart fills edge-to-edge (see `radius`).
+  // Derive the SVG canvas from the measured width + tree shape. Top-down at
+  // every width: height grows with depth; breadth fills the card (and scrolls
+  // inside it when leaf levels are dense). Desktop uses airier per-level spacing.
   const size = useMemo(() => {
-    if (isMobile) {
-      const { maxDepth, leafCount } = treeMetrics;
-      const height = MOBILE_PAD_T + MOBILE_PAD_B + maxDepth * MOBILE_DEPTH_STEP;
-      const breadth = Math.max(width, leafCount * MOBILE_LEAF_BREADTH + MOBILE_PAD_X * 2);
-      return { width: Math.max(breadth, 320), height };
-    }
-    const dim = Math.min(920, Math.max(560, width));
-    return { width: dim, height: dim };
+    const depthStep = isMobile ? DEPTH_STEP.mobile : DEPTH_STEP.desktop;
+    const leafBreadth = isMobile ? LEAF_BREADTH.mobile : LEAF_BREADTH.desktop;
+    const { maxDepth, leafCount } = treeMetrics;
+    const height = PAD_T + PAD_B + maxDepth * depthStep;
+    const breadth = Math.max(width, leafCount * leafBreadth + PAD_X * 2);
+    return { width: Math.max(breadth, 320), height };
   }, [isMobile, width, treeMetrics]);
 
-  // Compute layout whenever size / mode changes.
+  // Top-down tree layout: d.x = horizontal breadth, d.y = vertical depth. d3
+  // spreads the leaves across the available breadth, so a sparse tree fills the
+  // card and a dense one overflows into horizontal scroll.
   const laidOut = useMemo(() => {
     const r = root.copy();
-    if (isMobile) {
-      // Top-down tree layout: d.x = horizontal breadth, d.y = vertical depth.
-      const maxDepth = r.height || 4;
-      const treeHeight = maxDepth * MOBILE_DEPTH_STEP;
-      d3.tree<TreeNode>()
-        .size([size.width - MOBILE_PAD_X * 2, treeHeight])
-        .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
-      return r;
-    }
-    // Desktop: radial layout. Label-aware padding makes outer labels fit *inside*
-    // the square, so the circular tree fills the canvas with no dead corners.
-    const labelPx = Math.min(treeMetrics.longestLeafLabel, 18) * 6.2;
-    const pad = Math.max(72, labelPx + 24);
-    const radius = Math.min(size.width, size.height) / 2 - pad;
+    const depthStep = isMobile ? DEPTH_STEP.mobile : DEPTH_STEP.desktop;
+    const treeHeight = (r.height || 4) * depthStep;
     d3.tree<TreeNode>()
-      .size([2 * Math.PI, radius])
-      .separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1))(r);
+      .size([size.width - PAD_X * 2, treeHeight])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
     return r;
-  }, [root, size, isMobile, treeMetrics]);
+  }, [root, size, isMobile]);
 
   // Hover/selection augmented path.
   const activePathIds = useMemo(() => {
@@ -171,11 +159,13 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     merge2.append('feMergeNode').attr('in', 'blur');
     merge2.append('feMergeNode').attr('in', 'SourceGraphic');
 
-    if (isMobile) {
-      renderVertical(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
-    } else {
-      renderRadial(svg, laidOut, size, activePathIds, { setSelected, setHoveredId, setTip, inView });
-    }
+    renderVertical(svg, laidOut, size, activePathIds, {
+      setSelected,
+      setHoveredId,
+      setTip,
+      inView,
+      isMobile,
+    });
 
     // Pinch-to-zoom + drag-to-pan on mobile, where leaf clusters are dense.
     // `touch-action: pan-y` (set on the SVG) lets one-finger vertical scroll
@@ -254,12 +244,8 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
             ref={svgRef}
             width={size.width}
             height={size.height}
-            viewBox={
-              isMobile
-                ? `0 0 ${size.width} ${size.height}`
-                : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
-            }
-            className="block max-w-full"
+            viewBox={`0 0 ${size.width} ${size.height}`}
+            className="mx-auto block max-w-full"
             style={isMobile ? { touchAction: 'pan-y' } : undefined}
             role="img"
             aria-label="Dendrogram from Indian society through varna and jati to the Kadai kootam"
@@ -288,17 +274,8 @@ type Handlers = {
   setHoveredId: (id: string | null) => void;
   setTip: (s: TooltipState) => void;
   inView: boolean;
+  isMobile: boolean;
 };
-
-function tipContent(d: d3.HierarchyNode<TreeNode>) {
-  return (
-    <>
-      <strong>{d.data.name.en}</strong>
-      <br />
-      <span style={{ opacity: 0.8 }}>{LEVEL_COLOR[d.data.level].label}</span>
-    </>
-  );
-}
 
 function truncate(s: string, max: number) {
   return s.length <= max ? s : s.slice(0, max - 1) + '…';
@@ -314,7 +291,12 @@ function renderVertical(
   handlers: Handlers,
 ) {
   const reduced = prefersReducedMotion();
-  const padL = MOBILE_PAD_X, padT = MOBILE_PAD_T;
+  const padL = PAD_X, padT = PAD_T;
+  const m = handlers.isMobile;
+  // Desktop has room for larger dots, fonts, and longer labels.
+  const R = { hi: m ? 8 : 9.5, sec: m ? 7 : 8.5, branch: m ? 5 : 6, leaf: m ? 4 : 5 };
+  const F = { root: m ? 12 : 15, varna: m ? 9 : 12, hi: m ? 11 : 13, base: m ? 9 : 11 };
+  const TR = { root: m ? 18 : 26, varna: m ? 12 : 18, base: m ? 20 : 30 };
 
   // d.x = horizontal, d.y = vertical (from d3.tree top-down layout).
   const nx = (d: d3.HierarchyNode<TreeNode>) => padL + (d as any).x as number;
@@ -371,10 +353,9 @@ function renderVertical(
     .style('cursor', 'pointer')
     .style('outline', 'none')
     .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.4 : 1))
-    // The vertical tree is mobile-only: a tap opens the bottom-sheet drawer
-    // (setSelected), so the floating tooltip is suppressed here — on touch it
-    // only flashes a redundant black box behind the drawer. The path-highlight
-    // (setHoveredId) is kept for hover/keyboard-focus dimming.
+    // Click/tap opens the detail drawer (setSelected); hover/keyboard-focus
+    // lights the ancestor path and reveals its labels (setHoveredId). No floating
+    // tooltip — the in-tree labels and the drawer carry the naming.
     .on('click', (_, d) => handlers.setSelected(d.data))
     .on('mouseenter', (_event: MouseEvent, d) => { handlers.setHoveredId(d.data.id); })
     .on('mouseleave', () => { handlers.setHoveredId(null); })
@@ -395,7 +376,7 @@ function renderVertical(
 
   node
     .append('circle')
-    .attr('r', (d) => d.data.highlight ? 8 : d.data.secondary ? 7 : d.children ? 5 : 4)
+    .attr('r', (d) => d.data.highlight ? R.hi : d.data.secondary ? R.sec : d.children ? R.branch : R.leaf)
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
     .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
@@ -406,7 +387,7 @@ function renderVertical(
   // Highlight ring around Kadai.
   node.filter((d) => !!d.data.highlight)
     .append('circle')
-    .attr('r', 13)
+    .attr('r', m ? 13 : 15)
     .attr('fill', 'none')
     .attr('stroke', '#f43f5e')
     .attr('stroke-width', 1.5)
@@ -416,7 +397,7 @@ function renderVertical(
   // Secondary ring around the Nagarathar node (violet, no pulse).
   node.filter((d) => !!d.data.secondary)
     .append('circle')
-    .attr('r', 12)
+    .attr('r', m ? 12 : 14)
     .attr('fill', 'none')
     .attr('stroke', SECONDARY_RING)
     .attr('stroke-width', 1.5)
@@ -427,15 +408,17 @@ function renderVertical(
   node.filter((d) => showLabel(d))
     .append('text')
     .attr('dy', (d) => {
-      if (d.data.level === 'root' || d.data.level === 'varna') return 18;
-      return d.children ? -10 : 18;
+      const below = m ? 18 : 22;
+      const above = m ? -10 : -14;
+      if (d.data.level === 'root' || d.data.level === 'varna') return below;
+      return d.children ? above : below;
     })
     .attr('text-anchor', 'middle')
     .attr('font-size', (d) => {
-      if (d.data.level === 'root') return 12;
-      if (d.data.level === 'varna') return 9;
-      if (d.data.highlight) return 11;
-      return 9;
+      if (d.data.level === 'root') return F.root;
+      if (d.data.level === 'varna') return F.varna;
+      if (d.data.highlight) return F.hi;
+      return F.base;
     })
     .attr('font-weight', (d) =>
       d.data.highlight || d.data.secondary || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500
@@ -449,9 +432,9 @@ function renderVertical(
     .attr('stroke-width', 3)
     .text((d) => {
       const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
-      if (d.data.level === 'root') return truncate(raw, 18);
-      if (d.data.level === 'varna') return truncate(raw, 12);
-      return truncate(raw, 20);
+      if (d.data.level === 'root') return truncate(raw, TR.root);
+      if (d.data.level === 'varna') return truncate(raw, TR.varna);
+      return truncate(raw, TR.base);
     });
 
   // Entry animation.
@@ -465,185 +448,6 @@ function renderVertical(
   } else if (!handlers.inView && !reduced) {
     node.style('opacity', 0);
   }
-}
-
-// ─────────────────────────── Radial (desktop) renderer ───────────────────────────
-
-function renderRadial(
-  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
-  root: d3.HierarchyNode<TreeNode>,
-  size: { width: number; height: number },
-  activePathIds: Set<string>,
-  handlers: Handlers,
-) {
-  const reduced = prefersReducedMotion();
-
-  // Rotate so the highlighted leaf sits at roughly upper-right.
-  const highlightLeaf = root.descendants().find((d) => d.data.highlight);
-  let rotation = 0;
-  if (highlightLeaf) {
-    const angle = (highlightLeaf as any).x as number;
-    rotation = -30 - (angle * 180) / Math.PI + 90;
-  }
-
-  const g = svg.append('g').attr('transform', `rotate(${rotation})`);
-
-  // Only show labels for: root, varna, the secondary node, and nodes on the
-  // active/highlight path.
-  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
-    d.depth <= 1 || activePathIds.has(d.data.id) || d.data.highlight || d.data.secondary;
-
-  // Links.
-  const linkGen = d3
-    .linkRadial<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
-    .angle((d) => (d as any).x)
-    .radius((d) => (d as any).y);
-
-  g.append('g')
-    .attr('fill', 'none')
-    .selectAll('path')
-    .data(root.links())
-    .join('path')
-    .attr('d', linkGen as any)
-    .attr('stroke-linecap', 'round')
-    .attr('stroke', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? CHART.linkActive : CHART.link;
-    })
-    .attr('stroke-width', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      // Depth-tapered: the varna trunk carries visual weight, leaf twigs recede.
-      return onPath ? 2.6 : Math.max(1, 2.4 - d.target.depth * 0.35);
-    })
-    .attr('stroke-opacity', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return onPath ? 1 : 0.75;
-    });
-
-  // Nodes.
-  const node = g
-    .append('g')
-    .selectAll('g')
-    .data(root.descendants())
-    .join('g')
-    .attr('transform', (d) => {
-      const x = (d as any).x as number;
-      const y = (d as any).y as number;
-      return `rotate(${(x * 180) / Math.PI - 90}) translate(${y},0)`;
-    })
-    .attr('tabindex', 0)
-    .attr('role', 'button')
-    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
-    .style('cursor', 'pointer')
-    .style('outline', 'none')
-    .on('mouseenter', (event: MouseEvent, d) => {
-      handlers.setHoveredId(d.data.id);
-      handlers.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
-    })
-    .on('mouseleave', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('focus', function (_: FocusEvent, d) {
-      handlers.setHoveredId(d.data.id);
-      const r = (this as SVGGElement).getBoundingClientRect();
-      handlers.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
-    })
-    .on('blur', () => { handlers.setHoveredId(null); handlers.setTip({ x: null, y: null, content: null }); })
-    .on('click', (_, d) => handlers.setSelected(d.data))
-    .on('keydown', function (event: KeyboardEvent, d) {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handlers.setSelected(d.data); }
-      if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) {
-        const siblings = d.parent?.children;
-        if (!siblings || siblings.length < 2) return;
-        const allG = node.nodes() as SVGGElement[];
-        const sibIdxs = siblings.map((s) =>
-          allG.findIndex((el) => (d3.select(el).datum() as d3.HierarchyNode<TreeNode>).data.id === s.data.id)
-        );
-        const myIdx = siblings.indexOf(d as any);
-        const fwd = event.key === 'ArrowRight' || event.key === 'ArrowDown';
-        const nextIdx = sibIdxs[(myIdx + (fwd ? 1 : -1) + siblings.length) % siblings.length];
-        if (nextIdx >= 0) { event.preventDefault(); (allG[nextIdx] as unknown as HTMLElement).focus?.(); }
-      }
-    });
-
-  node
-    .append('circle')
-    .attr('r', (d) => d.data.highlight ? 9 : d.data.secondary ? 8 : d.children ? 5 : 4)
-    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
-    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
-    .attr('stroke-width', (d) => activePathIds.has(d.data.id) ? 2 : 1)
-    .attr('filter', (d) => d.data.highlight ? 'url(#kadai-glow)' : d.data.secondary ? 'url(#secondary-glow)' : null)
-    .attr('class', (d) => d.data.highlight ? 'animate-pulse' : null);
-
-  if (!reduced && handlers.inView) {
-    node.each(function (d, i) {
-      const sel = d3.select(this);
-      const delay = Math.min(d.depth * 60 + i * 6, 600);
-      sel.style('opacity', 0).style('transition', `opacity 360ms ease ${delay}ms`);
-      requestAnimationFrame(() => sel.style('opacity', null));
-    });
-  } else if (!handlers.inView && !reduced) {
-    node.style('opacity', 0);
-  }
-
-  node.filter((d) => !!d.data.highlight)
-    .append('circle')
-    .attr('r', 14)
-    .attr('fill', 'none')
-    .attr('stroke', '#f43f5e')
-    .attr('stroke-width', 1.5)
-    .attr('stroke-opacity', 0.7)
-    .attr('class', 'animate-pulse');
-
-  // Secondary ring around the Nagarathar node (violet, dashed, no pulse).
-  node.filter((d) => !!d.data.secondary)
-    .append('circle')
-    .attr('r', 13)
-    .attr('fill', 'none')
-    .attr('stroke', SECONDARY_RING)
-    .attr('stroke-width', 1.5)
-    .attr('stroke-dasharray', '3 2')
-    .attr('stroke-opacity', 0.85);
-
-  // Labels: only for root, varna, secondary, and active path. All others rely on tooltip.
-  node.filter((d) => showLabel(d))
-    .append('text')
-    .attr('dy', '0.32em')
-    .attr('x', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
-      const onRight = norm > -90 && norm < 90;
-      // Wider offset for root/varna to clear the larger dots.
-      const offset = d.depth <= 1 ? 12 : 10;
-      return onRight ? offset : -offset;
-    })
-    .attr('text-anchor', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      const norm = ((screenDeg + 180) % 360 + 360) % 360 - 180;
-      const onRight = norm > -90 && norm < 90;
-      return onRight ? 'start' : 'end';
-    })
-    .attr('transform', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      return `rotate(${-screenDeg})`;
-    })
-    .attr('font-size', (d) => d.data.level === 'root' ? 13 : d.data.highlight ? 12 : d.data.secondary ? 11 : d.depth <= 1 ? 11 : 10)
-    .attr('font-weight', (d) => d.data.highlight || d.data.secondary || d.depth <= 1 ? 600 : 500)
-    .attr('fill', (d) =>
-      d.data.secondary ? LEVEL_COLOR['temple-clan'].text
-      : activePathIds.has(d.data.id) ? '#0f172a' : '#44403c'
-    )
-    .attr('paint-order', 'stroke')
-    .attr('stroke', '#ffffff')
-    .attr('stroke-width', 3)
-    .text((d) => {
-      const raw = d.data.highlight ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
-      // Truncate deep path labels to avoid overlap with outer nodes.
-      if (d.depth >= 3) return truncate(raw, 18);
-      return raw;
-    });
-
 }
 
 // ─────────────────────────── Drawer ───────────────────────────

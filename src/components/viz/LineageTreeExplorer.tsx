@@ -15,7 +15,8 @@ import Tooltip, { type TooltipState } from '../ui/Tooltip';
 // so it stays in lockstep with the SSR locator. Unlike the focused "you are here"
 // VarnaJatiRadial, this is an exploratory tool: pick the depth, reveal all 145
 // kootams, show every label, and focus ANY node (deep-linkable via ?node=).
-//   • desktop = radial   • mobile = top-down vertical
+//   • top-down vertical at every width — desktop gets airier spacing, dense
+//     levels overflow into horizontal scroll.
 // =============================================================================
 
 const SECONDARY_RING = '#8b5cf6';
@@ -29,11 +30,14 @@ const LEVEL_STEPS: { label: string; maxDepth: number }[] = [
   { label: 'Kootams', maxDepth: 4 },
 ];
 
-const MOBILE_DEPTH_STEP = 104;
-const MOBILE_PAD_T = 40;
-const MOBILE_PAD_B = 40;
-const MOBILE_PAD_X = 16;
-const MOBILE_LEAF_BREADTH = 16;
+// Top-down vertical at every width (one design language across the site).
+// Desktop gets airier tiers + wider leaf spacing; dense levels (all 145 kootams)
+// overflow into horizontal scroll inside the card.
+const DEPTH_STEP = { mobile: 104, desktop: 128 };
+const LEAF_BREADTH = { mobile: 16, desktop: 26 };
+const PAD_T = 40;
+const PAD_B = 44;
+const PAD_X = 16;
 
 function truncate(s: string, max: number) {
   return s.length <= max ? s : s.slice(0, max - 1) + '…';
@@ -159,42 +163,27 @@ export default function LineageTreeExplorer({ id }: LineageTreeExplorerProps = {
   const treeMetrics = useMemo(() => {
     const md = root.height || 4;
     const leafCount = root.leaves().length;
-    const longest = root.leaves().reduce((m, d) => Math.max(m, d.data.name.en.length), 0);
-    return { md, leafCount, longest };
+    return { md, leafCount };
   }, [root]);
 
   const size = useMemo(() => {
-    if (isMobile) {
-      const height = MOBILE_PAD_T + MOBILE_PAD_B + treeMetrics.md * MOBILE_DEPTH_STEP;
-      const breadth = Math.max(width, treeMetrics.leafCount * MOBILE_LEAF_BREADTH + MOBILE_PAD_X * 2);
-      return { width: Math.max(breadth, 320), height };
-    }
-    // Desktop radial is square; cap it to the viewport height so the whole
-    // circle is visible without scrolling.
-    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
-    const dim = Math.min(1000, Math.max(520, Math.min(width, vh * 0.82)));
-    return { width: dim, height: dim };
+    const depthStep = isMobile ? DEPTH_STEP.mobile : DEPTH_STEP.desktop;
+    const leafBreadth = isMobile ? LEAF_BREADTH.mobile : LEAF_BREADTH.desktop;
+    const height = PAD_T + PAD_B + treeMetrics.md * depthStep;
+    const breadth = Math.max(width, treeMetrics.leafCount * leafBreadth + PAD_X * 2);
+    return { width: Math.max(breadth, 320), height };
   }, [isMobile, width, treeMetrics]);
 
   const laidOut = useMemo(() => {
     const r = root.copy();
-    if (isMobile) {
-      const treeHeight = (r.height || 4) * MOBILE_DEPTH_STEP;
-      d3
-        .tree<TreeNode>()
-        .size([size.width - MOBILE_PAD_X * 2, treeHeight])
-        .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
-      return r;
-    }
-    const labelPx = Math.min(treeMetrics.longest, 18) * 6.2;
-    const pad = Math.max(72, labelPx + 24);
-    const radius = Math.min(size.width, size.height) / 2 - pad;
+    const depthStep = isMobile ? DEPTH_STEP.mobile : DEPTH_STEP.desktop;
+    const treeHeight = (r.height || 4) * depthStep;
     d3
       .tree<TreeNode>()
-      .size([2 * Math.PI, radius])
-      .separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1))(r);
+      .size([size.width - PAD_X * 2, treeHeight])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
     return r;
-  }, [root, size, isMobile, treeMetrics]);
+  }, [root, size, isMobile]);
 
   // Render pass.
   useEffect(() => {
@@ -222,11 +211,24 @@ export default function LineageTreeExplorer({ id }: LineageTreeExplorerProps = {
       inView,
       showAllLabels,
       focusId: effectiveFocusId,
+      isMobile,
     };
 
-    if (isMobile) renderVertical(svg, laidOut, size, activePathIds, handlers);
-    else renderRadial(svg, laidOut, size, activePathIds, handlers);
+    renderVertical(svg, laidOut, size, activePathIds, handlers);
   }, [laidOut, size, activePathIds, isMobile, inView, showAllLabels, effectiveFocusId]);
+
+  // When the tree is wider than its card (e.g. all 145 kootams on desktop),
+  // centre the horizontal scroll on the focused node so the view never lands on
+  // a blank edge. No-op when the tree fits (scrollWidth ≈ clientWidth).
+  useEffect(() => {
+    const el = dimRef.current;
+    if (!el || !measured) return;
+    if (el.scrollWidth <= el.clientWidth + 2) return;
+    const focusNode = laidOut.descendants().find((d) => d.data.id === effectiveFocusId);
+    if (!focusNode) return;
+    const fx = PAD_X + ((focusNode as any).x as number);
+    el.scrollLeft = Math.max(0, Math.min(fx - el.clientWidth / 2, el.scrollWidth - el.clientWidth));
+  }, [laidOut, size, effectiveFocusId, measured, dimRef]);
 
   // Keep ?node= in sync for shareable deep links.
   useEffect(() => {
@@ -375,12 +377,10 @@ export default function LineageTreeExplorer({ id }: LineageTreeExplorerProps = {
             ref={svgRef}
             width={size.width}
             height={size.height}
-            viewBox={
-              isMobile
-                ? `0 0 ${size.width} ${size.height}`
-                : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
-            }
-            className="mx-auto block max-w-full"
+            viewBox={`0 0 ${size.width} ${size.height}`}
+            /* Desktop keeps intrinsic width so a dense tree (all 145 kootams)
+               scrolls horizontally inside the card; mobile scales to fit. */
+            className={`mx-auto block ${isMobile ? 'max-w-full' : ''}`}
             role="img"
             aria-label={`Varna→Jati tree, focused on ${focusName}. Detail level: ${LEVEL_STEPS[levelStep].label}.`}
           />
@@ -403,17 +403,8 @@ type Handlers = {
   inView: boolean;
   showAllLabels: boolean;
   focusId: string;
+  isMobile: boolean;
 };
-
-function tipContent(d: d3.HierarchyNode<TreeNode>) {
-  return (
-    <>
-      <strong>{d.data.name.en}</strong>
-      <br />
-      <span style={{ opacity: 0.8 }}>{LEVEL_COLOR[d.data.level].label}</span>
-    </>
-  );
-}
 
 function entryAnim(node: d3.Selection<any, d3.HierarchyNode<TreeNode>, any, any>, inView: boolean) {
   const reduced = prefersReducedMotion();
@@ -436,10 +427,15 @@ function renderVertical(
   activePathIds: Set<string>,
   h: Handlers,
 ) {
-  const padL = MOBILE_PAD_X;
-  const padT = MOBILE_PAD_T;
+  const padL = PAD_X;
+  const padT = PAD_T;
   const nx = (d: d3.HierarchyNode<TreeNode>) => padL + ((d as any).x as number);
   const ny = (d: d3.HierarchyNode<TreeNode>) => padT + ((d as any).y as number);
+  const m = h.isMobile;
+  // Desktop has room for larger dots, fonts, and longer labels.
+  const R = { focus: m ? 8 : 9.5, sec: m ? 7 : 8.5, branch: m ? 5 : 6, leaf: m ? 4 : 5 };
+  const F = { root: m ? 12 : 15, focus: m ? 11 : 13, base: m ? 9 : 11 };
+  const TR = { root: m ? 18 : 26, base: m ? 20 : 30 };
 
   const focusActive = activePathIds.size > 0;
   const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
@@ -511,7 +507,7 @@ function renderVertical(
 
   node
     .append('circle')
-    .attr('r', (d) => (d.data.id === h.focusId ? 8 : d.data.secondary ? 7 : d.children ? 5 : 4))
+    .attr('r', (d) => (d.data.id === h.focusId ? R.focus : d.data.secondary ? R.sec : d.children ? R.branch : R.leaf))
     .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
     .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
     .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
@@ -521,7 +517,7 @@ function renderVertical(
   node
     .filter((d) => d.data.id === h.focusId)
     .append('circle')
-    .attr('r', 13)
+    .attr('r', m ? 13 : 15)
     .attr('fill', 'none')
     .attr('stroke', '#f43f5e')
     .attr('stroke-width', 1.5)
@@ -531,7 +527,7 @@ function renderVertical(
   node
     .filter((d) => !!d.data.secondary)
     .append('circle')
-    .attr('r', 12)
+    .attr('r', m ? 12 : 14)
     .attr('fill', 'none')
     .attr('stroke', SECONDARY_RING)
     .attr('stroke-width', 1.5)
@@ -541,9 +537,13 @@ function renderVertical(
   node
     .filter((d) => showLabel(d))
     .append('text')
-    .attr('dy', (d) => (d.data.level === 'root' || d.data.level === 'varna' ? 18 : d.children ? -10 : 18))
+    .attr('dy', (d) => {
+      const below = m ? 18 : 22;
+      const above = m ? -10 : -14;
+      return d.data.level === 'root' || d.data.level === 'varna' ? below : d.children ? above : below;
+    })
     .attr('text-anchor', 'middle')
-    .attr('font-size', (d) => (d.data.level === 'root' ? 12 : d.data.id === h.focusId ? 11 : 9))
+    .attr('font-size', (d) => (d.data.level === 'root' ? F.root : d.data.id === h.focusId ? F.focus : F.base))
     .attr('font-weight', (d) =>
       d.data.id === h.focusId || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500,
     )
@@ -559,175 +559,8 @@ function renderVertical(
     .attr('stroke-width', 3)
     .text((d) => {
       const raw = d.data.id === h.focusId ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
-      if (d.data.level === 'root') return truncate(raw, 18);
-      return truncate(raw, 20);
-    });
-
-  entryAnim(node, h.inView);
-}
-
-function renderRadial(
-  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
-  root: d3.HierarchyNode<TreeNode>,
-  _size: { width: number; height: number },
-  activePathIds: Set<string>,
-  h: Handlers,
-) {
-  // Rotate so the focused leaf sits upper-right.
-  const focusLeaf = root.descendants().find((d) => d.data.id === h.focusId);
-  let rotation = 0;
-  if (focusLeaf) {
-    const angle = (focusLeaf as any).x as number;
-    rotation = -30 - (angle * 180) / Math.PI + 90;
-  }
-
-  const g = svg.append('g').attr('transform', `rotate(${rotation})`);
-  const focusActive = activePathIds.size > 0;
-
-  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
-    h.showAllLabels ||
-    d.depth <= 1 ||
-    activePathIds.has(d.data.id) ||
-    d.data.id === h.focusId ||
-    d.data.secondary;
-
-  const linkGen = d3
-    .linkRadial<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
-    .angle((d) => (d as any).x)
-    .radius((d) => (d as any).y);
-
-  g.append('g')
-    .attr('fill', 'none')
-    .selectAll('path')
-    .data(root.links())
-    .join('path')
-    .attr('d', linkGen as any)
-    .attr('stroke-linecap', 'round')
-    .attr('stroke', (d) =>
-      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
-        ? CHART.linkActive
-        : CHART.link,
-    )
-    .attr('stroke-width', (d) =>
-      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
-        ? 2.6
-        : Math.max(0.8, 2.2 - d.target.depth * 0.3),
-    )
-    .attr('stroke-opacity', (d) => {
-      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
-      return focusActive && !onPath ? 0.4 : onPath ? 1 : 0.7;
-    });
-
-  const node = g
-    .append('g')
-    .selectAll('g')
-    .data(root.descendants())
-    .join('g')
-    .attr('transform', (d) => {
-      const x = (d as any).x as number;
-      const y = (d as any).y as number;
-      return `rotate(${(x * 180) / Math.PI - 90}) translate(${y},0)`;
-    })
-    .attr('tabindex', 0)
-    .attr('role', 'button')
-    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
-    .style('cursor', 'pointer')
-    .style('outline', 'none')
-    .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.5 : 1))
-    .on('mouseenter', (event: MouseEvent, d) => {
-      h.setHoveredId(d.data.id);
-      h.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
-    })
-    .on('mouseleave', () => {
-      h.setHoveredId(null);
-      h.setTip({ x: null, y: null, content: null });
-    })
-    .on('focus', function (_e, d) {
-      h.setHoveredId(d.data.id);
-      const r = (this as SVGGElement).getBoundingClientRect();
-      h.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
-    })
-    .on('blur', () => {
-      h.setHoveredId(null);
-      h.setTip({ x: null, y: null, content: null });
-    })
-    .on('click', (_, d) => h.onFocus(d.data.id))
-    .on('keydown', function (event: KeyboardEvent, d) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        h.onFocus(d.data.id);
-      }
-    });
-
-  node
-    .append('circle')
-    .attr('r', (d) => (d.data.id === h.focusId ? 9 : d.data.secondary ? 8 : d.children ? 5 : 4))
-    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
-    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
-    .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
-    .attr('filter', (d) => (d.data.id === h.focusId ? 'url(#lte-focus-glow)' : null));
-
-  node
-    .filter((d) => d.data.id === h.focusId)
-    .append('circle')
-    .attr('r', 14)
-    .attr('fill', 'none')
-    .attr('stroke', '#f43f5e')
-    .attr('stroke-width', 1.5)
-    .attr('stroke-opacity', 0.75)
-    .attr('class', 'animate-pulse');
-
-  node
-    .filter((d) => !!d.data.secondary)
-    .append('circle')
-    .attr('r', 13)
-    .attr('fill', 'none')
-    .attr('stroke', SECONDARY_RING)
-    .attr('stroke-width', 1.5)
-    .attr('stroke-dasharray', '3 2')
-    .attr('stroke-opacity', 0.85);
-
-  node
-    .filter((d) => showLabel(d))
-    .append('text')
-    .attr('dy', '0.32em')
-    .attr('x', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      const norm = (((screenDeg + 180) % 360) + 360) % 360 - 180;
-      const onRight = norm > -90 && norm < 90;
-      const offset = d.depth <= 1 ? 12 : 9;
-      return onRight ? offset : -offset;
-    })
-    .attr('text-anchor', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      const norm = (((screenDeg + 180) % 360) + 360) % 360 - 180;
-      return norm > -90 && norm < 90 ? 'start' : 'end';
-    })
-    .attr('transform', (d) => {
-      const x = (d as any).x as number;
-      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
-      return `rotate(${-screenDeg})`;
-    })
-    .attr('font-size', (d) =>
-      d.data.level === 'root' ? 13 : d.data.id === h.focusId ? 12 : d.depth <= 1 ? 11 : 9.5,
-    )
-    .attr('font-weight', (d) => (d.data.id === h.focusId || d.depth <= 1 ? 600 : 500))
-    .attr('fill', (d) =>
-      d.data.secondary
-        ? LEVEL_COLOR['temple-clan'].text
-        : activePathIds.has(d.data.id)
-          ? '#0f172a'
-          : '#44403c',
-    )
-    .attr('paint-order', 'stroke')
-    .attr('stroke', '#ffffff')
-    .attr('stroke-width', 3)
-    .text((d) => {
-      const raw = d.data.id === h.focusId ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
-      if (d.depth >= 3) return truncate(raw, 16);
-      return raw;
+      if (d.data.level === 'root') return truncate(raw, TR.root);
+      return truncate(raw, TR.base);
     });
 
   entryAnim(node, h.inView);
