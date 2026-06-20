@@ -337,8 +337,12 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
     });
   }
 
-  // Run on first load and after every view-transition swap.
+  // Run on first load and after every view-transition swap. Also call directly
+  // in case this module first loads *during* a swap (after astro:page-load has
+  // already fired for that navigation); init() is idempotent.
   document.addEventListener('astro:page-load', init);
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
 
   // React to runtime changes:
   //  • compare: LineageCompare rewrites ?a=/?b= via history.replaceState (no
