@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
  * resolves to `true` immediately where IntersectionObserver is unavailable.
  *
  * Extracted from the inline copies previously duplicated across the viz charts
- * (GeneticsChart, VarnaJatiRadial, KootamForceGraph).
+ * (GeneticsChart, VarnaJatiDendrogram, KootamForceGraph).
  */
 export function useInView<T extends Element>(): readonly [React.RefObject<T | null>, boolean] {
   const ref = useRef<T | null>(null);

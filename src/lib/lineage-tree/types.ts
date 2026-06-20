@@ -1,7 +1,7 @@
 // =============================================================================
 // lineage-tree/types — the single source of truth for the Varna→Jati tree
 // shapes shared across the SSR locator (VarnaJatiLocator.astro), the interactive
-// chart (VarnaJatiRadial / LineageTreeExplorer), and the reactive client scripts.
+// chart (VarnaJatiDendrogram / LineageTreeExplorer), and the reactive client scripts.
 //
 // Pure type module — no runtime imports, safe in Astro frontmatter, React, and
 // browser-bundled scripts alike.

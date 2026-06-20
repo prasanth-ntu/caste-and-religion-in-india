@@ -21,7 +21,7 @@ export interface DrawerProps {
  * Shared slide-in drawer shell: stone scrim + backdrop blur, a bottom sheet on
  * mobile (with grab-handle swipe-to-dismiss) or a right sidebar on desktop,
  * Escape-to-close, and `role="dialog"`/`aria-modal`. Extracted from the
- * VarnaJatiRadial node drawer so citations and charts share one tested shell.
+ * VarnaJatiDendrogram node drawer so citations and charts share one tested shell.
  */
 export function Drawer({
   isMobile,

@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Claim from '../../components/Claim.astro';
-import VarnaJatiRadial from '../../components/viz/VarnaJatiRadial.tsx';
+import VarnaJatiDendrogram from '../../components/viz/VarnaJatiDendrogram.tsx';
 import ChartSkeleton from '../../components/ui/ChartSkeleton.astro';
 import RelatedNav from '../../components/site/RelatedNav.astro';
 ---
@@ -59,9 +59,9 @@ import RelatedNav from '../../components/site/RelatedNav.astro';
     {/* Visualization */}
     <section class="mb-6">
       <div class="relative">
-        <ChartSkeleton target="varna-jati-radial" class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati radial…" />
+        <ChartSkeleton target="varna-jati-dendrogram" class="absolute inset-0 -z-0" aspect="1/1" ariaLabel="Loading varna/jati dendrogram…" />
         <div class="relative z-10">
-          <VarnaJatiRadial id="varna-jati-radial" client:load />
+          <VarnaJatiDendrogram id="varna-jati-dendrogram" client:load />
         </div>
       </div>
       <p class="mt-4 text-sm text-stone-600">
