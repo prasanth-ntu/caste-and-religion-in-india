@@ -412,20 +412,30 @@ export default function ScrollyTimeline({ events, id }: Props) {
       if (width === 0 || height === 0) return;
 
       const margin = { top: 4, right: 24, bottom: 18, left: 24 };
-      const innerW = width - margin.left - margin.right;
       const axisY = height - margin.bottom;
-
-      const x = d3.scaleLinear().domain([minYear, maxYear]).range([margin.left, margin.left + innerW]);
+      // The strip is an evenly-spaced navigator — one fixed SLOT per event —
+      // not a time-scaled axis. Even spacing is what stops time-clustered
+      // events (the 850/900/1000 CE and colonial 1881–1994 runs) from
+      // overlapping. Era bands therefore span event-INDEX ranges, and the
+      // per-event year labels (rendered as buttons) carry the dates, so the
+      // SVG draws no separate tick labels.
+      const SLOT = 72;
+      const PAD = 24; // matches the buttons' leading offset below
 
       const sel = d3.select(svg);
       sel.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       sel.selectAll('*').remove();
 
-      // era bands as a horizontal strip
+      // era bands spanning the index range of the events that fall in each era
       ERA_ORDER.forEach((era) => {
         const r = ERA_RANGES[era];
-        const x0 = x(Math.max(r.start, minYear));
-        const x1 = x(Math.min(r.end, maxYear));
+        const idxs = sorted
+          .map((e, i) => ({ e, i }))
+          .filter(({ e }) => e.year_start >= r.start && e.year_start < r.end)
+          .map(({ i }) => i);
+        if (idxs.length === 0) return;
+        const x0 = PAD + Math.min(...idxs) * SLOT;
+        const x1 = PAD + (Math.max(...idxs) + 1) * SLOT;
         sel
           .append('rect')
           .attr('y', margin.top)
@@ -436,26 +446,14 @@ export default function ScrollyTimeline({ events, id }: Props) {
           .attr('opacity', 0.55);
       });
 
-      // axis line
+      // axis baseline spanning the populated slots
       sel
         .append('line')
         .attr('y1', axisY)
         .attr('y2', axisY)
-        .attr('x1', margin.left)
-        .attr('x2', margin.left + innerW)
+        .attr('x1', PAD)
+        .attr('x2', PAD + sorted.length * SLOT)
         .attr('stroke', CHART.axis);
-
-      // sparse tick labels
-      x.ticks(5).forEach((t) => {
-        sel
-          .append('text')
-          .attr('x', x(t))
-          .attr('y', axisY + 12)
-          .attr('text-anchor', 'middle')
-          .attr('font-size', 9)
-          .attr('fill', FG[4])
-          .text(formatYear(t));
-      });
     };
 
     draw();
@@ -660,7 +658,9 @@ export default function ScrollyTimeline({ events, id }: Props) {
             <div
               ref={mobileContainerRef}
               className="relative h-full"
-              style={{ width: Math.max(sorted.length * 72 + 48, 320) }}
+              /* 24px leading pad + one 72px slot per event + 96px trailing space
+                 so the right-most dots can scroll clear of the floating FAB. */
+              style={{ width: Math.max(sorted.length * 72 + 120, 320) }}
             >
               {/* D3 draws era bands + axis into this SVG; it fills the inner wrapper */}
               <svg
@@ -671,15 +671,13 @@ export default function ScrollyTimeline({ events, id }: Props) {
               {/* interactive buttons, positioned by year percentage */}
               <ul role="list" className="relative h-full w-full">
                 {sorted.map((ev, i) => {
-                  const range = maxYear - minYear || 1;
-                  const pct = ((ev.year_start - minYear) / range) * 100;
                   const isActive = i === activeIndex;
                   const cMeta = categoryFor(ev.category);
                   return (
                     <li
                       key={ev.slug}
-                      className="absolute inset-y-0"
-                      style={{ left: `calc(${pct}% - 18px)` }}
+                      className="absolute inset-y-0 flex justify-center"
+                      style={{ left: `${24 + i * 72}px`, width: '72px' }}
                     >
                       <button
                         type="button"
@@ -688,7 +686,7 @@ export default function ScrollyTimeline({ events, id }: Props) {
                         onKeyDown={(e) => handleStripKey(e, i)}
                         aria-label={`${ev.title}, ${formatYear(ev.year_start)}`}
                         aria-current={isActive ? 'true' : 'false'}
-                        className={`flex h-full w-9 flex-col items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 ${
+                        className={`flex h-full w-11 flex-col items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 ${
                           isActive ? 'bg-stone-100/80' : ''
                         }`}
                       >
