@@ -27,6 +27,8 @@ import {
   resolveSelection,
   renderMinimapInner,
   compareSummary,
+  forkPath,
+  renderForkBreadcrumb,
 } from '../../lib/lineage-tree';
 
 export interface Props {
@@ -72,6 +74,7 @@ const radialInner = renderMinimapInner(radial, { slugA, slugB });
 const verticalInner = renderMinimapInner(vertical, { slugA, slugB });
 
 const summary = compareMode ? compareSummary(radial, slugA, slugB) : null;
+const fork = compareMode ? forkPath(radial, slugA, slugB) : null;
 
 const aName = slugA ? radial.byId[slugA]?.name ?? '' : '';
 const bName = slugB ? radial.byId[slugB]?.name ?? '' : '';
@@ -145,6 +148,15 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
         &nbsp;(<span class="vjl-lca-levels">{summary?.levelsUp} level{summary?.levelsUp === 1 ? '' : 's'}</span> up)
       </span>
     </p>
+  )}
+
+  {compareMode && (
+    <nav
+      class="vjl-fork mb-2 space-y-0.5 text-[11px] leading-snug"
+      aria-label="Shared ancestry and where each lineage diverges"
+      style={fork ? '' : 'display:none;'}
+      set:html={fork ? renderForkBreadcrumb(fork) : ''}
+    />
   )}
 
   {/* Radial — desktop / wide */}
@@ -223,6 +235,8 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
     resolveSelection,
     renderMinimapInner,
     compareSummary,
+    forkPath,
+    renderForkBreadcrumb,
     kootamNameMap,
   } from '../../lib/lineage-tree';
   import { readCurrentSlug } from '../../lib/lineage-selection';
@@ -263,6 +277,18 @@ if (compareMode && (highlightSlugs?.[0] || highlightSlugs?.[1])) {
         set('.vjl-lca-levels', `${sum.levelsUp} level${sum.levelsUp === 1 ? '' : 's'}`);
       } else {
         summaryEl.style.display = 'none';
+      }
+    }
+
+    // Ancestry fork breadcrumb.
+    const forkEl = root.querySelector<HTMLElement>('.vjl-fork');
+    if (forkEl) {
+      const fork = forkPath(radial, slugA, slugB);
+      if (fork) {
+        forkEl.style.display = '';
+        forkEl.innerHTML = renderForkBreadcrumb(fork);
+      } else {
+        forkEl.style.display = 'none';
       }
     }
 

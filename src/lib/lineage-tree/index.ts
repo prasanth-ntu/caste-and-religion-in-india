@@ -28,4 +28,5 @@ export { resolveSelection } from './resolve';
 
 export { layoutTree, ancestorChain, lcaOfChains } from './layout';
 
-export { renderMinimapInner, compareSummary } from './render';
+export { renderMinimapInner, compareSummary, forkPath, renderForkBreadcrumb } from './render';
+export type { ForkCrumb, ForkPath } from './render';

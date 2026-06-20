@@ -110,6 +110,68 @@ export function renderMinimapInner(layout: Layout, hl: MinimapHighlight): string
   );
 }
 
+export interface ForkCrumb {
+  id: string;
+  name: string;
+}
+
+export interface ForkPath {
+  /** Root→LCA, inclusive — the ancestry both lineages share. */
+  shared: ForkCrumb[];
+  /** LCA→A, exclusive of the LCA — where lineage A diverges. */
+  aTail: ForkCrumb[];
+  /** LCA→B, exclusive of the LCA — where lineage B diverges. */
+  bTail: ForkCrumb[];
+}
+
+/**
+ * The ancestry "fork": the shared root→LCA path plus each lineage's divergent
+ * tail. Powers the compare breadcrumb ("show all the parent names"). Returns
+ * null until both sides resolve.
+ */
+export function forkPath(layout: Layout, slugA: string | null, slugB: string | null): ForkPath | null {
+  const { byId } = layout;
+  if (!slugA || !slugB) return null;
+  const chainA = ancestorChain(byId, slugA);
+  const chainB = ancestorChain(byId, slugB);
+  const lcaId = lcaOfChains(chainA, chainB);
+  if (!lcaId) return null;
+  const lcaIdx = chainA.indexOf(lcaId);
+  const crumb = (id: string): ForkCrumb => ({ id, name: byId[id]?.name ?? id });
+  return {
+    shared: chainA.slice(0, lcaIdx + 1).map(crumb),
+    aTail: chainA.slice(lcaIdx + 1).map(crumb),
+    bTail: chainB.slice(lcaIdx + 1).map(crumb),
+  };
+}
+
+/**
+ * Markup for the compare ancestry breadcrumb: the shared root→LCA path on one
+ * line, then each lineage's divergent tail. One implementation for SSR
+ * (`set:html`) and the reactive client (`innerHTML`).
+ */
+export function renderForkBreadcrumb(fork: ForkPath): string {
+  const sep = '<span class="text-stone-300" aria-hidden="true">›</span>';
+  const join = (crumbs: ForkCrumb[]) => crumbs.map((c) => `<span>${esc(c.name)}</span>`).join(sep);
+  const sharedRow =
+    `<div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-stone-600">` +
+    `<span aria-hidden="true">🌳</span>${join(fork.shared)}</div>`;
+  const tail = (crumbs: ForkCrumb[], color: string, tag: string) => {
+    const label = crumbs.length ? join(crumbs) : '<span>(this node)</span>';
+    return (
+      `<div class="flex flex-wrap items-center gap-x-1">` +
+      `<span class="text-stone-400" aria-hidden="true">↳</span>` +
+      `<span class="font-semibold" style="color:${color}">${tag}</span>` +
+      `<span class="font-medium" style="color:${color}">${label}</span></div>`
+    );
+  };
+  return (
+    sharedRow +
+    tail(fork.aTail, C.a, 'A') +
+    tail(fork.bTail, C.b, 'B')
+  );
+}
+
 /** LCA summary (names + levels-up) for the caption line, compare mode. */
 export function compareSummary(layout: Layout, slugA: string | null, slugB: string | null) {
   const { byId } = layout;
