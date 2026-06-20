@@ -13,7 +13,7 @@ import Tooltip, { type TooltipState } from '../ui/Tooltip';
 //
 // Built on the shared lineage-tree core (buildTree) and chart-tokens (LEVEL_COLOR)
 // so it stays in lockstep with the SSR locator. Unlike the focused "you are here"
-// VarnaJatiRadial, this is an exploratory tool: pick the depth, reveal all 145
+// VarnaJatiDendrogram, this is an exploratory tool: pick the depth, reveal all 145
 // kootams, show every label, and focus ANY node (deep-linkable via ?node=).
 //   • top-down vertical at every width — desktop gets airier spacing, dense
 //     levels overflow into horizontal scroll.

@@ -42,11 +42,11 @@ const PAD_T = 40;
 const PAD_B = 44;
 const PAD_X = 16;
 
-interface VarnaJatiRadialProps {
+interface VarnaJatiDendrogramProps {
   id?: string;
 }
 
-export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
+export default function VarnaJatiDendrogram({ id }: VarnaJatiDendrogramProps = {}) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const transformRef = useRef(d3.zoomIdentity);
@@ -56,9 +56,9 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
 
-  // Shared sizing (768 breakpoint: radial desktop vs. vertical mobile) and
-  // one-shot in-view trigger for the entry animation. Both observers attach to
-  // the same container via a merged ref.
+  // Shared sizing (768 breakpoint: airier desktop spacing vs. compact mobile)
+  // and one-shot in-view trigger for the entry animation. Both observers attach
+  // to the same container via a merged ref.
   const { ref: dimRef, width, isMobile, measured } = useChartDimensions({
     breakpoint: 768,
     initialWidth: 800,
@@ -172,7 +172,7 @@ export default function VarnaJatiRadial({ id }: VarnaJatiRadialProps = {}) {
     // pass through to the page, so zoom/pan only engages on a pinch or a
     // deliberate drag — the chart never traps the scroll.
     if (isMobile) {
-      const layer = svg.select<SVGGElement>('.vjr-zoom-layer');
+      const layer = svg.select<SVGGElement>('.vjd-zoom-layer');
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([1, 4])
@@ -307,7 +307,7 @@ function renderVertical(
   const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
     d.data.level === 'root' || d.data.level === 'varna' || d.data.secondary || activePathIds.has(d.data.id);
 
-  const g = svg.append('g').attr('class', 'vjr-zoom-layer');
+  const g = svg.append('g').attr('class', 'vjd-zoom-layer');
 
   // When a node is focused (tap/hover), dim everything not on its ancestor
   // path so the lineage reads clearly on a small screen.
