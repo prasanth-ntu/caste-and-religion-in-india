@@ -478,7 +478,7 @@ function FestivalDrawer({
     : 'fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-stone-200 bg-white shadow-2xl';
 
   return (
-    <div className="fixed inset-0 z-40">
+    <div className="fixed inset-0 z-50">
       <button
         type="button"
         aria-label="Close festival details"

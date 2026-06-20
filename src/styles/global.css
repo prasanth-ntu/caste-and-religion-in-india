@@ -84,6 +84,20 @@
   --cat-6: #6d28d9;  /* violet */
 }
 
+/* Floating-FAB clearance + touch targets.
+   The global Explorer FAB (and per-page Compare FAB) are position:fixed at the
+   bottom-right. `scroll-padding-bottom` keeps in-page anchor scrolls clear of
+   the ~80px FAB footprint; the `.tap-target` utility enforces the 44px minimum
+   touch size on small text-link CTAs that can't otherwise reach it. */
+html {
+  scroll-padding-bottom: 6rem;
+}
+.tap-target {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 /* Global reduced-motion override */
 @media (prefers-reduced-motion: reduce) {
   *,

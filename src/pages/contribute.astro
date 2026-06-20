@@ -65,7 +65,7 @@ function newIssueUrl(slug: string, name: string) {
   title="Contribute lineages — Decoded"
   description="The site documents only 4 of 145 Kongu Vellala kootams. Contribute your family lineage and help fill the gap."
 >
-  <main id="main-content" class="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+  <main id="main-content" class="mx-auto max-w-4xl px-6 py-12 pb-24 sm:py-16 lg:pb-12">
     <nav class="mb-6 text-sm text-stone-500">
       <a href="/" class="hover:text-stone-900">Home</a>
       <span class="mx-2" aria-hidden="true">/</span>
@@ -153,7 +153,7 @@ function newIssueUrl(slug: string, name: string) {
               href={newIssueUrl(k.slug, k.name)}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-xs font-medium text-emerald-700 hover:underline"
+              class="tap-target text-xs font-medium text-emerald-700 hover:underline"
             >
               Add details →
             </a>
@@ -174,7 +174,7 @@ function newIssueUrl(slug: string, name: string) {
         <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-stone-800">
           Show all {stubs.length} stub slots
         </summary>
-        <ul class="grid gap-1 px-4 py-3 text-sm sm:grid-cols-3">
+        <ul class="grid gap-x-3 gap-y-1 px-4 py-3 text-sm sm:grid-cols-3">
           {stubs.map((k) => (
             <li class="flex items-center justify-between gap-2">
               <span class="font-mono text-xs text-stone-600">{k.slug}</span>
@@ -182,7 +182,7 @@ function newIssueUrl(slug: string, name: string) {
                 href={newIssueUrl(k.slug, k.name)}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-[11px] font-medium text-emerald-700 hover:underline"
+                class="tap-target text-[11px] font-medium text-emerald-700 hover:underline"
               >
                 Claim →
               </a>
