@@ -59,6 +59,37 @@ export const PILLAR = {
 } as const;
 
 /**
+ * Lineage mini-map / tree palette. The locator + reactive client scripts + the
+ * SSR renderer all read these so highlight colors never drift between paths.
+ *   a   — primary highlight (indigo-700, "Lineage A" / "you are here")
+ *   b   — compare secondary (amber-700, "Lineage B")
+ *   lca — lowest common ancestor marker (violet-700)
+ */
+export const LINEAGE = {
+  a: '#4338ca',
+  b: '#b45309',
+  lca: '#6d28d9',
+  node: '#d6d3d1', // stone-300
+  nodeStroke: '#a8a29e', // stone-400
+  edge: '#e7e5e4', // stone-200
+  label: '#44403c', // stone-700
+} as const;
+
+/** Per-level node colors for the interactive chart — mirrors LEVEL_COLOR. */
+export const LEVEL_COLOR: Record<
+  string,
+  { fill: string; stroke: string; text: string; label: string }
+> = {
+  root: { fill: '#78716c', stroke: '#44403c', text: '#1c1917', label: 'Society' },
+  varna: { fill: '#3b82f6', stroke: '#1d4ed8', text: '#1e3a8a', label: 'Varna' },
+  'caste-cluster': { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Caste cluster' },
+  jati: { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Jati' },
+  'sub-jati': { fill: '#10b981', stroke: '#047857', text: '#064e3b', label: 'Sub-jati' },
+  kootam: { fill: '#f43f5e', stroke: '#be123c', text: '#881337', label: 'Kootam' },
+  'temple-clan': { fill: '#8b5cf6', stroke: '#6d28d9', text: '#4c1d95', label: 'Temple-clan (Koil)' },
+};
+
+/**
  * Categorical data ramp — global.css :76-81 (--cat-1 … --cat-6). Colorblind-aware,
  * tuned to sit on the paper/ink editorial palette. Use for nominal series; do NOT
  * use the tier/pillar hues for arbitrary categories (they carry fixed meaning).
