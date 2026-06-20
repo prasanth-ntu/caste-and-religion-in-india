@@ -98,6 +98,8 @@ function AdmixtureChart() {
   }, [measured, dimRef]);
   // On mobile, force a wider virtual chart and let the wrapper scroll horizontally.
   const chartWidth = isMobile ? Math.max(width, 560) : width;
+  // Only advertise horizontal scrolling when the chart actually overflows.
+  const showScrollHint = chartWidth > width;
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -421,7 +423,7 @@ function AdmixtureChart() {
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg ref={svgRef} className="block" role="img" aria-label="ANI / ASI admixture timeline" />
       </div>
-      {isMobile && (
+      {showScrollHint && (
         <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full timeline →</p>
       )}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>
@@ -460,7 +462,10 @@ function FounderChart() {
     : { top: 32, right: 32, bottom: 40, left: 200 };
   const innerH = sorted.length * rowHeight;
   const height = innerH + margin.top + margin.bottom;
-  const chartWidth = width === 0 ? 800 : width;
+  // On mobile force a wider virtual canvas so the wrapper scrolls instead of
+  // squashing/clipping the bars and x-axis title (mirrors AdmixtureChart).
+  const chartWidth = isMobile ? Math.max(width, 560) : width === 0 ? 800 : width;
+  const showScrollHint = chartWidth > width;
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -656,7 +661,7 @@ function FounderChart() {
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-3">
         <svg ref={svgRef} className="block" role="img" aria-label="Founder-event severity by population" />
       </div>
-      {isMobile && (
+      {showScrollHint && (
         <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full chart →</p>
       )}
       <Tooltip x={tip.x} y={tip.y}>{tip.content}</Tooltip>

@@ -170,6 +170,8 @@ function SankeyChart({ era }: { era: Era }) {
   // if labels would otherwise crowd.
   const chartWidth = isMobile ? Math.max(width, 720) : width;
   const height = isMobile ? 540 : 520;
+  // Only show the scroll hint when the chart actually overflows its container.
+  const showScrollHint = chartWidth > width;
 
   // Hydration sentinel — see ChartSkeleton.astro.
   useEffect(() => {
@@ -191,7 +193,7 @@ function SankeyChart({ era }: { era: Era }) {
     if (chartWidth === 0) return;
 
     const margin = isMobile
-      ? { top: 18, right: 130, bottom: 36, left: 100 }
+      ? { top: 18, right: 130, bottom: 36, left: 124 }
       : { top: 24, right: 160, bottom: 40, left: 160 };
 
     svg
@@ -498,7 +500,7 @@ function SankeyChart({ era }: { era: Era }) {
           aria-label={`Reservation sankey — ${era === 'current-tn' ? 'Tamil Nadu current 69%' : 'Pre-Mandal 1989 central government'}`}
         />
       </div>
-      {isMobile && (
+      {showScrollHint && (
         <p className="mt-1.5 text-center text-[11px] text-stone-400">← scroll to see the full diagram →</p>
       )}
       <p className="mt-3 text-sm leading-relaxed text-stone-700">
