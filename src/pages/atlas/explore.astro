@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AtlasExplore from '../../components/viz/AtlasExplore.tsx';
+import { JOURNEY, FEATURED_KOOTAM_SLUGS } from '../../data/atlas-journey';
+import type { ResolvedStage, StageId } from '../../data/atlas-explore';
+import { getCollection, getEntry } from 'astro:content';
+
+// ── Resolve the real content collections at build time ──────────────────────
+const claimsAll = await getCollection('claims');
+const claimById = new Map(claimsAll.map((c) => [c.id, c.data]));
+
+const kootamsAll = await getCollection('kootams');
+const kootamById = new Map(kootamsAll.map((k) => [k.id, k.data]));
+const kootamsTotal = kootamsAll.length;
+
+const deityEntry = await getEntry('deities', 'konur-kaliamman');
+
+const cleanName = (n: string) => n.replace(/\s+(Kootam|Kulam)$/i, '');
+const totemLabel = (t: { type?: string; species?: string }) =>
+  (t.species ?? t.type ?? '').split('(')[0].split('/')[0].trim() || (t.type ?? 'totem');
+
+const isNamed = (slug: string) => !/^kootam-\d+$/.test(slug);
+const documentedNamed = kootamsAll
+  .filter((k) => isNamed(k.id) && k.data.status === 'documented')
+  .map((k) => k.id);
+
+const featuredSlugs: string[] = [];
+for (const slug of [...FEATURED_KOOTAM_SLUGS, ...documentedNamed]) {
+  if (featuredSlugs.length >= 4) break;
+  if (kootamById.has(slug) && !featuredSlugs.includes(slug)) featuredSlugs.push(slug);
+}
+
+const featuredKootams = featuredSlugs.map((slug) => {
+  const k = kootamById.get(slug)!;
+  const isAuthor = slug === 'kadai';
+  return {
+    slug,
+    en: cleanName(k.name),
+    ta: k.totem.tamil_name ?? '',
+    totem: totemLabel(k.totem),
+    note: isAuthor
+      ? 'The author’s own clan — its totem the quail.'
+      : `A documented Kongu Vellala kootam${k.region ? `, ${k.region}` : ''}.`,
+    isAuthor,
+  };
+});
+
+// ── Build the per-stage props from the narrative defs + real data ───────────
+const stages: ResolvedStage[] = JOURNEY.map((stage) => {
+  const anchors = stage.claimSlugs
+    .map((slug) => {
+      const c = claimById.get(slug);
+      if (!c) return null;
+      const kind = stage.claimKinds?.[slug] ?? { kind: 'claim' as const };
+      return {
+        kind: kind.kind,
+        label: kind.label,
+        tier: c.tier,
+        text: c.statement,
+        evidence: c.evidence_summary ?? c.statement,
+      };
+    })
+    .filter((a): a is NonNullable<typeof a> => a !== null);
+
+  return {
+    id: stage.id,
+    en: stage.en,
+    ta: stage.ta,
+    sec: stage.sec,
+    scale: stage.scale,
+    altitude: stage.altitude,
+    path: stage.path,
+    lede: stage.lede,
+    anchors,
+    ...(stage.showKootams
+      ? { kootams: featuredKootams, kootamsMore: Math.max(0, kootamsTotal - featuredKootams.length) }
+      : {}),
+    ...(stage.showDeity && deityEntry
+      ? {
+          deity: {
+            en: deityEntry.data.name,
+            ta: deityEntry.data.tamil_name ?? '',
+            place: [deityEntry.data.village, deityEntry.data.district && `${deityEntry.data.district} district`]
+              .filter(Boolean)
+              .join(' · '),
+          },
+        }
+      : {}),
+  };
+}) as ResolvedStage[];
+---
+
+<BaseLayout
+  title="The Atlas — Explore · Lineage · Decoded"
+  description="A live map and identity tree wired to one descent — India to a single village shrine. Pick any node, follow the guide between stages, surface the kootams, and arrive at the kuladeivam. Two layouts, light or dark."
+>
+  <main id="main-content" class="atlas-explore-main">
+    <AtlasExplore stages={stages} client:only="react" />
+  </main>
+</BaseLayout>
+
+<style>
+  /* The Atlas is a fixed-viewport app: it fills the screen below the sticky
+     header; the site footer sits just past the fold. */
+  .atlas-explore-main {
+    height: calc(100dvh - 4rem);
+    min-height: 540px;
+    width: 100%;
+    overflow: hidden;
+  }
+</style>
