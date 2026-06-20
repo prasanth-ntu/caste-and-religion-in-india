@@ -1,0 +1,734 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as d3 from 'd3';
+import { buildTree } from '../../lib/lineage-tree';
+import type { TreeNode, CasteLevel } from '../../lib/lineage-tree';
+import { LEVEL_COLOR, CHART } from '../../lib/chart-tokens';
+import { useChartDimensions } from '../../hooks/useChartDimensions';
+import { useInView } from '../../hooks/useInView';
+import { prefersReducedMotion } from '../../lib/chart-motion';
+import Tooltip, { type TooltipState } from '../ui/Tooltip';
+
+// =============================================================================
+// LineageTreeExplorer — the full-page interactive dendrogram for /overview/tree.
+//
+// Built on the shared lineage-tree core (buildTree) and chart-tokens (LEVEL_COLOR)
+// so it stays in lockstep with the SSR locator. Unlike the focused "you are here"
+// VarnaJatiRadial, this is an exploratory tool: pick the depth, reveal all 145
+// kootams, show every label, and focus ANY node (deep-linkable via ?node=).
+//   • desktop = radial   • mobile = top-down vertical
+// =============================================================================
+
+const SECONDARY_RING = '#8b5cf6';
+
+// Detail-level steps map to a max visible depth. Society (root, depth 0) is
+// always shown; the steps reveal progressively deeper rings.
+const LEVEL_STEPS: { label: string; maxDepth: number }[] = [
+  { label: 'Varnas', maxDepth: 1 },
+  { label: 'Caste clusters', maxDepth: 2 },
+  { label: 'Sub-castes', maxDepth: 3 },
+  { label: 'Kootams', maxDepth: 4 },
+];
+
+const MOBILE_DEPTH_STEP = 104;
+const MOBILE_PAD_T = 40;
+const MOBILE_PAD_B = 40;
+const MOBILE_PAD_X = 16;
+const MOBILE_LEAF_BREADTH = 16;
+
+function truncate(s: string, max: number) {
+  return s.length <= max ? s : s.slice(0, max - 1) + '…';
+}
+
+/** Deep-clone the tree and drop any children below `maxDepth`. Never mutates the
+ *  shared import. */
+function pruneToDepth(tree: TreeNode, maxDepth: number): TreeNode {
+  const clone = structuredClone(tree) as TreeNode;
+  const strip = (n: TreeNode, depth: number) => {
+    if (depth >= maxDepth) {
+      delete n.children;
+      return;
+    }
+    (n.children ?? []).forEach((c) => strip(c, depth + 1));
+  };
+  strip(clone, 0);
+  return clone;
+}
+
+interface FlatNode {
+  id: string;
+  name: string;
+  level: CasteLevel;
+}
+
+function readNodeParam(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('node');
+}
+
+interface LineageTreeExplorerProps {
+  id?: string;
+}
+
+export default function LineageTreeExplorer({ id }: LineageTreeExplorerProps = {}) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const [showAllKootams, setShowAllKootams] = useState(false);
+  const [levelStep, setLevelStep] = useState(3); // index into LEVEL_STEPS (Kootams)
+  const [showAllLabels, setShowAllLabels] = useState(false);
+  const [focusId, setFocusId] = useState<string>('kadai');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [tip, setTip] = useState<TooltipState>({ x: null, y: null, content: null });
+
+  const { ref: dimRef, width, isMobile, measured } = useChartDimensions({
+    breakpoint: 768,
+    initialWidth: 820,
+  });
+  const [inViewRef, inView] = useInView<HTMLDivElement>();
+  const setContainerRef = (el: HTMLDivElement | null) => {
+    dimRef.current = el;
+    inViewRef.current = el;
+  };
+
+  useEffect(() => {
+    if (measured) dimRef.current?.setAttribute('data-hydrated', 'true');
+  }, [measured, dimRef]);
+
+  // Initialise focus from ?node= on mount (deep links from the locator).
+  useEffect(() => {
+    const fromUrl = readNodeParam();
+    if (fromUrl) setFocusId(fromUrl);
+  }, []);
+
+  const maxDepth = LEVEL_STEPS[levelStep].maxDepth;
+
+  // Build the full tree once per kootam toggle, then prune to the chosen depth.
+  const fullTree = useMemo(
+    () => buildTree(showAllKootams ? { injectAll: true } : {}),
+    [showAllKootams],
+  );
+  const tree = useMemo(() => pruneToDepth(fullTree, maxDepth), [fullTree, maxDepth]);
+
+  const root = useMemo(() => {
+    const h = d3.hierarchy<TreeNode>(tree);
+    h.sort((a, b) => d3.ascending(a.data.name.en, b.data.name.en));
+    return h;
+  }, [tree]);
+
+  // Full (unpruned) ancestor chain of the user's focus pick — lets us fall back
+  // to the deepest *visible* ancestor when the focus is pruned out of view.
+  const focusChain = useMemo(() => {
+    const full = d3.hierarchy<TreeNode>(fullTree);
+    const t = full.descendants().find((d) => d.data.id === focusId);
+    return t ? t.ancestors().map((d) => d.data.id).reverse() : [];
+  }, [fullTree, focusId]);
+
+  // Flat list of currently-visible nodes for the focus picker (grouped by level).
+  const flat = useMemo<FlatNode[]>(
+    () =>
+      root
+        .descendants()
+        .map((d) => ({ id: d.data.id, name: d.data.name.en, level: d.data.level })),
+    [root],
+  );
+
+  // If the focused node fell out of view (depth/kootam toggle changed), clamp to
+  // the deepest visible ancestor so the picker + path highlight stay valid.
+  const visibleIds = useMemo(() => new Set(flat.map((f) => f.id)), [flat]);
+  const effectiveFocusId = useMemo(() => {
+    if (visibleIds.has(focusId)) return focusId;
+    for (let i = focusChain.length - 1; i >= 0; i -= 1) {
+      if (visibleIds.has(focusChain[i])) return focusChain[i];
+    }
+    return root.data.id; // root is always visible
+  }, [visibleIds, focusId, focusChain, root]);
+
+  const focusPathIds = useMemo(() => {
+    const target = root.descendants().find((d) => d.data.id === effectiveFocusId);
+    if (!target) return new Set<string>();
+    return new Set(target.ancestors().map((d) => d.data.id));
+  }, [root, effectiveFocusId]);
+
+  const activePathIds = useMemo(() => {
+    if (hoveredId) {
+      const t = root.descendants().find((d) => d.data.id === hoveredId);
+      if (t) return new Set(t.ancestors().map((d) => d.data.id));
+    }
+    return focusPathIds;
+  }, [hoveredId, root, focusPathIds]);
+
+  const treeMetrics = useMemo(() => {
+    const md = root.height || 4;
+    const leafCount = root.leaves().length;
+    const longest = root.leaves().reduce((m, d) => Math.max(m, d.data.name.en.length), 0);
+    return { md, leafCount, longest };
+  }, [root]);
+
+  const size = useMemo(() => {
+    if (isMobile) {
+      const height = MOBILE_PAD_T + MOBILE_PAD_B + treeMetrics.md * MOBILE_DEPTH_STEP;
+      const breadth = Math.max(width, treeMetrics.leafCount * MOBILE_LEAF_BREADTH + MOBILE_PAD_X * 2);
+      return { width: Math.max(breadth, 320), height };
+    }
+    // Desktop radial is square; cap it to the viewport height so the whole
+    // circle is visible without scrolling.
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const dim = Math.min(1000, Math.max(520, Math.min(width, vh * 0.82)));
+    return { width: dim, height: dim };
+  }, [isMobile, width, treeMetrics]);
+
+  const laidOut = useMemo(() => {
+    const r = root.copy();
+    if (isMobile) {
+      const treeHeight = (r.height || 4) * MOBILE_DEPTH_STEP;
+      d3
+        .tree<TreeNode>()
+        .size([size.width - MOBILE_PAD_X * 2, treeHeight])
+        .separation((a, b) => (a.parent === b.parent ? 1 : 2))(r);
+      return r;
+    }
+    const labelPx = Math.min(treeMetrics.longest, 18) * 6.2;
+    const pad = Math.max(72, labelPx + 24);
+    const radius = Math.min(size.width, size.height) / 2 - pad;
+    d3
+      .tree<TreeNode>()
+      .size([2 * Math.PI, radius])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 1.8) / Math.max(a.depth, 1))(r);
+    return r;
+  }, [root, size, isMobile, treeMetrics]);
+
+  // Render pass.
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+    if (!svg.node()) return;
+    svg.selectAll('*').remove();
+
+    const defs = svg.append('defs');
+    const glow = defs
+      .append('filter')
+      .attr('id', 'lte-focus-glow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    glow.append('feGaussianBlur').attr('stdDeviation', 3.5).attr('result', 'blur');
+    const merge = glow.append('feMerge');
+    merge.append('feMergeNode').attr('in', 'blur');
+    merge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    const handlers = {
+      onFocus: (id: string) => setFocusId(id),
+      setHoveredId,
+      setTip,
+      inView,
+      showAllLabels,
+      focusId: effectiveFocusId,
+    };
+
+    if (isMobile) renderVertical(svg, laidOut, size, activePathIds, handlers);
+    else renderRadial(svg, laidOut, size, activePathIds, handlers);
+  }, [laidOut, size, activePathIds, isMobile, inView, showAllLabels, effectiveFocusId]);
+
+  // Keep ?node= in sync for shareable deep links.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('node') === effectiveFocusId) return;
+    url.searchParams.set('node', effectiveFocusId);
+    window.history.replaceState(null, '', url.toString());
+  }, [effectiveFocusId]);
+
+  // Group picker options by level, in canonical level order.
+  const grouped = useMemo(() => {
+    const order: CasteLevel[] = [
+      'root',
+      'varna',
+      'caste-cluster',
+      'jati',
+      'sub-jati',
+      'kootam',
+      'temple-clan',
+    ];
+    const byLevel = new Map<CasteLevel, FlatNode[]>();
+    for (const f of flat) {
+      if (!byLevel.has(f.level)) byLevel.set(f.level, []);
+      byLevel.get(f.level)!.push(f);
+    }
+    return order
+      .filter((lv) => byLevel.has(lv))
+      .map((lv) => ({
+        level: lv,
+        label: LEVEL_COLOR[lv]?.label ?? lv,
+        items: byLevel.get(lv)!.sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+  }, [flat]);
+
+  const focusName = flat.find((f) => f.id === effectiveFocusId)?.name ?? effectiveFocusId;
+
+  return (
+    <div className="w-full">
+      {/* Controls */}
+      <div className="mb-4 flex flex-col gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
+        {/* Detail level */}
+        <div className="min-w-0">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-500">
+            Detail level
+          </label>
+          <div className="inline-flex flex-wrap gap-1 rounded-lg border border-stone-300 bg-white p-1">
+            {LEVEL_STEPS.map((s, i) => (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setLevelStep(i)}
+                aria-pressed={levelStep === i}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  levelStep === i
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-stone-600 hover:bg-stone-100'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Focus picker */}
+        <div className="min-w-0 flex-1">
+          <label
+            htmlFor="lte-focus"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-500"
+          >
+            Focus a node
+          </label>
+          <select
+            id="lte-focus"
+            value={effectiveFocusId}
+            onChange={(e) => setFocusId(e.target.value)}
+            className="w-full max-w-xs rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            {grouped.map((g) => (
+              <optgroup key={g.level} label={g.label}>
+                {g.items.map((it) => (
+                  <option key={it.id} value={it.id}>
+                    {it.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        {/* Toggles */}
+        <div className="flex flex-col gap-2">
+          <label className="inline-flex items-center gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              checked={showAllKootams}
+              onChange={(e) => setShowAllKootams(e.target.checked)}
+              className="h-4 w-4 rounded border-stone-300 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500"
+            />
+            Show all 145 kootams
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              checked={showAllLabels}
+              onChange={(e) => setShowAllLabels(e.target.checked)}
+              className="h-4 w-4 rounded border-stone-300 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500"
+            />
+            Show all labels
+          </label>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-600">
+        {(['root', 'varna', 'caste-cluster', 'sub-jati', 'kootam'] as CasteLevel[]).map((lv) => (
+          <span key={lv} className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="inline-block h-3 w-3 rounded-full"
+              style={{ background: LEVEL_COLOR[lv].fill }}
+            />
+            {LEVEL_COLOR[lv].label}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5 font-medium text-stone-700">
+          <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-rose-500 ring-2 ring-rose-300" />
+          Focused: {focusName}
+        </span>
+      </div>
+
+      {isMobile && measured && (
+        <p className="mb-2 text-center text-xs text-stone-400">
+          Tap any node to focus it · scroll the card to pan
+        </p>
+      )}
+
+      <div
+        ref={setContainerRef}
+        id={id}
+        className="relative overflow-auto rounded-2xl border border-stone-200 bg-white p-2 sm:p-4"
+      >
+        {measured && (
+          <svg
+            ref={svgRef}
+            width={size.width}
+            height={size.height}
+            viewBox={
+              isMobile
+                ? `0 0 ${size.width} ${size.height}`
+                : `${-size.width / 2} ${-size.height / 2} ${size.width} ${size.height}`
+            }
+            className="mx-auto block max-w-full"
+            role="img"
+            aria-label={`Varna→Jati tree, focused on ${focusName}. Detail level: ${LEVEL_STEPS[levelStep].label}.`}
+          />
+        )}
+      </div>
+
+      <Tooltip x={tip.x} y={tip.y}>
+        {tip.content}
+      </Tooltip>
+    </div>
+  );
+}
+
+// ─────────────────────────── shared render helpers ───────────────────────────
+
+type Handlers = {
+  onFocus: (id: string) => void;
+  setHoveredId: (id: string | null) => void;
+  setTip: (s: TooltipState) => void;
+  inView: boolean;
+  showAllLabels: boolean;
+  focusId: string;
+};
+
+function tipContent(d: d3.HierarchyNode<TreeNode>) {
+  return (
+    <>
+      <strong>{d.data.name.en}</strong>
+      <br />
+      <span style={{ opacity: 0.8 }}>{LEVEL_COLOR[d.data.level].label}</span>
+    </>
+  );
+}
+
+function entryAnim(node: d3.Selection<any, d3.HierarchyNode<TreeNode>, any, any>, inView: boolean) {
+  const reduced = prefersReducedMotion();
+  if (!reduced && inView) {
+    node.each(function (d, i) {
+      const sel = d3.select(this);
+      const delay = Math.min(d.depth * 50 + i * 4, 500);
+      sel.style('opacity', 0).style('transition', `opacity 320ms ease ${delay}ms`);
+      requestAnimationFrame(() => sel.style('opacity', null));
+    });
+  } else if (!inView && !reduced) {
+    node.style('opacity', 0);
+  }
+}
+
+function renderVertical(
+  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
+  root: d3.HierarchyNode<TreeNode>,
+  _size: { width: number; height: number },
+  activePathIds: Set<string>,
+  h: Handlers,
+) {
+  const padL = MOBILE_PAD_X;
+  const padT = MOBILE_PAD_T;
+  const nx = (d: d3.HierarchyNode<TreeNode>) => padL + ((d as any).x as number);
+  const ny = (d: d3.HierarchyNode<TreeNode>) => padT + ((d as any).y as number);
+
+  const focusActive = activePathIds.size > 0;
+  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
+    h.showAllLabels ||
+    d.data.level === 'root' ||
+    d.data.level === 'varna' ||
+    d.data.id === h.focusId ||
+    d.data.secondary ||
+    activePathIds.has(d.data.id);
+
+  const g = svg.append('g');
+
+  g.append('g')
+    .attr('fill', 'none')
+    .selectAll('path')
+    .data(root.links())
+    .join('path')
+    .attr('d', (d: any) => {
+      const sx = nx(d.source), sy = ny(d.source);
+      const tx = nx(d.target), ty = ny(d.target);
+      const my = (sy + ty) / 2;
+      return `M${sx},${sy}C${sx},${my} ${tx},${my} ${tx},${ty}`;
+    })
+    .attr('stroke', (d: any) =>
+      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
+        ? CHART.linkActive
+        : CHART.link,
+    )
+    .attr('stroke-linecap', 'round')
+    .attr('stroke-width', (d: any) =>
+      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
+        ? 3
+        : Math.max(1, 2 - d.target.depth * 0.25),
+    )
+    .attr('stroke-opacity', (d: any) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return focusActive && !onPath ? 0.3 : 0.8;
+    });
+
+  const node = g
+    .append('g')
+    .selectAll('g')
+    .data(root.descendants())
+    .join('g')
+    .attr('transform', (d) => `translate(${nx(d)},${ny(d)})`)
+    .attr('tabindex', 0)
+    .attr('role', 'button')
+    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
+    .style('cursor', 'pointer')
+    .style('outline', 'none')
+    .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.45 : 1))
+    .on('click', (_, d) => h.onFocus(d.data.id))
+    .on('mouseenter', (_e, d) => h.setHoveredId(d.data.id))
+    .on('mouseleave', () => h.setHoveredId(null))
+    .on('focus', (_e, d) => h.setHoveredId(d.data.id))
+    .on('blur', () => h.setHoveredId(null))
+    .on('keydown', function (event: KeyboardEvent, d) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        h.onFocus(d.data.id);
+      }
+    });
+
+  node
+    .append('circle')
+    .attr('r', 20)
+    .attr('fill', 'transparent')
+    .style('pointer-events', 'all');
+
+  node
+    .append('circle')
+    .attr('r', (d) => (d.data.id === h.focusId ? 8 : d.data.secondary ? 7 : d.children ? 5 : 4))
+    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
+    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
+    .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
+    .style('pointer-events', 'none')
+    .attr('filter', (d) => (d.data.id === h.focusId ? 'url(#lte-focus-glow)' : null));
+
+  node
+    .filter((d) => d.data.id === h.focusId)
+    .append('circle')
+    .attr('r', 13)
+    .attr('fill', 'none')
+    .attr('stroke', '#f43f5e')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-opacity', 0.75)
+    .attr('class', 'animate-pulse');
+
+  node
+    .filter((d) => !!d.data.secondary)
+    .append('circle')
+    .attr('r', 12)
+    .attr('fill', 'none')
+    .attr('stroke', SECONDARY_RING)
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3 2')
+    .attr('stroke-opacity', 0.8);
+
+  node
+    .filter((d) => showLabel(d))
+    .append('text')
+    .attr('dy', (d) => (d.data.level === 'root' || d.data.level === 'varna' ? 18 : d.children ? -10 : 18))
+    .attr('text-anchor', 'middle')
+    .attr('font-size', (d) => (d.data.level === 'root' ? 12 : d.data.id === h.focusId ? 11 : 9))
+    .attr('font-weight', (d) =>
+      d.data.id === h.focusId || d.data.level === 'root' || d.data.level === 'varna' ? 600 : 500,
+    )
+    .attr('fill', (d) =>
+      d.data.secondary
+        ? LEVEL_COLOR['temple-clan'].text
+        : activePathIds.has(d.data.id)
+          ? '#0f172a'
+          : LEVEL_COLOR[d.data.level].text,
+    )
+    .attr('paint-order', 'stroke')
+    .attr('stroke', '#ffffff')
+    .attr('stroke-width', 3)
+    .text((d) => {
+      const raw = d.data.id === h.focusId ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
+      if (d.data.level === 'root') return truncate(raw, 18);
+      return truncate(raw, 20);
+    });
+
+  entryAnim(node, h.inView);
+}
+
+function renderRadial(
+  svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>,
+  root: d3.HierarchyNode<TreeNode>,
+  _size: { width: number; height: number },
+  activePathIds: Set<string>,
+  h: Handlers,
+) {
+  // Rotate so the focused leaf sits upper-right.
+  const focusLeaf = root.descendants().find((d) => d.data.id === h.focusId);
+  let rotation = 0;
+  if (focusLeaf) {
+    const angle = (focusLeaf as any).x as number;
+    rotation = -30 - (angle * 180) / Math.PI + 90;
+  }
+
+  const g = svg.append('g').attr('transform', `rotate(${rotation})`);
+  const focusActive = activePathIds.size > 0;
+
+  const showLabel = (d: d3.HierarchyNode<TreeNode>) =>
+    h.showAllLabels ||
+    d.depth <= 1 ||
+    activePathIds.has(d.data.id) ||
+    d.data.id === h.focusId ||
+    d.data.secondary;
+
+  const linkGen = d3
+    .linkRadial<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
+    .angle((d) => (d as any).x)
+    .radius((d) => (d as any).y);
+
+  g.append('g')
+    .attr('fill', 'none')
+    .selectAll('path')
+    .data(root.links())
+    .join('path')
+    .attr('d', linkGen as any)
+    .attr('stroke-linecap', 'round')
+    .attr('stroke', (d) =>
+      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
+        ? CHART.linkActive
+        : CHART.link,
+    )
+    .attr('stroke-width', (d) =>
+      activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id)
+        ? 2.6
+        : Math.max(0.8, 2.2 - d.target.depth * 0.3),
+    )
+    .attr('stroke-opacity', (d) => {
+      const onPath = activePathIds.has(d.source.data.id) && activePathIds.has(d.target.data.id);
+      return focusActive && !onPath ? 0.4 : onPath ? 1 : 0.7;
+    });
+
+  const node = g
+    .append('g')
+    .selectAll('g')
+    .data(root.descendants())
+    .join('g')
+    .attr('transform', (d) => {
+      const x = (d as any).x as number;
+      const y = (d as any).y as number;
+      return `rotate(${(x * 180) / Math.PI - 90}) translate(${y},0)`;
+    })
+    .attr('tabindex', 0)
+    .attr('role', 'button')
+    .attr('aria-label', (d) => `${d.data.name.en} — ${LEVEL_COLOR[d.data.level].label}`)
+    .style('cursor', 'pointer')
+    .style('outline', 'none')
+    .style('opacity', (d) => (focusActive && !activePathIds.has(d.data.id) ? 0.5 : 1))
+    .on('mouseenter', (event: MouseEvent, d) => {
+      h.setHoveredId(d.data.id);
+      h.setTip({ x: event.clientX, y: event.clientY, content: tipContent(d) });
+    })
+    .on('mouseleave', () => {
+      h.setHoveredId(null);
+      h.setTip({ x: null, y: null, content: null });
+    })
+    .on('focus', function (_e, d) {
+      h.setHoveredId(d.data.id);
+      const r = (this as SVGGElement).getBoundingClientRect();
+      h.setTip({ x: r.left + r.width / 2, y: r.top, content: tipContent(d) });
+    })
+    .on('blur', () => {
+      h.setHoveredId(null);
+      h.setTip({ x: null, y: null, content: null });
+    })
+    .on('click', (_, d) => h.onFocus(d.data.id))
+    .on('keydown', function (event: KeyboardEvent, d) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        h.onFocus(d.data.id);
+      }
+    });
+
+  node
+    .append('circle')
+    .attr('r', (d) => (d.data.id === h.focusId ? 9 : d.data.secondary ? 8 : d.children ? 5 : 4))
+    .attr('fill', (d) => LEVEL_COLOR[d.data.level].fill)
+    .attr('stroke', (d) => LEVEL_COLOR[d.data.level].stroke)
+    .attr('stroke-width', (d) => (activePathIds.has(d.data.id) ? 2 : 1))
+    .attr('filter', (d) => (d.data.id === h.focusId ? 'url(#lte-focus-glow)' : null));
+
+  node
+    .filter((d) => d.data.id === h.focusId)
+    .append('circle')
+    .attr('r', 14)
+    .attr('fill', 'none')
+    .attr('stroke', '#f43f5e')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-opacity', 0.75)
+    .attr('class', 'animate-pulse');
+
+  node
+    .filter((d) => !!d.data.secondary)
+    .append('circle')
+    .attr('r', 13)
+    .attr('fill', 'none')
+    .attr('stroke', SECONDARY_RING)
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3 2')
+    .attr('stroke-opacity', 0.85);
+
+  node
+    .filter((d) => showLabel(d))
+    .append('text')
+    .attr('dy', '0.32em')
+    .attr('x', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      const norm = (((screenDeg + 180) % 360) + 360) % 360 - 180;
+      const onRight = norm > -90 && norm < 90;
+      const offset = d.depth <= 1 ? 12 : 9;
+      return onRight ? offset : -offset;
+    })
+    .attr('text-anchor', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      const norm = (((screenDeg + 180) % 360) + 360) % 360 - 180;
+      return norm > -90 && norm < 90 ? 'start' : 'end';
+    })
+    .attr('transform', (d) => {
+      const x = (d as any).x as number;
+      const screenDeg = (x * 180) / Math.PI - 90 + rotation;
+      return `rotate(${-screenDeg})`;
+    })
+    .attr('font-size', (d) =>
+      d.data.level === 'root' ? 13 : d.data.id === h.focusId ? 12 : d.depth <= 1 ? 11 : 9.5,
+    )
+    .attr('font-weight', (d) => (d.data.id === h.focusId || d.depth <= 1 ? 600 : 500))
+    .attr('fill', (d) =>
+      d.data.secondary
+        ? LEVEL_COLOR['temple-clan'].text
+        : activePathIds.has(d.data.id)
+          ? '#0f172a'
+          : '#44403c',
+    )
+    .attr('paint-order', 'stroke')
+    .attr('stroke', '#ffffff')
+    .attr('stroke-width', 3)
+    .text((d) => {
+      const raw = d.data.id === h.focusId ? `★ ${d.data.name.en}` : d.data.secondary ? `◆ ${d.data.name.en}` : d.data.name.en;
+      if (d.depth >= 3) return truncate(raw, 16);
+      return raw;
+    });
+
+  entryAnim(node, h.inView);
+}

@@ -14,41 +14,11 @@
 // *historical exclusion* encoded by those texts -- it describes the schema,
 // it does not endorse it. See node.note.
 
-export type CasteLevel =
-  | 'root'
-  | 'varna'
-  | 'caste-cluster'
-  | 'jati'
-  | 'sub-jati'
-  | 'kootam'
-  | 'temple-clan';
-
-export type CasteTier = 'green' | 'yellow' | 'red' | 'rational';
-
-export interface TreeNode {
-  id: string;
-  name: {
-    en: string;
-    ta?: string;
-  };
-  level: CasteLevel;
-  /** Optional one-line summary shown in the drawer. */
-  summary?: string;
-  /** Evidence tier badge for the drawer. */
-  tier?: CasteTier;
-  /** Framing / caveat note (used on "Outside varna"). */
-  note?: string;
-  /** Marks the "you are here" leaf. */
-  highlight?: boolean;
-  /**
-   * Marks a node belonging to a *second* documented community shown as a
-   * parallel worked example (the Nattukottai Chettiar / Nagarathar). Gets a
-   * distinct (violet) visual treatment, separate from the rose "you are here"
-   * highlight, and does NOT anchor the radial rotation.
-   */
-  secondary?: boolean;
-  children?: TreeNode[];
-}
+// Tree shape types now live in the shared core (src/lib/lineage-tree/types.ts)
+// so the SSR locator, the React chart, and the reactive client scripts agree on
+// one definition. Re-exported here for back-compat with existing importers.
+export type { CasteLevel, CasteTier, TreeNode } from '../lib/lineage-tree/types';
+import type { TreeNode } from '../lib/lineage-tree/types';
 
 export const varnaJatiTree: TreeNode = {
   id: 'indian-society',

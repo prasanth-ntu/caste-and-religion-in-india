@@ -1,27 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { varnaJatiTree, type TreeNode, type CasteLevel } from '../../data/varna-jati-tree';
+import { varnaJatiTree } from '../../data/varna-jati-tree';
+import type { TreeNode, CasteLevel } from '../../lib/lineage-tree';
 import Tooltip, { type TooltipState } from '../ui/Tooltip';
 import { Drawer as UIDrawer } from '../ui/Drawer';
 import { useChartDimensions } from '../../hooks/useChartDimensions';
 import { useInView } from '../../hooks/useInView';
 import { prefersReducedMotion } from '../../lib/chart-motion';
-import { CHART } from '../../lib/chart-tokens';
+import { CHART, LEVEL_COLOR } from '../../lib/chart-tokens';
 
 // ---------- Palette ----------
-const LEVEL_COLOR: Record<
-  CasteLevel,
-  { fill: string; stroke: string; text: string; label: string }
-> = {
-  root: { fill: '#78716c', stroke: '#44403c', text: '#1c1917', label: 'Society' },
-  varna: { fill: '#3b82f6', stroke: '#1d4ed8', text: '#1e3a8a', label: 'Varna' },
-  'caste-cluster': { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Caste cluster' },
-  jati: { fill: '#f59e0b', stroke: '#b45309', text: '#78350f', label: 'Jati' },
-  'sub-jati': { fill: '#10b981', stroke: '#047857', text: '#064e3b', label: 'Sub-jati' },
-  kootam: { fill: '#f43f5e', stroke: '#be123c', text: '#881337', label: 'Kootam' },
-  'temple-clan': { fill: '#8b5cf6', stroke: '#6d28d9', text: '#4c1d95', label: 'Temple-clan (Koil)' },
-};
-
 // Violet accent for the "second documented community" (secondary) treatment —
 // distinct from the rose Kadai "you are here" highlight.
 const SECONDARY_RING = '#8b5cf6';
