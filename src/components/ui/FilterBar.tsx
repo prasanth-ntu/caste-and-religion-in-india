@@ -156,7 +156,7 @@ export function Toggle({
   className = '',
 }: ToggleProps) {
   const base =
-    'relative inline-flex items-center rounded-full border border-stone-300 bg-white ' +
+    'relative inline-grid grid-cols-2 items-center rounded-full border border-stone-300 bg-white ' +
     'min-h-[40px] sm:min-h-[36px] text-xs font-medium ' +
     'focus-within:ring-2 focus-within:ring-indigo-500';
   return (
@@ -175,14 +175,14 @@ export function Toggle({
         style={{ transform: `translateX(${pressed ? '100%' : '0'})` }}
       />
       <span
-        className={`relative z-10 flex-1 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
+        className={`relative z-10 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
           pressed ? 'text-stone-500' : 'text-indigo-700'
         }`}
       >
         {labelOff}
       </span>
       <span
-        className={`relative z-10 flex-1 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
+        className={`relative z-10 text-center px-4 py-1.5 whitespace-nowrap transition-colors duration-200 ${
           pressed ? 'text-indigo-700' : 'text-stone-500'
         }`}
       >

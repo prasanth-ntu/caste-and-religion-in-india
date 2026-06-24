@@ -453,7 +453,7 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
           <button
             type="button"
             onClick={() => setShowStubs((s) => !s)}
-            className={`ml-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
               showStubs
                 ? 'border-amber-300 bg-amber-50 text-amber-900'
                 : 'border-stone-200 bg-stone-100 text-stone-500'
@@ -474,7 +474,7 @@ export default function KootamForceGraph({ kootams, id }: KootamForceGraphProps)
             className="w-full max-w-sm rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-stone-500 focus:outline-none"
             data-testid="search-input"
           />
-          <span className="text-xs text-stone-500" data-testid="result-count">
+          <span className="shrink-0 whitespace-nowrap text-xs text-stone-500" data-testid="result-count">
             {filteredNodes.length} of {kootams.length}
           </span>
         </div>
@@ -566,7 +566,7 @@ function KootamDrawer({ node, onClose }: { node: SimNode; onClose: () => void })
   const p = TOTEM_PALETTE[node.totemType];
 
   return (
-    <div className="fixed inset-0 z-40" data-testid="kootam-drawer">
+    <div className="fixed inset-0 z-50" data-testid="kootam-drawer">
       <button
         type="button"
         aria-label="Close drawer"

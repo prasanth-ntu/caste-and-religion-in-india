@@ -76,7 +76,7 @@ export default function SourcesFilterClient({
 
   return (
     <>
-      <FilterBar ariaLabel="Filter sources" scrollOnMobile className="mb-3">
+      <FilterBar ariaLabel="Filter sources" className="mb-3">
         <FilterBar.ChipGroup label="Type">
           {TYPE_ORDER.filter((t) => (typeCounts[t] ?? 0) > 0).map((t) => (
             <FilterBar.Chip

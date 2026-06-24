@@ -121,7 +121,7 @@ export function ClaimEvidencePanel({
       aria-label="Evidence summary"
       hidden={!open}
       className={`block overflow-hidden transition-[max-height,opacity] duration-[200ms] ease-out ${
-        open ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'
+        open ? 'max-h-[32rem] opacity-100 mt-2' : 'max-h-0 opacity-0'
       }`}
     >
       <span

@@ -87,7 +87,7 @@ export default function LineageCompareOverlay({ currentSlug }: LineageCompareOve
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Compare lineages"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-lg transition hover:border-stone-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 sm:bottom-8 sm:right-8"
+        className="fixed bottom-24 right-6 z-40 flex items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-800 shadow-lg transition hover:border-stone-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50 sm:bottom-8 sm:right-8"
       >
         <span aria-hidden="true">⇄</span>
         <span className="hidden sm:inline">Compare with…</span>

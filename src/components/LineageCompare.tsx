@@ -140,7 +140,7 @@ export default function LineageCompare({
   return (
     <div>
       {!compact && b && (
-        <div className="sticky top-0 z-20 -mx-6 mb-3 flex items-center justify-between gap-2 border-b border-stone-200 bg-white/95 px-6 py-2 text-sm shadow-sm backdrop-blur md:hidden">
+        <div className="sticky top-16 z-20 -mx-6 mb-3 flex items-center justify-between gap-2 border-b border-stone-200 bg-white/95 px-6 py-2 text-sm shadow-sm backdrop-blur md:hidden">
           <span className="min-w-0 truncate">
             <span aria-hidden="true">{a?.totemEmoji}</span>{' '}
             {a && detailHref(a) ? (
@@ -164,7 +164,7 @@ export default function LineageCompare({
             type="button"
             onClick={swap}
             aria-label="Swap A and B"
-            className="shrink-0 rounded-md border border-stone-300 bg-white px-2 py-1 text-xs font-medium text-stone-700 hover:border-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-medium text-stone-700 hover:border-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
           >
             ⇄ Swap
           </button>
